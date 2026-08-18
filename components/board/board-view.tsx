@@ -5,6 +5,7 @@ import { ArrowDownUp, TrendingUp, TrendingDown } from "lucide-react"
 import { games, formatSpread, edgeGrade, type Game } from "@/lib/data"
 import { EdgeBadge } from "@/components/edge-badge"
 import { RatingMeter } from "@/components/rating-meter"
+import { TeamLogo } from "@/components/team-logo"
 import { cn } from "@/lib/utils"
 
 type Market = "spread" | "total"
@@ -112,10 +113,12 @@ function BoardRow({ g, market }: { g: Game; market: Market }) {
           {g.status === "live" && (
             <span className="h-2 w-2 rounded-full bg-primary [animation:live-pulse_1.6s_ease-in-out_infinite]" />
           )}
-          <span className="font-display text-sm font-semibold text-foreground">
+          <span className="flex items-center gap-1.5 font-display text-sm font-semibold text-foreground">
+            <TeamLogo name={g.away.name} abbr={g.away.abbr} size="sm" />
             {g.away.rank && <span className="text-muted-foreground">{g.away.rank} </span>}
             {g.away.abbr}
-            <span className="mx-1 text-muted-foreground">@</span>
+            <span className="mx-0.5 text-muted-foreground">@</span>
+            <TeamLogo name={g.home.name} abbr={g.home.abbr} size="sm" />
             {g.home.rank && <span className="text-muted-foreground">{g.home.rank} </span>}
             {g.home.abbr}
           </span>
@@ -151,8 +154,11 @@ function BoardCard({ g, market }: { g: Game; market: Market }) {
             {g.status === "live" && (
               <span className="h-2 w-2 rounded-full bg-primary [animation:live-pulse_1.6s_ease-in-out_infinite]" />
             )}
-            <span className="font-display text-base font-semibold text-foreground">
-              {g.away.abbr} <span className="text-muted-foreground">@</span> {g.home.abbr}
+            <span className="flex items-center gap-1.5 font-display text-base font-semibold text-foreground">
+              <TeamLogo name={g.away.name} abbr={g.away.abbr} size="sm" />
+              {g.away.abbr} <span className="text-muted-foreground">@</span>
+              <TeamLogo name={g.home.name} abbr={g.home.abbr} size="sm" />
+              {g.home.abbr}
             </span>
           </div>
           <div className="mt-1 font-mono text-[11px] text-muted-foreground">

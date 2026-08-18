@@ -13,6 +13,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { games, formatSpread } from '@/lib/data'
+import { TeamLogo } from '@/components/team-logo'
 
 const tabs = [
   { id: 'edges', label: 'Top Edges', icon: Zap },
@@ -172,12 +173,14 @@ export function TopEdges() {
 function Matchup({ game }: { game: (typeof games)[number] }) {
   return (
     <div className="flex items-center gap-2 font-display text-sm">
-      <span className="font-semibold text-foreground">
+      <span className="flex items-center gap-1.5 font-semibold text-foreground">
+        <TeamLogo name={game.away.name} abbr={game.away.abbr} size="sm" />
         {game.away.rank && <span className="text-muted-foreground">{game.away.rank} </span>}
         {game.away.name}
       </span>
       <span className="text-muted-foreground">@</span>
-      <span className="font-semibold text-foreground">
+      <span className="flex items-center gap-1.5 font-semibold text-foreground">
+        <TeamLogo name={game.home.name} abbr={game.home.abbr} size="sm" />
         {game.home.rank && <span className="text-muted-foreground">{game.home.rank} </span>}
         {game.home.name}
       </span>

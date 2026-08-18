@@ -1,6 +1,7 @@
 import { bseRatings } from "@/lib/data"
 import { RatingMeter } from "@/components/rating-meter"
 import { TrendIcon } from "@/components/board/board-view"
+import { TeamLogo } from "@/components/team-logo"
 
 export function RatingsTable() {
   return (
@@ -29,10 +30,13 @@ export function RatingsTable() {
             <tr key={r.abbr} className="bg-background transition-colors hover:bg-card">
               <td className="px-4 py-3 font-mono text-sm text-muted-foreground">{r.rank}</td>
               <td className="px-4 py-3">
-                <span className="font-display text-sm font-semibold text-foreground">
-                  {r.team}
+                <span className="flex items-center gap-2">
+                  <TeamLogo name={r.team} abbr={r.abbr} size="sm" />
+                  <span className="font-display text-sm font-semibold text-foreground">
+                    {r.team}
+                  </span>
+                  <span className="font-mono text-[11px] text-muted-foreground">{r.abbr}</span>
                 </span>
-                <span className="ml-2 font-mono text-[11px] text-muted-foreground">{r.abbr}</span>
               </td>
               <td className="hidden px-4 py-3 text-right font-mono text-sm text-foreground/80 sm:table-cell">
                 {r.offense.toFixed(1)}

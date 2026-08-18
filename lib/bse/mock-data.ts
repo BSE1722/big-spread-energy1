@@ -157,6 +157,43 @@ export function getRawTeamMetrics(team: string): RawTeamMetrics | undefined {
   return RAW_TEAM_METRICS[team]
 }
 
+/**
+ * Team branding used for the logo chips shown next to team names. We store each
+ * school's primary color (not the trademarked logo art) so the UI can render a
+ * legally-safe monogram badge. Add an optional `logo` image URL here later and
+ * the TeamLogo component will prefer it automatically — no component changes.
+ */
+export interface TeamBranding {
+  /** Primary brand color (hex). */
+  color: string
+  /** Optional logo image URL — takes precedence over the color monogram when set. */
+  logo?: string
+}
+
+const TEAM_BRANDING: Record<string, TeamBranding> = {
+  Georgia: { color: "#BA0C2F" },
+  "Ole Miss": { color: "#14213D" },
+  "Ohio State": { color: "#BB0000" },
+  "Penn State": { color: "#041E42" },
+  Texas: { color: "#BF5700" },
+  "Oklahoma State": { color: "#FF7300" },
+  Oregon: { color: "#154733" },
+  Washington: { color: "#4B2E83" },
+  "Notre Dame": { color: "#0C2340" },
+  Clemson: { color: "#F56600" },
+  Alabama: { color: "#9E1B32" },
+  LSU: { color: "#461D7C" },
+  Michigan: { color: "#00274C" },
+  "Miami FL": { color: "#F47321" },
+}
+
+/** Fallback branding for any team not in the map (keeps the UI resilient). */
+const FALLBACK_BRANDING: TeamBranding = { color: "#3F3F46" }
+
+export function getTeamBranding(team: string): TeamBranding {
+  return TEAM_BRANDING[team] ?? FALLBACK_BRANDING
+}
+
 /** Demo sportsbooks used to synthesize a multi-book market for best-line comparison. */
 export const MOCK_SPORTSBOOKS: { id: Sportsbook; label: string }[] = [
   { id: "draftkings", label: "DraftKings" },

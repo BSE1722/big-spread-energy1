@@ -25,4 +25,6 @@ export {
   MOCK_SNAPSHOT_TIME,
   MOCK_SPORTSBOOKS,
   getRawTeamMetrics,
+  getTeamBranding,
+  type TeamBranding,
 } from "./mock-data"
