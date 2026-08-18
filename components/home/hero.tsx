@@ -73,14 +73,25 @@ export function Hero() {
 
         {/* Center: player */}
         <div className="relative z-10 flex items-center justify-center lg:col-span-4">
-          <Image
-            src="/images/hero-player.png"
-            alt="Football player wrapped in Big Spread Energy green"
-            width={640}
-            height={640}
-            priority
-            className="animate-hero-float h-auto w-full max-w-md object-contain [mask-image:radial-gradient(ellipse_70%_75%_at_50%_45%,#000_55%,transparent_88%)] [-webkit-mask-image:radial-gradient(ellipse_70%_75%_at_50%_45%,#000_55%,transparent_88%)]"
-          />
+          <div className="animate-hero-float relative w-full max-w-md">
+            {/* Moving green energy behind the player */}
+            <div
+              aria-hidden
+              className="animate-energy-drift absolute left-1/2 top-1/2 h-[70%] w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,oklch(0.86_0.24_148_/_0.55)_0%,transparent_65%)] blur-2xl"
+            />
+            <div
+              aria-hidden
+              className="animate-energy-drift-slow absolute left-[42%] top-[58%] h-[55%] w-[55%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,oklch(0.86_0.24_148_/_0.4)_0%,transparent_60%)] blur-3xl"
+            />
+            <Image
+              src="/images/hero-player.png"
+              alt="Football player wrapped in Big Spread Energy green"
+              width={640}
+              height={640}
+              priority
+              className="animate-energy-flicker relative z-10 h-auto w-full object-contain [mask-image:radial-gradient(ellipse_70%_75%_at_50%_45%,#000_55%,transparent_88%)] [-webkit-mask-image:radial-gradient(ellipse_70%_75%_at_50%_45%,#000_55%,transparent_88%)]"
+            />
+          </div>
         </div>
 
         {/* Right: phone card */}
