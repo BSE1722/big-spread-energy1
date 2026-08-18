@@ -2,10 +2,11 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { TrendingUp, ShieldCheck, Crosshair, Zap, Menu } from 'lucide-react'
 
+// Describes what the BSE model measures — not fabricated performance claims.
 const stats = [
-  { icon: TrendingUp, value: '+6.87', label: 'Units This Season' },
-  { icon: ShieldCheck, value: '61.3%', label: 'BSE Win Rate' },
-  { icon: Crosshair, value: '4.2%', label: 'Avg. Edge' },
+  { icon: TrendingUp, value: 'EV', label: 'Value-Graded Bets' },
+  { icon: ShieldCheck, value: '0–100', label: 'BSE Confidence Rating' },
+  { icon: Crosshair, value: 'Fair', label: 'Line vs Market Edge' },
 ]
 
 export function Hero() {

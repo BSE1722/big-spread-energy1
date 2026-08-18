@@ -72,9 +72,11 @@ const GAME_SEEDS: GameSeed[] = [
     away: { name: "Georgia", rank: 2, abbr: "UGA" },
     home: { name: "Ole Miss", rank: 14, abbr: "MISS" },
     markets: {
-      spread: { marketLine: -7, openLine: -6.5, fairLineDemo: -10.3, confidence: 0.82 },
-      moneyline: { marketLine: -285, openLine: -260, fairLineDemo: -420, confidence: 0.8 },
-      total: { marketLine: 55.5, openLine: 56.5, fairLineDemo: 53.8, confidence: 0.6 },
+      // Fair lines sit only modestly off market — realistic, defensible edges,
+      // never lottery-ticket blowouts.
+      spread: { marketLine: -7, openLine: -6.5, fairLineDemo: -8.4, confidence: 0.82 },
+      moneyline: { marketLine: -285, openLine: -260, fairLineDemo: -320, confidence: 0.8 },
+      total: { marketLine: 55.5, openLine: 56.5, fairLineDemo: 54.4, confidence: 0.6 },
     },
   },
   {
@@ -83,9 +85,9 @@ const GAME_SEEDS: GameSeed[] = [
     away: { name: "Ohio State", rank: 1, abbr: "OSU" },
     home: { name: "Penn State", rank: 8, abbr: "PSU" },
     markets: {
-      spread: { marketLine: -6.5, openLine: -5.5, fairLineDemo: -9.2, confidence: 0.78 },
-      moneyline: { marketLine: -245, openLine: -210, fairLineDemo: -360, confidence: 0.76 },
-      total: { marketLine: 48.5, openLine: 49.5, fairLineDemo: 47.1, confidence: 0.55 },
+      spread: { marketLine: -6.5, openLine: -5.5, fairLineDemo: -7.9, confidence: 0.78 },
+      moneyline: { marketLine: -245, openLine: -210, fairLineDemo: -280, confidence: 0.76 },
+      total: { marketLine: 48.5, openLine: 49.5, fairLineDemo: 47.4, confidence: 0.55 },
     },
   },
   {
@@ -94,9 +96,9 @@ const GAME_SEEDS: GameSeed[] = [
     away: { name: "Texas", rank: 5, abbr: "TEX" },
     home: { name: "Oklahoma State", rank: 19, abbr: "OKST" },
     markets: {
-      spread: { marketLine: -3.5, openLine: -4.5, fairLineDemo: -6, confidence: 0.7 },
-      moneyline: { marketLine: -175, openLine: -190, fairLineDemo: -240, confidence: 0.68 },
-      total: { marketLine: 59.5, openLine: 58.5, fairLineDemo: 61.2, confidence: 0.5 },
+      spread: { marketLine: -3.5, openLine: -4.5, fairLineDemo: -4.8, confidence: 0.7 },
+      moneyline: { marketLine: -175, openLine: -190, fairLineDemo: -200, confidence: 0.68 },
+      total: { marketLine: 59.5, openLine: 58.5, fairLineDemo: 60.6, confidence: 0.5 },
     },
   },
   {
@@ -105,9 +107,9 @@ const GAME_SEEDS: GameSeed[] = [
     away: { name: "Oregon", rank: 3, abbr: "ORE" },
     home: { name: "Washington", rank: 24, abbr: "WASH" },
     markets: {
-      spread: { marketLine: -10.5, openLine: -9.5, fairLineDemo: -12.7, confidence: 0.72 },
-      moneyline: { marketLine: -410, openLine: -360, fairLineDemo: -520, confidence: 0.7 },
-      total: { marketLine: 62.5, openLine: 61.5, fairLineDemo: 63.4, confidence: 0.48 },
+      spread: { marketLine: -10.5, openLine: -9.5, fairLineDemo: -11.6, confidence: 0.72 },
+      moneyline: { marketLine: -410, openLine: -360, fairLineDemo: -455, confidence: 0.7 },
+      total: { marketLine: 62.5, openLine: 61.5, fairLineDemo: 63.3, confidence: 0.48 },
     },
   },
   {
@@ -116,9 +118,9 @@ const GAME_SEEDS: GameSeed[] = [
     away: { name: "Notre Dame", rank: 10, abbr: "ND" },
     home: { name: "Clemson", rank: 20, abbr: "CLEM" },
     markets: {
-      spread: { marketLine: -2, openLine: -1.5, fairLineDemo: -4.1, confidence: 0.62 },
-      moneyline: { marketLine: -130, openLine: -120, fairLineDemo: -175, confidence: 0.6 },
-      total: { marketLine: 44.5, openLine: 45.5, fairLineDemo: 43.2, confidence: 0.44 },
+      spread: { marketLine: -2, openLine: -1.5, fairLineDemo: -3, confidence: 0.62 },
+      moneyline: { marketLine: -130, openLine: -120, fairLineDemo: -148, confidence: 0.6 },
+      total: { marketLine: 44.5, openLine: 45.5, fairLineDemo: 43.8, confidence: 0.44 },
     },
   },
   {
@@ -127,9 +129,11 @@ const GAME_SEEDS: GameSeed[] = [
     away: { name: "Alabama", rank: 4, abbr: "BAMA" },
     home: { name: "LSU", rank: 12, abbr: "LSU" },
     markets: {
-      spread: { marketLine: -3, openLine: -2.5, fairLineDemo: -3.4, confidence: 0.5 },
-      moneyline: { marketLine: -155, openLine: -140, fairLineDemo: -170, confidence: 0.48 },
-      total: { marketLine: 51.5, openLine: 52.5, fairLineDemo: 50.9, confidence: 0.42 },
+      // A near-fair market: tiny edge, low confidence — should NOT earn a high
+      // BSE rating just because a small line gap exists.
+      spread: { marketLine: -3, openLine: -2.5, fairLineDemo: -3.2, confidence: 0.5 },
+      moneyline: { marketLine: -155, openLine: -140, fairLineDemo: -162, confidence: 0.48 },
+      total: { marketLine: 51.5, openLine: 52.5, fairLineDemo: 51.2, confidence: 0.42 },
     },
   },
   {
@@ -138,9 +142,9 @@ const GAME_SEEDS: GameSeed[] = [
     away: { name: "Michigan", rank: 9, abbr: "MICH" },
     home: { name: "Miami FL", rank: 15, abbr: "MIA" },
     markets: {
-      spread: { marketLine: 1.5, openLine: 2.5, fairLineDemo: -0.6, confidence: 0.55 },
-      moneyline: { marketLine: 105, openLine: 120, fairLineDemo: -115, confidence: 0.52 },
-      total: { marketLine: 46.5, openLine: 47.5, fairLineDemo: 45.8, confidence: 0.4 },
+      spread: { marketLine: 1.5, openLine: 2.5, fairLineDemo: 0.4, confidence: 0.55 },
+      moneyline: { marketLine: 105, openLine: 120, fairLineDemo: -108, confidence: 0.52 },
+      total: { marketLine: 46.5, openLine: 47.5, fairLineDemo: 46, confidence: 0.4 },
     },
   },
 ]

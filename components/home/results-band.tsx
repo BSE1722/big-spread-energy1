@@ -53,22 +53,23 @@ export function ResultsBand() {
 
         {/* Testimonial + community */}
         <div className="mt-10 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-          <figure className="rounded-xl border border-border bg-card p-6">
-            <blockquote className="text-pretty text-base text-foreground">
-              &ldquo;BSE has completely changed the way I handicap games. The
-              edges are real.&rdquo;
-            </blockquote>
-            <div className="mt-4 flex items-center justify-between">
-              <figcaption className="font-display text-sm font-bold uppercase tracking-wide text-primary">
-                — BSE Pro Member
-              </figcaption>
-              <div className="flex gap-0.5" aria-label="5 out of 5 stars">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-                ))}
-              </div>
+          <div className="rounded-xl border border-border bg-card p-6">
+            <div className="flex items-center gap-2">
+              <LineChart className="h-4 w-4 text-primary" />
+              <span className="font-display text-sm font-bold uppercase tracking-wide text-primary">
+                Transparent Model Tracking
+              </span>
             </div>
-          </figure>
+            <p className="mt-3 text-pretty text-base text-foreground">
+              Model tracking begins Week 1. Every BSE rating, edge, and
+              recommendation is timestamped when published, so results are
+              graded against the number we actually posted — never revised after
+              the outcome.
+            </p>
+            <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">
+              No fabricated records. No cherry-picked wins.
+            </p>
+          </div>
 
           <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-6">
             <Image

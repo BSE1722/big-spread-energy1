@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import { PageHeader } from "@/components/page-header"
 import { ParlayGenerator } from "@/components/parlay/parlay-generator"
+import { DemoDataBanner } from "@/components/demo-data-banner"
 
 export const metadata: Metadata = {
   title: "Getting Parlaid — BSE Parlay Generator | Big Spread Energy",
@@ -14,8 +15,11 @@ export default function GettingParlaidPage() {
       <PageHeader
         eyebrow="Tools"
         title="Getting Parlaid"
-        description="Don't feel like building it yourself? Pick a risk profile and BSE assembles an optimized parlay from this week's highest-edge picks. Hit regenerate until it feels right."
+        description="Pick an objective and BSE searches combinations to optimize the whole ticket on joint probability, expected value, confidence, correlation, and payout — and will recommend fewer legs, or none, rather than force a bad ticket."
       />
+      <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6">
+        <DemoDataBanner />
+      </section>
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <ParlayGenerator />
       </section>

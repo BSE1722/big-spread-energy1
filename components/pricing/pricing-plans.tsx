@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Check } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { FREE_FEATURES, PRO_FEATURES } from "@/lib/bse"
 
 const plans = [
   {
@@ -14,12 +15,7 @@ const plans = [
     annual: 0,
     cta: "Start free",
     highlight: false,
-    features: [
-      "The Board — top 5 edges",
-      "Weekly BSE Top 25 ratings",
-      "Parlay Analyzer (2 legs)",
-      "Delayed line updates",
-    ],
+    features: FREE_FEATURES,
   },
   {
     name: "BSE Pro",
@@ -28,14 +24,7 @@ const plans = [
     annual: 24,
     cta: "Go Pro",
     highlight: true,
-    features: [
-      "The Board — every game, every number",
-      "Full BSE fair lines & edge scores",
-      "Unlimited Parlay Analyzer legs",
-      "Getting Parlaid generator",
-      "Real-time line movement alerts",
-      "Season ROI & bet tracking",
-    ],
+    features: PRO_FEATURES,
   },
   {
     name: "Syndicate",

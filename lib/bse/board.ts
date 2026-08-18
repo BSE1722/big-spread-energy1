@@ -108,19 +108,27 @@ interface BuiltSelection {
   edge: number
 }
 
+/**
+ * Build moneyline offers whose PRICE is internally consistent with the side's
+ * fair win probability. The market price is set a touch worse than fair (a
+ * small, believable book margin) so a modest positive edge exists without the
+ * displayed odds contradicting the model probability. `edgeBps` shifts the
+ * market slightly in the bettor's favor for the value side.
+ */
 function buildMoneylineOffers(
   gameId: string,
   side: MarketSide,
-  homeMarketAmerican: number,
-  homeOpenAmerican: number,
+  fairProb: number,
+  edgeBps: number,
 ): BookOffer[] {
-  // Convert home ML into the side's ML (rough two-way mirror for demo).
-  const base =
-    side === "home" ? homeMarketAmerican : mirrorMoneyline(homeMarketAmerican)
-  const open =
-    side === "home" ? homeOpenAmerican : mirrorMoneyline(homeOpenAmerican)
-  return MOCK_SPORTSBOOKS.map((book, i) => {
-    const j = Math.round(jitter(`${gameId}-${side}-ml-${book.id}`, 12))
+  // Fair price for this probability, then add book margin (worse for bettor)
+  // minus the small modeled edge (better for bettor).
+  const bookMargin = 0.03 // ~3% hold baked into the consensus number
+  const marketProb = clampProb(fairProb + bookMargin - edgeBps)
+  const base = probabilityToAmerican(marketProb)
+  const open = probabilityToAmerican(clampProb(marketProb + 0.01))
+  return MOCK_SPORTSBOOKS.map((book) => {
+    const j = Math.round(jitter(`${gameId}-${side}-ml-${book.id}`, 10))
     return {
       book: book.id,
       line: 0,
@@ -137,13 +145,6 @@ function buildMoneylineOffers(
       lastUpdated: MOCK_SNAPSHOT_TIME,
     },
   ])
-}
-
-/** Rough moneyline mirror for the opposite side (demo only). */
-function mirrorMoneyline(american: number): number {
-  const p = impliedProbability(american)
-  const opp = clampProb(1 - p * 0.96) // leave a little vig in
-  return probabilityToAmerican(opp)
 }
 
 function buildPointOffers(
@@ -207,11 +208,6 @@ function buildSelection(
   seed: MarketSeed,
   fairHomeMargin: number,
 ): BuiltSelection {
-  const offers =
-    marketType === "moneyline"
-      ? buildMoneylineOffers(game.id, side, seed.marketLine, seed.openLine)
-      : buildPointOffers(game.id, marketType, side, seed.marketLine, seed.openLine)
-
   // Fair line for THIS side.
   const fairLine =
     marketType === "spread"
@@ -236,6 +232,19 @@ function buildSelection(
     confidence: seed.confidence,
     generatedAt: MOCK_SNAPSHOT_TIME,
   })
+
+  // For moneylines, build the price FROM the fair probability so odds and
+  // probability never contradict. The favored side (fairProb > 0.5) carries a
+  // small modeled edge; the dog side is priced at fair-minus-hold (no edge).
+  const offers =
+    marketType === "moneyline"
+      ? buildMoneylineOffers(
+          game.id,
+          side,
+          projection.fairProbability,
+          projection.fairProbability >= 0.5 ? 0.02 : 0.005,
+        )
+      : buildPointOffers(game.id, marketType, side, seed.marketLine, seed.openLine)
 
   const label = sideLabel(marketType, side, game.home, game.away, marketLine)
   const edge = bseModel.edgeFor({ marketType, side, fairLine, marketLine })

@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import { PageHeader } from "@/components/page-header"
 import { BoardView } from "@/components/board/board-view"
 import { RatingsTable } from "@/components/board/ratings-table"
+import { DemoDataBanner } from "@/components/demo-data-banner"
+import { CURRENT_CONTEXT } from "@/lib/bse"
 
 export const metadata: Metadata = {
   title: "The Board — Live Lines & BSE Fair Lines | Big Spread Energy",
@@ -13,10 +15,14 @@ export default function BoardPage() {
   return (
     <main>
       <PageHeader
-        eyebrow="Week 11 · Live"
+        eyebrow={`${CURRENT_CONTEXT.league.toUpperCase()} · Week ${CURRENT_CONTEXT.week} · ${CURRENT_CONTEXT.season}`}
         title="The Board"
-        description="Every game, every number. Market lines stacked against BSE projected fair lines, with edge scores and conviction ratings updated in real time."
+        description="Every game, every number. Market lines stacked against BSE projected fair lines, with edge scores and conviction ratings — built to compare multiple sportsbooks and surface the best available price."
       />
+
+      <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6">
+        <DemoDataBanner />
+      </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <BoardView />
