@@ -144,3 +144,26 @@
     opacity: 0.35;
   }
 }
+
+@keyframes hero-float {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 60px oklch(0.86 0.24 148 / 0.25));
+  }
+  50% {
+    transform: translateY(-14px) scale(1.012);
+    filter: drop-shadow(0 0 80px oklch(0.86 0.24 148 / 0.4));
+  }
+}
+
+.animate-hero-float {
+  animation: hero-float 6s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hero-float {
+    animation: none;
+  }
+}

@@ -79,7 +79,7 @@ export function Hero() {
             width={640}
             height={640}
             priority
-            className="h-auto w-full max-w-md object-contain drop-shadow-[0_0_60px_oklch(0.86_0.24_148_/_0.25)] [mask-image:radial-gradient(ellipse_70%_75%_at_50%_45%,#000_55%,transparent_88%)] [-webkit-mask-image:radial-gradient(ellipse_70%_75%_at_50%_45%,#000_55%,transparent_88%)]"
+            className="animate-hero-float h-auto w-full max-w-md object-contain [mask-image:radial-gradient(ellipse_70%_75%_at_50%_45%,#000_55%,transparent_88%)] [-webkit-mask-image:radial-gradient(ellipse_70%_75%_at_50%_45%,#000_55%,transparent_88%)]"
           />
         </div>
 
