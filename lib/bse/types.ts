@@ -82,6 +82,51 @@ export interface BookOffer {
 }
 
 /* ------------------------------------------------------------------ */
+/* Provider seeds (raw facts a data feed supplies — the ONLY raw input) */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The minimal per-market facts a data provider supplies. `fairLineDemo` and
+ * `confidence` stand in for the proprietary model until it exists; a real feed
+ * would supply only the market/opening lines and the model would produce the
+ * fair line separately.
+ */
+export interface MarketSeed {
+  marketLine: number
+  openLine: number
+  fairLineDemo: number
+  confidence: number
+}
+
+export interface TeamSeed {
+  name: string
+  abbr: string
+  rank?: number
+}
+
+export interface GameSeed {
+  id: string
+  kickoff: string
+  network?: string
+  away: TeamSeed
+  home: TeamSeed
+  markets: {
+    spread: MarketSeed
+    total: MarketSeed
+    moneyline: MarketSeed
+  }
+}
+
+/** Opponent-adjusted team metric placeholders (demo scale). */
+export interface RawTeamMetrics {
+  rating: number
+  offense: number
+  defense: number
+  explosiveness: number
+  pace: number
+}
+
+/* ------------------------------------------------------------------ */
 /* BSE model outputs (architecture + placeholders — not yet predictive) */
 /* ------------------------------------------------------------------ */
 

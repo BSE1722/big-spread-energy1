@@ -1,11 +1,13 @@
 import Image from 'next/image'
-import { Star, AtSign, Camera, Play, Music2 } from 'lucide-react'
+import { AtSign, Camera, Play, Music2, LineChart } from 'lucide-react'
 
+// No fabricated performance stats. BSE tracks results transparently once the
+// model goes live, so these are honest, clearly-labeled placeholders.
 const stats = [
-  { value: '+46.2', label: 'Units YTD' },
-  { value: '61.3%', label: 'Win Rate' },
-  { value: '4.2%', label: 'Average Edge' },
-  { value: '22-14', label: 'Top Plays Record' },
+  { value: '—', label: 'Units — tracking Week 1' },
+  { value: '—', label: 'Win Rate — tracking Week 1' },
+  { value: '—', label: 'Avg Edge — tracking Week 1' },
+  { value: '—', label: 'Record — tracking Week 1' },
 ]
 
 const socials = [
@@ -25,11 +27,12 @@ export function ResultsBand() {
             <h2 className="font-display text-4xl font-bold uppercase leading-[0.95] tracking-tight sm:text-5xl">
               <span className="block text-foreground">Real Data.</span>
               <span className="block text-foreground">Real Edges.</span>
-              <span className="block text-primary text-glow">Real Results.</span>
+              <span className="block text-primary text-glow">Tracked Honestly.</span>
             </h2>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-muted-foreground">
-              BSE Pro members are cashing more tickets because they bet smarter,
-              not harder.
+              BSE grades every number on data, probability, and expected value —
+              not hype. Performance tracking begins Week 1 and every result is
+              timestamped so the record can&apos;t be changed after the fact.
             </p>
           </div>
 
