@@ -9,10 +9,12 @@ import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const nav = [
+  { href: "/", label: "Home" },
   { href: "/board", label: "The Board" },
-  { href: "/parlay-analyzer", label: "Parlay Analyzer" },
+  { href: "/board#ratings", label: "BSE Ratings" },
   { href: "/getting-parlaid", label: "Getting Parlaid" },
-  { href: "/pricing", label: "BSE Pro" },
+  { href: "/parlay-analyzer", label: "Tools" },
+  { href: "/pricing", label: "Pricing" },
 ]
 
 export function SiteHeader() {
@@ -42,14 +44,17 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Link href="/login" className={cn(buttonVariants({ variant: "ghost" }), "h-10 px-4")}>
-            Log in
+          <Link
+            href="/login"
+            className={cn(buttonVariants({ variant: "outline" }), "h-10 px-5 font-display font-semibold uppercase tracking-wide")}
+          >
+            Log In
           </Link>
           <Link
             href="/signup"
             className={cn(buttonVariants({ variant: "default" }), "h-10 px-5 font-display font-semibold uppercase tracking-wide")}
           >
-            Get Started
+            Join BSE Pro
           </Link>
         </div>
 
@@ -84,16 +89,16 @@ export function SiteHeader() {
               <Link
                 href="/login"
                 onClick={() => setOpen(false)}
-                className={cn(buttonVariants({ variant: "outline" }), "h-11")}
+                className={cn(buttonVariants({ variant: "outline" }), "h-11 font-display font-semibold uppercase tracking-wide")}
               >
-                Log in
+                Log In
               </Link>
               <Link
                 href="/signup"
                 onClick={() => setOpen(false)}
                 className={cn(buttonVariants({ variant: "default" }), "h-11 font-display font-semibold uppercase tracking-wide")}
               >
-                Get Started
+                Join BSE Pro
               </Link>
             </div>
           </nav>

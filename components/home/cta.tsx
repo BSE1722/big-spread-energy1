@@ -1,49 +1,25 @@
-import Link from "next/link"
-import { ArrowUpRight } from "lucide-react"
-import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import Link from 'next/link'
 
 export function HomeCta() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-24">
-      <div className="relative overflow-hidden rounded-2xl border border-primary/30 bg-card px-6 py-14 text-center sm:px-12">
-        <div
-          className="absolute inset-0 grid-lines opacity-60"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -bottom-32 left-1/2 h-72 w-[40rem] -translate-x-1/2 rounded-full bg-primary/20 blur-[110px]"
-          aria-hidden="true"
-        />
-        <div className="relative">
-          <h2 className="mx-auto max-w-2xl text-balance font-display text-4xl font-bold uppercase tracking-tight sm:text-5xl">
-            Stop chasing. Start pressing your edge.
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-pretty text-muted-foreground">
-            Join thousands of bettors using BSE fair lines to attack every
-            Saturday with a plan.
-          </p>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link
-              href="/signup"
-              className={cn(
-                buttonVariants({ variant: "default" }),
-                "h-12 gap-2 px-7 font-display text-base font-semibold uppercase tracking-wide",
-              )}
-            >
-              Create free account
-              <ArrowUpRight className="size-5" />
-            </Link>
-            <Link
-              href="/board"
-              className={cn(
-                buttonVariants({ variant: "outline" }),
-                "h-12 px-7 font-display text-base font-semibold uppercase tracking-wide",
-              )}
-            >
-              Browse The Board
-            </Link>
+    <section className="bg-background py-14">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center gap-5 rounded-xl border border-border bg-card px-6 py-8 text-center md:flex-row md:justify-between md:text-left">
+          <div>
+            <h2 className="font-display text-2xl font-bold uppercase tracking-wide text-foreground sm:text-3xl">
+              Bring The <span className="text-primary">Energy</span>. Cash The
+              Ticket.
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Become a BSE Pro member today.
+            </p>
           </div>
+          <Link
+            href="/pricing"
+            className="inline-flex h-12 shrink-0 items-center justify-center rounded-md bg-primary px-8 font-display text-sm font-bold uppercase tracking-wider text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Join BSE Pro
+          </Link>
         </div>
       </div>
     </section>

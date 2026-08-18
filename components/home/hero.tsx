@@ -1,121 +1,152 @@
-import Link from "next/link"
-import { ArrowUpRight, TrendingUp } from "lucide-react"
-import { buttonVariants } from "@/components/ui/button"
-import { games, formatSpread } from "@/lib/data"
-import { EdgeBadge } from "@/components/edge-badge"
-import { cn } from "@/lib/utils"
+import Link from 'next/link'
+import Image from 'next/image'
+import { TrendingUp, ShieldCheck, Crosshair, Zap, Menu } from 'lucide-react'
+
+const stats = [
+  { icon: TrendingUp, value: '+6.87', label: 'Units This Season' },
+  { icon: ShieldCheck, value: '61.3%', label: 'BSE Win Rate' },
+  { icon: Crosshair, value: '4.2%', label: 'Avg. Edge' },
+]
 
 export function Hero() {
-  const featured = games.slice(0, 3)
-
   return (
-    <section className="relative overflow-hidden border-b border-border">
-      <div className="absolute inset-0 grid-lines opacity-70" aria-hidden="true" />
-      <div
-        className="absolute -top-40 left-1/2 h-96 w-[42rem] -translate-x-1/2 rounded-full bg-primary/15 blur-[120px]"
-        aria-hidden="true"
-      />
+    <section className="relative overflow-hidden border-b border-border/60 bg-background">
+      {/* green energy glow behind player */}
+      <div className="pointer-events-none absolute inset-0 flex items-start justify-center">
+        <div className="radial-fade mt-10 h-[620px] w-[620px] max-w-full" />
+      </div>
 
-      <div className="relative mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
-        <div className="flex flex-col justify-center">
-          <span className="inline-flex w-fit items-center gap-2 rounded-full border border-border bg-card px-3 py-1 font-mono text-xs uppercase tracking-[0.2em] text-primary">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-primary [animation:live-pulse_1.6s_ease-in-out_infinite]" />
-            </span>
-            Week 11 lines are live
+      <div className="relative mx-auto grid max-w-7xl gap-8 px-4 pb-14 pt-10 sm:px-6 lg:grid-cols-12 lg:gap-4 lg:px-8 lg:pb-20 lg:pt-14">
+        {/* Left: copy */}
+        <div className="relative z-20 flex flex-col justify-center lg:col-span-5">
+          <span className="font-display text-sm font-semibold uppercase tracking-[0.22em] text-primary">
+            College Football Analytics
           </span>
 
-          <h1 className="mt-6 text-balance font-display text-5xl font-bold uppercase leading-[0.92] tracking-tight sm:text-6xl lg:text-7xl">
-            Bet with an
-            <span className="text-primary text-glow"> edge</span>, not a hunch.
+          <h1 className="mt-4 font-display font-bold uppercase leading-[0.82] tracking-tight">
+            <span className="block text-6xl text-foreground text-glow-strong sm:text-7xl xl:text-8xl">
+              Big Spread
+            </span>
+            <span className="mt-1 block font-marker text-6xl normal-case text-primary text-glow sm:text-7xl xl:text-8xl">
+              Energy
+            </span>
           </h1>
 
-          <p className="mt-6 max-w-lg text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Big Spread Energy projects fair lines for every college football
-            game, scores the edge against the market, and rates your parlays
-            before you place them. Terminal-grade analytics for real bettors.
+          <p className="mt-6 max-w-md text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
+            We find the edges the books don&apos;t want you to see. Better data.
+            Smarter models. Bigger wins.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/board"
-              className={cn(
-                buttonVariants({ variant: "default" }),
-                "h-12 gap-2 px-6 font-display text-base font-semibold uppercase tracking-wide",
-              )}
+              href="/pricing"
+              className="inline-flex h-12 items-center justify-center rounded-md bg-primary px-7 font-display text-sm font-bold uppercase tracking-wider text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              View The Board
-              <ArrowUpRight className="size-5" />
+              Get BSE Pro
             </Link>
             <Link
-              href="/pricing"
-              className={cn(
-                buttonVariants({ variant: "outline" }),
-                "h-12 px-6 font-display text-base font-semibold uppercase tracking-wide",
-              )}
+              href="/board"
+              className="inline-flex h-12 items-center justify-center rounded-md border border-border bg-card/40 px-7 font-display text-sm font-bold uppercase tracking-wider text-foreground transition-colors hover:border-primary hover:text-primary"
             >
-              Go Pro
+              See The Board
             </Link>
           </div>
 
-          <dl className="mt-10 grid grid-cols-3 gap-6 border-t border-border pt-6">
-            {[
-              { k: "Fair lines / week", v: "130+" },
-              { k: "Season ROI", v: "+14.2%" },
-              { k: "Edge picks graded", v: "2.4K" },
-            ].map((s) => (
-              <div key={s.k}>
-                <dt className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
-                  {s.k}
-                </dt>
-                <dd className="mt-1 font-display text-2xl font-bold text-foreground sm:text-3xl">
-                  {s.v}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-
-        {/* Terminal preview card */}
-        <div className="relative flex items-center">
-          <div className="w-full overflow-hidden rounded-xl border border-border bg-card shadow-2xl shadow-black/40">
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-muted-foreground">
-                <TrendingUp className="size-4 text-primary" />
-                The Board — Top Edges
-              </div>
-              <span className="flex items-center gap-1.5 font-mono text-[10px] uppercase text-primary">
-                <span className="h-1.5 w-1.5 rounded-full bg-primary [animation:live-pulse_1.6s_ease-in-out_infinite]" />
-                Live
-              </span>
-            </div>
-            <div className="divide-y divide-border">
-              {featured.map((g) => (
-                <div key={g.id} className="flex items-center justify-between gap-3 px-4 py-3.5">
-                  <div className="min-w-0">
-                    <div className="font-display text-sm font-semibold text-foreground">
-                      {g.away.abbr} <span className="text-muted-foreground">@</span> {g.home.abbr}
-                    </div>
-                    <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
-                      {g.kickoff} · {g.network}
-                    </div>
+          <div className="mt-10 flex flex-wrap gap-x-8 gap-y-5">
+            {stats.map((s) => (
+              <div key={s.label} className="flex items-center gap-2.5">
+                <s.icon className="h-6 w-6 shrink-0 text-primary" strokeWidth={2} />
+                <div>
+                  <div className="font-display text-xl font-bold leading-none text-foreground">
+                    {s.value}
                   </div>
-                  <div className="flex items-center gap-3 text-right">
-                    <div className="font-mono text-xs">
-                      <div className="text-muted-foreground">MKT {formatSpread(g.marketSpread)}</div>
-                      <div className="text-primary">FAIR {formatSpread(g.fairSpread)}</div>
-                    </div>
-                    <EdgeBadge edge={g.edgeSpread} />
+                  <div className="mt-1 text-xs uppercase tracking-wide text-muted-foreground">
+                    {s.label}
                   </div>
                 </div>
-              ))}
-            </div>
-            <div className="border-t border-border bg-secondary/40 px-4 py-3 text-center font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-              BSE fair line model · updated 2m ago
-            </div>
+              </div>
+            ))}
           </div>
+        </div>
+
+        {/* Center: player */}
+        <div className="relative z-10 flex items-center justify-center lg:col-span-4">
+          <Image
+            src="/images/hero-player.png"
+            alt="Football player wrapped in Big Spread Energy green"
+            width={640}
+            height={640}
+            priority
+            className="h-auto w-full max-w-md object-contain drop-shadow-[0_0_60px_oklch(0.86_0.24_148_/_0.25)]"
+          />
+        </div>
+
+        {/* Right: phone card */}
+        <div className="relative z-20 flex items-center justify-center lg:col-span-3">
+          <PhoneCard />
         </div>
       </div>
     </section>
+  )
+}
+
+function PhoneCard() {
+  return (
+    <div className="w-full max-w-[290px] rounded-[2.2rem] border border-border bg-card p-2 shadow-[0_0_50px_oklch(0_0_0_/_0.6)] ring-1 ring-primary/10">
+      <div className="overflow-hidden rounded-[1.7rem] bg-secondary">
+        {/* phone header */}
+        <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+          <div className="flex items-center gap-1">
+            <span className="font-display text-lg font-bold text-foreground">BS</span>
+            <span className="font-display text-lg font-bold text-primary">E</span>
+          </div>
+          <span className="font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            BSE Pro
+          </span>
+          <Menu className="h-4 w-4 text-muted-foreground" />
+        </div>
+
+        {/* rating */}
+        <div className="flex flex-col items-center px-4 py-6 text-center">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            BSE Rating
+          </span>
+          <span className="my-1 font-display text-7xl font-bold leading-none text-primary text-glow">
+            91
+          </span>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Big Spread Alert
+          </span>
+          <Zap className="mt-2 h-4 w-4 fill-primary text-primary" />
+        </div>
+
+        {/* matchup */}
+        <div className="border-t border-border/60 px-4 py-4">
+          <div className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
+            Ohio State @ Penn State
+          </div>
+          <dl className="mt-3 space-y-2 text-sm">
+            <Row label="Market Spread" value="-6.5" />
+            <Row label="BSE Projection" value="-9.2" />
+            <div className="flex items-center justify-between border-t border-border/60 pt-2">
+              <dt className="font-semibold text-primary">Spread Edge</dt>
+              <dd className="font-display text-base font-bold text-primary">+2.7</dd>
+            </div>
+          </dl>
+          <button className="mt-4 w-full rounded-md border border-border py-2.5 font-display text-xs font-bold uppercase tracking-wider text-foreground transition-colors hover:border-primary hover:text-primary">
+            View Full Breakdown
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-mono font-semibold text-foreground">{value}</dd>
+    </div>
   )
 }

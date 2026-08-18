@@ -117,6 +117,13 @@
       linear-gradient(to bottom, oklch(1 0 0 / 0.03) 1px, transparent 1px);
     background-size: 44px 44px;
   }
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @keyframes ticker {
