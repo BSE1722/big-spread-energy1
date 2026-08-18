@@ -14,9 +14,10 @@ export function FeatureGrid() {
               <span className="text-primary">Parlaid</span>
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              Optimized tickets that balance a meaningful payout with a
-              realistic chance to cash — fewer legs, or none, when the math
-              says so.
+              Stop chasing lottery tickets. Getting Parlaid analyzes
+              probability, value, confidence, price and correlation to build
+              smarter parlays designed to balance a realistic chance of cashing
+              with a payout worth chasing.
             </p>
             <Link
               href="/getting-parlaid"

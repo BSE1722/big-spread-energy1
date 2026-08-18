@@ -73,7 +73,7 @@ export function BoardView() {
               <th className="px-4 py-3 font-medium">Matchup</th>
               <th className="px-4 py-3 font-medium">Kickoff</th>
               <th className="px-4 py-3 text-right font-medium">Market</th>
-              <th className="px-4 py-3 text-right font-medium">BSE Fair</th>
+              <th className="px-4 py-3 text-right font-medium">BSE Projection</th>
               <th className="px-4 py-3 text-right font-medium">Edge</th>
               <th className="px-4 py-3 font-medium">BSE Rating</th>
               <th className="px-4 py-3 font-medium">BSE Pick</th>
@@ -168,7 +168,7 @@ function BoardCard({ g, market }: { g: Game; market: Market }) {
           <div className="mt-1 font-mono text-sm text-foreground/80">{v.mkt}</div>
         </div>
         <div className="border-x border-border">
-          <div className="font-mono text-[10px] uppercase text-muted-foreground">BSE Fair</div>
+              <div className="font-mono text-[10px] uppercase text-muted-foreground">BSE Projection</div>
           <div className="mt-1 font-mono text-sm font-semibold text-primary">{v.fair}</div>
         </div>
         <div>
