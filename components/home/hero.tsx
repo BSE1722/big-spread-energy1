@@ -34,8 +34,9 @@ export function Hero() {
           </h1>
 
           <p className="mt-6 max-w-md text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-            We find the edges the books don&apos;t want you to see. Better data.
-            Smarter models. Bigger wins.
+            We find the market inefficiencies the books don&apos;t want you to
+            see. Better data. Smarter models. Sharper decisions grounded in true
+            probability and expected value.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">

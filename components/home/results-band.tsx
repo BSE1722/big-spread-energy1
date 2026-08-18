@@ -31,8 +31,10 @@ export function ResultsBand() {
             </h2>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-muted-foreground">
               BSE grades every number on data, probability, and expected value —
-              not hype. Performance tracking begins Week 1 and every result is
-              timestamped so the record can&apos;t be changed after the fact.
+              not hype. We don&apos;t chase lottery-ticket parlays with huge
+              payouts and tiny odds; we find where a ticket gets mathematically
+              worse and stop there. Performance tracking begins Week 1, every
+              result timestamped so the record can&apos;t change after the fact.
             </p>
           </div>
 

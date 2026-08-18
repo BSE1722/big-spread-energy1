@@ -14,8 +14,9 @@ export function FeatureGrid() {
               <span className="text-primary">Parlaid</span>
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              Our weekly parlay builder shows you how to turn data into big
-              paydays.
+              Optimized tickets that balance a meaningful payout with a
+              realistic chance to cash — fewer legs, or none, when the math
+              says so.
             </p>
             <Link
               href="/getting-parlaid"
@@ -32,7 +33,7 @@ export function FeatureGrid() {
         <FeatureCard
           icon={BrainCircuit}
           title="BSE Model"
-          body="Proprietary models. Real-time data. Lines move. We react. You win."
+          body="Proprietary models. Real-time data. LINES MOVE. WE REACT. FIND THE EDGE BEFORE IT'S GONE."
           cta="How We Do It"
           href="/board"
         />
