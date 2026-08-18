@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { PageHeader } from "@/components/page-header"
 import { BoardView } from "@/components/board/board-view"
 import { RatingsTable } from "@/components/board/ratings-table"
+import { TeamSearch } from "@/components/board/team-search"
 import { DemoDataBanner } from "@/components/demo-data-banner"
 import { CURRENT_CONTEXT } from "@/lib/bse"
 
@@ -22,6 +23,10 @@ export default function BoardPage() {
 
       <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6">
         <DemoDataBanner />
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
+        <TeamSearch />
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
