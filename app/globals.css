@@ -7,6 +7,7 @@
 @theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-oswald), 'Arial Narrow', sans-serif;
+  --font-marker: var(--font-marker), 'Comic Sans MS', cursive;
   --font-mono: ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
 
   --color-background: var(--background);
@@ -89,8 +90,23 @@
   .font-display {
     font-family: var(--font-display);
   }
+  .font-marker {
+    font-family: var(--font-marker);
+  }
   .text-glow {
     text-shadow: 0 0 24px oklch(0.86 0.24 148 / 0.45);
+  }
+  .text-glow-strong {
+    text-shadow:
+      0 0 8px oklch(0.86 0.24 148 / 0.55),
+      0 0 40px oklch(0.86 0.24 148 / 0.35);
+  }
+  .radial-fade {
+    background: radial-gradient(
+      circle at center,
+      oklch(0.86 0.24 148 / 0.18) 0%,
+      transparent 62%
+    );
   }
   .grid-lines {
     background-image: linear-gradient(

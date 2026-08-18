@@ -1,6 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
-import { Oswald, Inter } from 'next/font/google'
+import { Oswald, Inter, Permanent_Marker } from 'next/font/google'
 import './globals.css'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
@@ -14,6 +14,12 @@ const oswald = Oswald({
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
+})
+
+const permanentMarker = Permanent_Marker({
+  subsets: ['latin'],
+  variable: '--font-marker',
+  weight: '400',
 })
 
 export const metadata: Metadata = {
@@ -37,7 +43,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`dark bg-background ${oswald.variable} ${inter.variable}`}>
+    <html
+      lang="en"
+      className={`dark bg-background ${oswald.variable} ${inter.variable} ${permanentMarker.variable}`}
+    >
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
         <SiteHeader />
         {children}
