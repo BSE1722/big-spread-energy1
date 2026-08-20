@@ -1,22 +1,17 @@
 import { NextResponse } from "next/server"
-import { getCfbdGames } from "@/lib/cfbd"
+import { getCfbdTeams } from "@/lib/cfbd"
 
 export async function GET() {
 try {
-const games = await getCfbdGames({
-year: 2026,
-week: 1,
-seasonType: "regular",
-division: "fbs",
-})
+const teams = await getCfbdTeams()
 
 return NextResponse.json({
 ok: true,
-count: Array.isArray(games) ? games.length : 0,
-sample: Array.isArray(games) ? games.slice(0, 5) : games,
+count: Array.isArray(teams) ? teams.length : 0,
+teams,
 })
 } catch (error) {
-console.error("CFBD test failed:", error)
+console.error("CFBD teams test failed:", error)
 
 return NextResponse.json(
 {
