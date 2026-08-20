@@ -169,21 +169,15 @@ setLoadingGames(false)
     }
   }
 
-  const results = livegames
+ const results = liveGames
 
-  return (
-    return (
-<>
-<div
-style={{
-background: "yellow",
-color: "black",
-padding: "30px",
-fontSize: "30px",
-fontWeight: "bold",
-}}
->
-TEAM SEARCH COMPONENT IS ALIVE
+return (
+<div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+<div className="flex items-center gap-2">
+<CalendarClock className="size-4 text-primary" />
+<h2 className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
+Find a team&apos;s next games
+</h2>
 </div>
 
 <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
