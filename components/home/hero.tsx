@@ -33,10 +33,20 @@ export function Hero() {
             </span>
           </h1>
 
-          <p className="mt-6 max-w-md text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-            We find the market inefficiencies the books don&apos;t want you to
-            see. Better data. Smarter models. Sharper decisions grounded in true
-            probability and expected value.
+          <p className="mt-6 max-w-md text-pretty text-lg font-semibold leading-relaxed text-foreground sm:text-xl">
+            Bring us the bet you&apos;re thinking about making. We&apos;ll tell
+            you whether the numbers actually support it.
+          </p>
+
+          <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">
+            BSE breaks down your bet or parlay across estimated true
+            probability, sportsbook implied probability, expected value, BSE
+            projections, line quality, model confidence, and correlation between
+            legs. We flag the weak legs, explain what&apos;s hurting the ticket,
+            and recommend a mathematically stronger version when one exists.
+            This isn&apos;t another picks or &ldquo;locks&rdquo; site — it&apos;s
+            a decision engine built to answer one question before you wager: do
+            the numbers actually support this bet?
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
