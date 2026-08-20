@@ -1,26 +1,81 @@
 "use client"
 
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Search, X, CalendarClock } from "lucide-react"
 import { games, formatSpread, type Game } from "@/lib/data"
 import { EdgeBadge } from "@/components/edge-badge"
 import { TeamLogo } from "@/components/team-logo"
 import { cn } from "@/lib/utils"
 
-type TeamOption = { name: string; abbr: string; rank?: number }
+type TeamOption = {
 
-/** Unique, alphabetized list of every team on the board. */
+  name: string
+
+  abbr: string
+
+  rank?: number
+
+}
+
+type CfbdTeam = {
+
+  school: string
+
+  abbreviation?: string | null
+
+}
+
 function useTeamOptions(): TeamOption[] {
-  return useMemo(() => {
-    const map = new Map<string, TeamOption>()
-    for (const g of games) {
-      if (!map.has(g.away.name))
-        map.set(g.away.name, { name: g.away.name, abbr: g.away.abbr, rank: g.away.rank })
-      if (!map.has(g.home.name))
-        map.set(g.home.name, { name: g.home.name, abbr: g.home.abbr, rank: g.home.rank })
+
+  const [teams, setTeams] = useState<TeamOption[]>([])
+
+  useEffect(() => {
+
+    async function loadTeams() {
+
+      try {
+
+        const res = await fetch("/api/cfbd-teams")
+
+        if (!res.ok) {
+
+          throw new Error(`Team request failed: ${res.status}`)
+
+        }
+
+        const data = await res.json()
+
+        const teamOptions: TeamOption[] = Array.isArray(data.teams)
+
+          ? data.teams.map((team: CfbdTeam) => ({
+
+              name: team.school,
+
+              abbr: team.abbreviation || team.school,
+
+            }))
+
+          : []
+
+        setTeams(teamOptions)
+
+      } catch (error) {
+
+        console.error("Failed to load CFBD teams:", error)
+
+        setTeams([])
+
+      }
+
     }
-    return [...map.values()].sort((a, b) => a.name.localeCompare(b.name))
+
+    loadTeams()
+
   }, [])
+
+  return teams
+
+}
 }
 
 function gamesForTeam(team: string): Game[] {
