@@ -149,7 +149,7 @@ function PhoneCard() {
             Ohio State @ Penn State
           </div>
           <dl className="mt-3 space-y-2 text-sm">
-            <Row label="Market Spread" value="OSU -6.5" />
+            <Row label="Market Spread" value=" OSU -6.5 " />
             <Row label="BSE Projection" value="-9.2" />
             <div className="flex items-center justify-between border-t border-border/60 pt-2">
               <dt className="font-semibold text-primary">Spread Edge</dt>
