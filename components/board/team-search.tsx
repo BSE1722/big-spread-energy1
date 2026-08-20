@@ -76,7 +76,6 @@ function useTeamOptions(): TeamOption[] {
   return teams
 
 }
-}
 
 function gamesForTeam(team: string): Game[] {
   return games
