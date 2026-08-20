@@ -156,7 +156,7 @@ function PhoneCard() {
               <dd className="font-display text-base font-bold text-primary">+2.7</dd>
             </div>
           </dl>
-          <button className="mt-4 w-full rounded-md border border-border py-2.5 font-display text-xs font-bold uppercase tracking-wider text-foreground transition-colors hover:border-primary hover:text-primary">
+          <link href="/board" className="mt-4 w-full rounded-md border border-border py-2.5 font-display text-xs font-bold uppercase tracking-wider text-foreground transition-colors hover:border-primary hover:text-primary">
             View Full Breakdown
           </button>
         </div>
