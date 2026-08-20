@@ -18,7 +18,7 @@ export default function BoardPage() {
       <PageHeader
         eyebrow={`${CURRENT_CONTEXT.league.toUpperCase()} · Week ${CURRENT_CONTEXT.week} · ${CURRENT_CONTEXT.season}`}
         title="The Board"
-        description="Every game, every number. Market lines stacked against the BSE Projection fair line, with the Edge and a 0–100 BSE Rating — built to compare multiple sportsbooks and surface the best available price."
+        description="Every game, every market line. BSE Projections use AI, Internal formulas, and recurring news to produce the best reads for your bet. 0–100 BSE Rating — built to compare multiple sportsbooks and surface the best available outcome."
       />
 
       <section className="mx-auto max-w-7xl px-4 pt-8 sm:px-6">
