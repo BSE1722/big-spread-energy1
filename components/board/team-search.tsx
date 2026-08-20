@@ -24,7 +24,17 @@ type CfbdTeam = {
   abbreviation?: string | null
 
 }
-
+type CfbdGame = {
+id: number
+week: number
+startDate: string
+startTimeTBD: boolean
+homeTeam: string
+awayTeam: string
+homeConference?: string | null
+awayConference?: string | null
+venue?: string | null
+}
 function useTeamOptions(): TeamOption[] {
 
   const [teams, setTeams] = useState<TeamOption[]>([])
@@ -87,6 +97,8 @@ export function TeamSearch() {
   const teams = useTeamOptions()
   const [query, setQuery] = useState("")
   const [selected, setSelected] = useState<string | null>(null)
+  const [liveGames, setLiveGames] = useState<CfbdGame[]>([])
+const [loadingGames, setLoadingGames] = useState(false)
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -99,17 +111,40 @@ export function TeamSearch() {
       .slice(0, 6)
   }, [query, teams])
 
-  function choose(team: string) {
-    setSelected(team)
-    setQuery(team)
-    setOpen(false)
-    inputRef.current?.blur()
-  }
+ async function choose(team: string) {
+setSelected(team)
+setQuery(team)
+setOpen(false)
+inputRef.current?.blur()
+
+setLoadingGames(true)
+setLiveGames([])
+
+try {
+const res = await fetch(
+`/api/cfbd-team-games?team=${encodeURIComponent(team)}`
+)
+
+if (!res.ok) {
+throw new Error(`Game request failed: ${res.status}`)
+}
+
+const data = await res.json()
+
+setLiveGames(Array.isArray(data.games) ? data.games : [])
+} catch (error) {
+console.error("Failed to load CFBD team games:", error)
+setLiveGames([])
+} finally {
+setLoadingGames(false)
+}
 
   function clear() {
     setSelected(null)
     setQuery("")
     setOpen(false)
+    setlivegames([])
+    setloadinggames(false)
     inputRef.current?.focus()
   }
 
@@ -133,7 +168,7 @@ export function TeamSearch() {
     }
   }
 
-  const results = selected ? gamesForTeam(selected) : []
+  const results = livegames
 
   return (
     <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
@@ -238,41 +273,45 @@ export function TeamSearch() {
   )
 }
 
-function TeamGameCard({ g, team }: { g: Game; team: string }) {
-  const isHome = g.home.name === team
-  const opponent = isHome ? g.away : g.home
-  return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-2">
-        <span className="font-mono text-[11px] uppercase text-muted-foreground">
-          {isHome ? "vs" : "@"}
-        </span>
-        <TeamLogo name={opponent.name} abbr={opponent.abbr} size="sm" />
-        <span className="font-display text-sm font-semibold text-foreground">
-          {opponent.rank && <span className="text-muted-foreground">{opponent.rank} </span>}
-          {opponent.name}
-        </span>
-      </div>
+function TeamGameCard({ g, team }: { g: CfbdGame; team: string }) {
+const isHome = g.homeTeam === team
+const opponent = isHome ? g.awayTeam : g.homeTeam
 
-      <div className="flex items-center gap-4">
-        <div className="font-mono text-[11px] text-muted-foreground">
-          {g.kickoff}
-          <span className="ml-1 opacity-60">· {g.network}</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <div className="font-mono text-[9px] uppercase text-muted-foreground">Market</div>
-            <div className="font-mono text-xs text-foreground/80">{formatSpread(g.marketSpread)}</div>
-          </div>
-          <div className="text-right">
-            <div className="font-mono text-[9px] uppercase text-muted-foreground">BSE</div>
-            <div className="font-mono text-xs font-semibold text-primary">
-              {formatSpread(g.fairSpread)}
-            </div>
-          </div>
-          <EdgeBadge edge={g.edgeSpread} />
-        </div>
-      </div>
-    </div>
-  )
+const kickoff = new Date(g.startDate).toLocaleString("en-US", {
+weekday: "short",
+month: "short",
+day: "numeric",
+hour: "numeric",
+minute: "2-digit",
+})
+
+return (
+<div className="flex flex-col gap-3 rounded-lg border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
+<div className="flex items-center gap-2">
+<span className="font-mono text-[11px] uppercase text-muted-foreground">
+{isHome ? "vs" : "@"}
+</span>
+
+<span className="font-display text-sm font-semibold text-foreground">
+{opponent}
+</span>
+</div>
+
+<div className="flex items-center gap-4">
+<div className="font-mono text-[11px] text-muted-foreground">
+Week {g.week}
+</div>
+
+<div className="font-mono text-[11px] text-muted-foreground">
+{kickoff}
+</div>
+
+{g.venue && (
+<div className="font-mono text-[11px] text-muted-foreground">
+{g.venue}
+</div>
+)}
+</div>
+</div>
+)
 }
