@@ -172,8 +172,23 @@ setLoadingGames(false)
   const results = livegames
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-      <div style={{ color: "yellow", fontSize: "20px", fontWeight: "bold" }}>
+    return (
+<>
+<div
+style={{
+background: "yellow",
+color: "black",
+padding: "30px",
+fontSize: "30px",
+fontWeight: "bold",
+}}
+>
+TEAM SEARCH COMPONENT IS ALIVE
+</div>
+
+<div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+</div>>
+  ) 
 TEAMSEARCH COMPONENT IS ALIVE
 </div>
       <div className="flex items-center gap-2">
