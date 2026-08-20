@@ -94,6 +94,7 @@ function gamesForTeam(team: string): Game[] {
 }
 
 export function TeamSearch() {
+  console.log("TEAMSEARCH RENDERED")
   const teams = useTeamOptions()
   const [query, setQuery] = useState("")
   const [selected, setSelected] = useState<string | null>(null)
