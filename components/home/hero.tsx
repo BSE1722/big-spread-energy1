@@ -39,10 +39,10 @@ export function Hero() {
           </p>
 
           <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">
-            BSE breaks down your bet or parlay across estimated true
-            probability, sportsbook implied probability, expected value, BSE
-            projections, line quality, model confidence, and correlation between
-            legs. We flag the weak legs, explain what&apos;s hurting the ticket,
+            BSE combines deep college football analytics wtih market data to break down matchups,
+            compare sportbook lines to our projections, track line movement, score betting edges,
+            and analyze CUSTOM parlays leg-by-leg. 
+            We flag the weak legs, explain what&apos;s hurting the ticket,
             and recommend a mathematically stronger version when one exists.
             This isn&apos;t another picks or &ldquo;locks&rdquo; site — it&apos;s
             a decision engine built to answer one question before you wager: do
