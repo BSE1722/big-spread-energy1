@@ -6,7 +6,7 @@ import { games, formatSpread, edgeGrade, type Game } from "@/lib/data"
 import { EdgeBadge } from "@/components/edge-badge"
 import { RatingMeter } from "@/components/rating-meter"
 import { TeamLogo } from "@/components/team-logo"
-import { TeamSearch } from ".team-search"
+import { TeamSearch } from "./team-search"
 import { cn } from "@/lib/utils"
 
 type Market = "spread" | "total"
