@@ -18,6 +18,7 @@ year: number
 week?: number
 seasonType?: "regular" | "postseason"
 division?: "fbs" | "fcs"
+  team?: string
 }) {
 const search = new URLSearchParams({
 year: String(params.year),
@@ -26,7 +27,7 @@ year: String(params.year),
 if (params.week) search.set("week", String(params.week))
 if (params.seasonType) search.set("seasonType", params.seasonType)
 if (params.division) search.set("division", params.division)
-
+if (params.team) search.set("team", params.team)
 const response = await fetch(
 `${CFBD_BASE_URL}/games?${search.toString()}`,
 {
