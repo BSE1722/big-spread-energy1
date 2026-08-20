@@ -66,6 +66,9 @@ export function BoardView() {
           </select>
         </label>
       </div>
+      <div style={{ color: "red", fontSize: "24px", fontWeight: "bold" }}>
+TEAM SEARCH TEST
+</div>
 <TeamSearch />
       {/* Desktop table */}
       <div className="mt-4 hidden overflow-hidden rounded-xl border border-border lg:block">
