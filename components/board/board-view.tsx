@@ -6,6 +6,7 @@ import { games, formatSpread, edgeGrade, type Game } from "@/lib/data"
 import { EdgeBadge } from "@/components/edge-badge"
 import { RatingMeter } from "@/components/rating-meter"
 import { TeamLogo } from "@/components/team-logo"
+import { teamsearch } from ".team-search"
 import { cn } from "@/lib/utils"
 
 type Market = "spread" | "total"
@@ -65,7 +66,7 @@ export function BoardView() {
           </select>
         </label>
       </div>
-
+<teamSearch />
       {/* Desktop table */}
       <div className="mt-4 hidden overflow-hidden rounded-xl border border-border lg:block">
         <table className="w-full border-collapse text-left">
