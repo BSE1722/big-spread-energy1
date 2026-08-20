@@ -5,20 +5,14 @@ export async function GET() {
 try {
 const teams = await getCfbdTeams()
 
+const fbsTeams = Array.isArray(teams)
+? teams
+.filter((team: any) => team.classification === "fbs")
+.sort((a: any, b: any) => a.school.localeCompare(b.school))
+: []
+
 return NextResponse.json({
 ok: true,
-count: Array.isArray(teams) ? teams.length : 0,
-teams,
-})
-} catch (error) {
-console.error("CFBD teams test failed:", error)
-
-return NextResponse.json(
-{
-ok: false,
-error: error instanceof Error ? error.message : "Unknown error",
-},
-{ status: 500 }
-)
-}
-}
+totalReturned: Array.isArray(teams) ? teams.length : 0,
+fbsCount: fbsTeams.length,
+teams: fbsTeams,
