@@ -157,13 +157,11 @@ function PhoneCard() {
             </div>
           </dl>
          <Link
-href="/board"
-className="mt-4 block w-full rounded-md border border-border py-2.5 text-center font-display text-xs font-bold uppercase tracking-wider text-foreground transition-colors hover:border-primary hover:text-primary"
+            href="/board"
+            className="mt-4 block w-full rounded-md border border-border py-2.5 text-center font-display text-xs font-bold uppercase tracking-wider text-foreground transition-colors hover:border-primary hover:text-primary"
 >
-View Full Breakdown
-</Link>
-            View Full Breakdown
-          </Link>
+    View Full Breakdown
+    </Link>
         </div>
       </div>
     </div>
