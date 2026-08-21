@@ -19,10 +19,17 @@ export function LiveTicker() {
   // Duplicate the list so the marquee loops seamlessly.
   const items = games.length ? [...games, ...games] : []
 
+  // Scale the loop duration to the slate size (~4s per game) so the scroll
+  // speed stays slow and readable no matter how many Week 1 games there are.
+  const durationSeconds = Math.max(60, games.length * 4)
+
   return (
-    <div className="w-full overflow-hidden border-y border-border bg-card">
+    <div className="group w-full overflow-hidden border-y border-border bg-card">
       {items.length > 0 ? (
-        <div className="flex w-max animate-[ticker_40s_linear_infinite] items-center gap-8 py-2.5">
+        <div
+          className="flex w-max items-center gap-8 py-2.5 animate-[ticker_linear_infinite] group-hover:[animation-play-state:paused]"
+          style={{ animationDuration: `${durationSeconds}s` }}
+        >
           {items.map((g, i) => (
             <div
               key={`${g.id}-${i}`}
