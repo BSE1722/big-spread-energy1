@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react"
 import { ArrowDownUp, TrendingUp, TrendingDown } from "lucide-react"
 import { useLiveBoard, formatKickoff, type LiveBoardGame } from "@/lib/use-live-board"
-import { TeamLogo } from "@/components/team-logo"
+import { TeamName } from "@/components/team-name"
 import { cn } from "@/lib/utils"
 
 type Market = "spread" | "total"
@@ -172,14 +172,10 @@ function BoardRow({ g, market }: { g: LiveBoardGame; market: Market }) {
   return (
     <tr className="bg-background transition-colors hover:bg-card">
       <td className="px-4 py-3.5">
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1.5 font-display text-sm font-semibold text-foreground">
-            <TeamLogo name={g.away.name} abbr={g.away.abbr} size="sm" />
-            {g.away.name}
-            <span className="mx-0.5 text-muted-foreground">@</span>
-            <TeamLogo name={g.home.name} abbr={g.home.abbr} size="sm" />
-            {g.home.name}
-          </span>
+        <div className="flex items-center gap-2 font-display text-sm">
+          <TeamName name={g.away.name} abbr={g.away.abbr} size="sm" />
+          <span className="mx-0.5 text-muted-foreground">@</span>
+          <TeamName name={g.home.name} abbr={g.home.abbr} size="sm" />
         </div>
       </td>
       <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
@@ -215,13 +211,10 @@ function BoardCard({ g, market }: { g: LiveBoardGame; market: Market }) {
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 font-display text-base font-semibold text-foreground">
-              <TeamLogo name={g.away.name} abbr={g.away.abbr} size="sm" />
-              {g.away.abbr} <span className="text-muted-foreground">@</span>
-              <TeamLogo name={g.home.name} abbr={g.home.abbr} size="sm" />
-              {g.home.abbr}
-            </span>
+          <div className="flex items-center gap-2 font-display text-base">
+            <TeamName name={g.away.name} abbr={g.away.abbr} label="abbr" size="sm" />
+            <span className="text-muted-foreground">@</span>
+            <TeamName name={g.home.name} abbr={g.home.abbr} label="abbr" size="sm" />
           </div>
           <div className="mt-1 font-mono text-[11px] text-muted-foreground">
             {formatKickoff(g.kickoff, g.kickoffTBD)}

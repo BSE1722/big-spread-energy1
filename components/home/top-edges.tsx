@@ -12,7 +12,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { useLiveBoard, formatKickoff, type LiveBoardGame } from '@/lib/use-live-board'
-import { TeamLogo } from '@/components/team-logo'
+import { TeamName } from '@/components/team-name'
 
 const tabs = [
   { id: 'edges', label: 'Top Edges', icon: Zap },
@@ -205,15 +205,9 @@ function fmtSpread(n: number): string {
 function Matchup({ game }: { game: LiveBoardGame }) {
   return (
     <div className="flex items-center gap-2 font-display text-sm">
-      <span className="flex items-center gap-1.5 font-semibold text-foreground">
-        <TeamLogo name={game.away.name} abbr={game.away.abbr} size="sm" />
-        {game.away.name}
-      </span>
+      <TeamName name={game.away.name} abbr={game.away.abbr} size="sm" />
       <span className="text-muted-foreground">@</span>
-      <span className="flex items-center gap-1.5 font-semibold text-foreground">
-        <TeamLogo name={game.home.name} abbr={game.home.abbr} size="sm" />
-        {game.home.name}
-      </span>
+      <TeamName name={game.home.name} abbr={game.home.abbr} size="sm" />
     </div>
   )
 }

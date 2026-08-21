@@ -15,6 +15,7 @@
 
 import type { DataSource, GameSeed, League, RawTeamMetrics, Sport, Sportsbook } from "./types"
 import { getCurrentContext } from "./season"
+import { getTeamColor } from "./teams"
 
 /** All values below are demo data. This flag is stamped onto every Game. */
 export const MOCK_DATA_SOURCE: DataSource = "mock"
@@ -172,28 +173,13 @@ export interface TeamBranding {
   logo?: string
 }
 
-const TEAM_BRANDING: Record<string, TeamBranding> = {
-  Georgia: { color: "#BA0C2F" },
-  "Ole Miss": { color: "#14213D" },
-  "Ohio State": { color: "#BB0000" },
-  "Penn State": { color: "#041E42" },
-  Texas: { color: "#BF5700" },
-  "Oklahoma State": { color: "#FF7300" },
-  Oregon: { color: "#154733" },
-  Washington: { color: "#4B2E83" },
-  "Notre Dame": { color: "#0C2340" },
-  Clemson: { color: "#F56600" },
-  Alabama: { color: "#9E1B32" },
-  LSU: { color: "#461D7C" },
-  Michigan: { color: "#00274C" },
-  "Miami FL": { color: "#F47321" },
-}
-
-/** Fallback branding for any team not in the map (keeps the UI resilient). */
-const FALLBACK_BRANDING: TeamBranding = { color: "#3F3F46" }
-
+/**
+ * Colors now come from the centralized team registry (`./teams`), which covers
+ * every FBS team using official CollegeFootballData brand colors. Lookups accept
+ * a full school name or an abbreviation, so every team renders its real color.
+ */
 export function getTeamBranding(team: string): TeamBranding {
-  return TEAM_BRANDING[team] ?? FALLBACK_BRANDING
+  return { color: getTeamColor(team) }
 }
 
 /** Demo sportsbooks used to synthesize a multi-book market for best-line comparison. */
