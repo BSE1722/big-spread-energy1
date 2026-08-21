@@ -1,10 +1,10 @@
 const CFBD_BASE_URL = "https://api.collegefootballdata.com"
 
 function getHeaders() {
-const apiKey = process.env.CFBD_API_KEY
+  const apiKey = process.env.CFBD_API
 
 if (!apiKey) {
-throw new Error("CFBD_API_KEY is not configured")
+throw new Error("CFBD_API is not configured")
 }
 
 return {

@@ -2,104 +2,68 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Search, X, CalendarClock } from "lucide-react"
-import { games, formatSpread, type Game } from "@/lib/data"
-import { EdgeBadge } from "@/components/edge-badge"
 import { TeamLogo } from "@/components/team-logo"
 import { cn } from "@/lib/utils"
 
 type TeamOption = {
-
   name: string
-
   abbr: string
-
   rank?: number
-
 }
 
 type CfbdTeam = {
-
   school: string
-
   abbreviation?: string | null
-
 }
+
 type CfbdGame = {
-id: number
-week: number
-startDate: string
-startTimeTBD: boolean
-homeTeam: string
-awayTeam: string
-homeConference?: string | null
-awayConference?: string | null
-venue?: string | null
+  id: number
+  week: number
+  startDate: string
+  startTimeTBD: boolean
+  homeTeam: string
+  awayTeam: string
+  homeConference?: string | null
+  awayConference?: string | null
+  venue?: string | null
 }
-function useTeamOptions(): TeamOption[] {
 
+function useTeamOptions(): TeamOption[] {
   const [teams, setTeams] = useState<TeamOption[]>([])
 
   useEffect(() => {
-
     async function loadTeams() {
-
       try {
-
         const res = await fetch("/api/cfbd-teams")
-
         if (!res.ok) {
-
           throw new Error(`Team request failed: ${res.status}`)
-
         }
-
         const data = await res.json()
-
         const teamOptions: TeamOption[] = Array.isArray(data.teams)
-
           ? data.teams.map((team: CfbdTeam) => ({
-
               name: team.school,
-
               abbr: team.abbreviation || team.school,
-
             }))
-
           : []
-
         setTeams(teamOptions)
-
       } catch (error) {
-
         console.error("Failed to load CFBD teams:", error)
-
         setTeams([])
-
       }
-
     }
 
     loadTeams()
-
   }, [])
 
   return teams
-
-}
-
-function gamesForTeam(team: string): Game[] {
-  return games
-    .filter((g) => g.away.name === team || g.home.name === team)
-    .sort((a, b) => a.kickoff.localeCompare(b.kickoff))
 }
 
 export function TeamSearch() {
-  console.log("TEAMSEARCH RENDERED")
   const teams = useTeamOptions()
   const [query, setQuery] = useState("")
   const [selected, setSelected] = useState<string | null>(null)
   const [liveGames, setLiveGames] = useState<CfbdGame[]>([])
-const [loadingGames, setLoadingGames] = useState(false)
+  const [loadingGames, setLoadingGames] = useState(false)
   const [open, setOpen] = useState(false)
   const [active, setActive] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -112,40 +76,36 @@ const [loadingGames, setLoadingGames] = useState(false)
       .slice(0, 6)
   }, [query, teams])
 
- async function choose(team: string) {
-setSelected(team)
-setQuery(team)
-setOpen(false)
-inputRef.current?.blur()
+  async function choose(team: string) {
+    setSelected(team)
+    setQuery(team)
+    setOpen(false)
+    inputRef.current?.blur()
 
-setLoadingGames(true)
-setLiveGames([])
+    setLoadingGames(true)
+    setLiveGames([])
 
-try {
-const res = await fetch(
-`/api/cfbd-team-games?team=${encodeURIComponent(team)}`
-)
-
-if (!res.ok) {
-throw new Error(`Game request failed: ${res.status}`)
-}
-
-const data = await res.json()
-
-setLiveGames(Array.isArray(data.games) ? data.games : [])
-} catch (error) {
-console.error("Failed to load CFBD team games:", error)
-setLiveGames([])
-} finally {
-setLoadingGames(false)
-}
+    try {
+      const res = await fetch(`/api/cfbd-team-games?team=${encodeURIComponent(team)}`)
+      if (!res.ok) {
+        throw new Error(`Game request failed: ${res.status}`)
+      }
+      const data = await res.json()
+      setLiveGames(Array.isArray(data.games) ? data.games : [])
+    } catch (error) {
+      console.error("Failed to load CFBD team games:", error)
+      setLiveGames([])
+    } finally {
+      setLoadingGames(false)
+    }
+  }
 
   function clear() {
     setSelected(null)
     setQuery("")
     setOpen(false)
-    setlivegames([])
-    setloadinggames(false)
+    setLiveGames([])
+    setLoadingGames(false)
     inputRef.current?.focus()
   }
 
@@ -169,29 +129,16 @@ setLoadingGames(false)
     }
   }
 
- const results = liveGames
-return (
-<div
-style={{
-background: "yellow",
-color: "black",
-padding: "24px",
-fontSize: "24px",
-fontWeight: "bold",
-marginTop: "16px",
-}}
->
-TEAM SEARCH IS RENDERING
-</div>
-)
-return (
-<div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-<div className="flex items-center gap-2">
-<CalendarClock className="size-4 text-primary" />
-<h2 className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
-Find a team&apos;s next games
-</h2>
-</div>
+  const results = liveGames
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+      <div className="flex items-center gap-2">
+        <CalendarClock className="size-4 text-primary" />
+        <h2 className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
+          Find a team&apos;s next games
+        </h2>
+      </div>
 
       {/* Search input */}
       <div className="relative mt-3">
@@ -247,13 +194,9 @@ Find a team&apos;s next games
                   )}
                 >
                   <TeamLogo name={t.name} abbr={t.abbr} size="sm" />
-                  <span className="font-display text-sm font-semibold text-foreground">
-                    {t.name}
-                  </span>
+                  <span className="font-display text-sm font-semibold text-foreground">{t.name}</span>
                   {t.rank && (
-                    <span className="ml-auto font-mono text-[11px] text-muted-foreground">
-                      #{t.rank}
-                    </span>
+                    <span className="ml-auto font-mono text-[11px] text-muted-foreground">#{t.rank}</span>
                   )}
                 </button>
               </li>
@@ -265,7 +208,11 @@ Find a team&apos;s next games
       {/* Results */}
       {selected && (
         <div className="mt-4">
-          {results.length > 0 ? (
+          {loadingGames ? (
+            <p className="rounded-lg border border-dashed border-border bg-background px-3 py-6 text-center text-sm text-muted-foreground">
+              Loading games for {selected}…
+            </p>
+          ) : results.length > 0 ? (
             <>
               <p className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
                 {results.length} scheduled {results.length === 1 ? "game" : "games"} for {selected}
@@ -288,45 +235,29 @@ Find a team&apos;s next games
 }
 
 function TeamGameCard({ g, team }: { g: CfbdGame; team: string }) {
-const isHome = g.homeTeam === team
-const opponent = isHome ? g.awayTeam : g.homeTeam
+  const isHome = g.homeTeam === team
+  const opponent = isHome ? g.awayTeam : g.homeTeam
 
-const kickoff = new Date(g.startDate).toLocaleString("en-US", {
-weekday: "short",
-month: "short",
-day: "numeric",
-hour: "numeric",
-minute: "2-digit",
-})
+  const kickoff = new Date(g.startDate).toLocaleString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  })
 
-return (
-<div className="flex flex-col gap-3 rounded-lg border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
-<div className="flex items-center gap-2">
-<span className="font-mono text-[11px] uppercase text-muted-foreground">
-{isHome ? "vs" : "@"}
-</span>
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-[11px] uppercase text-muted-foreground">{isHome ? "vs" : "@"}</span>
+        <span className="font-display text-sm font-semibold text-foreground">{opponent}</span>
+      </div>
 
-<span className="font-display text-sm font-semibold text-foreground">
-{opponent}
-</span>
-</div>
-
-<div className="flex items-center gap-4">
-<div className="font-mono text-[11px] text-muted-foreground">
-Week {g.week}
-</div>
-
-<div className="font-mono text-[11px] text-muted-foreground">
-{kickoff}
-</div>
-
-{g.venue && (
-<div className="font-mono text-[11px] text-muted-foreground">
-{g.venue}
-</div>
-)}
-</div>
-</div>
-)
-}
+      <div className="flex items-center gap-4">
+        <div className="font-mono text-[11px] text-muted-foreground">Week {g.week}</div>
+        <div className="font-mono text-[11px] text-muted-foreground">{kickoff}</div>
+        {g.venue && <div className="font-mono text-[11px] text-muted-foreground">{g.venue}</div>}
+      </div>
+    </div>
+  )
 }
