@@ -170,7 +170,20 @@ setLoadingGames(false)
   }
 
  const results = liveGames
-
+return (
+<div
+style={{
+background: "yellow",
+color: "black",
+padding: "24px",
+fontSize: "24px",
+fontWeight: "bold",
+marginTop: "16px",
+}}
+>
+TEAM SEARCH IS RENDERING
+</div>
+)
 return (
 <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
 <div className="flex items-center gap-2">
