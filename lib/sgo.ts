@@ -21,6 +21,68 @@ const BOOKMAKER = "draftkings" as const
 /** How long a cached odds pull stays fresh (seconds). Tune in one place. */
 export const ODDS_CACHE_SECONDS = 300
 
+/*
+ * Strict market selection.
+ *
+ * SGO encodes every market as `oddID = statID-statEntityID-periodID-betTypeID-sideID`.
+ * The ONLY markets we accept as the standard full-game DraftKings lines are:
+ *   - total    : points-all-game-ou-over / points-all-game-ou-under
+ *   - spread   : points-home-game-sp-home / points-away-game-sp-away
+ *   - moneyline: points-home-game-ml-home / points-away-game-ml-away
+ *
+ * Requiring periodID === "game" excludes first-half/quarter/period markets;
+ * requiring statID === "points" excludes yardage/other stats; requiring
+ * statEntityID === "all" for totals excludes team totals; and player props are
+ * excluded because their statEntityID is a playerID (not all/home/away).
+ */
+const FULL_GAME_PERIOD = "game"
+const GAME_POINTS_STAT = "points"
+const TEAM_SIDES = new Set(["home", "away"])
+
+/**
+ * Configurable plausible range for a full-game NCAAF total. Totals outside this
+ * band are FLAGGED for review (not silently dropped or replaced). Override via
+ * ODDS_TOTAL_MIN / ODDS_TOTAL_MAX. Safety check only — never a guess source.
+ */
+export const TOTAL_MIN = Number(process.env.ODDS_TOTAL_MIN ?? 25)
+export const TOTAL_MAX = Number(process.env.ODDS_TOTAL_MAX ?? 100)
+
+/** Parsed SGO oddID segments. statEntityID may contain hyphens (playerIDs). */
+export interface OddSegments {
+  statID: string
+  statEntityID: string
+  periodID: string
+  betTypeID: string
+  sideID: string
+}
+
+/**
+ * Parse an SGO oddID into its 5 segments, reading fixed segments from BOTH ends
+ * so a hyphenated statEntityID (e.g. a playerID) does not shift the fields.
+ */
+export function parseOddID(oddID: string): OddSegments | null {
+  if (typeof oddID !== "string") return null
+  const parts = oddID.split("-")
+  if (parts.length < 5) return null
+  const sideID = parts[parts.length - 1]
+  const betTypeID = parts[parts.length - 2]
+  const periodID = parts[parts.length - 3]
+  const statID = parts[0]
+  const statEntityID = parts.slice(1, parts.length - 3).join("-")
+  return { statID, statEntityID, periodID, betTypeID, sideID }
+}
+
+/** True only for the standard full-game, points-based main line of a bet type. */
+export function isFullGameMainLine(seg: OddSegments): boolean {
+  if (seg.periodID !== FULL_GAME_PERIOD) return false
+  if (seg.statID !== GAME_POINTS_STAT) return false
+  if (seg.betTypeID === "ou") return seg.statEntityID === "all" && (seg.sideID === "over" || seg.sideID === "under")
+  if (seg.betTypeID === "sp" || seg.betTypeID === "ml") {
+    return TEAM_SIDES.has(seg.statEntityID) && seg.sideID === seg.statEntityID
+  }
+  return false
+}
+
 /* ------------------------------- Raw types ------------------------------- */
 
 interface SgoByBookmaker {
@@ -74,6 +136,18 @@ export interface NormalizedMarket {
     points: number | null
     overPrice: number | null
     underPrice: number | null
+    /**
+     * false = the total fell outside the plausible NCAAF range and is FLAGGED
+     * for review. Consumers (BSE) should treat a flagged total as unavailable
+     * rather than trusting it. null total is considered in-range (nothing to flag).
+     */
+    withinPlausibleRange: boolean
+  }
+  /** Exact SGO oddIDs selected per market, for traceability/auditing. */
+  sourceOddIDs: {
+    spread: string | null
+    moneyline: string | null
+    total: string | null
   }
   /** Most recent bookmaker update across the parsed markets (ISO), if any. */
   updatedAt: string | null
@@ -112,12 +186,18 @@ function emptyMarket(): NormalizedMarket {
     available: false,
     spread: { home: null, away: null, homePrice: null, awayPrice: null },
     moneyline: { home: null, away: null },
-    total: { points: null, overPrice: null, underPrice: null },
+    total: { points: null, overPrice: null, underPrice: null, withinPlausibleRange: true },
+    sourceOddIDs: { spread: null, moneyline: null, total: null },
     updatedAt: null,
   }
 }
 
-/** Extract DraftKings spread/moneyline/total from an SGO event's odds map. */
+/**
+ * Extract the standard full-game DraftKings spread/moneyline/total from an
+ * SGO event. Selection is strict: only oddIDs that pass `isFullGameMainLine`
+ * are considered, so team totals, alternate lines, halves/quarters, and player
+ * props are all rejected instead of being mistaken for the game line.
+ */
 function normalizeMarket(event: SgoEvent): NormalizedMarket {
   const market = emptyMarket()
   const odds = event.odds
@@ -125,39 +205,44 @@ function normalizeMarket(event: SgoEvent): NormalizedMarket {
 
   const updatedAts: string[] = []
 
-  for (const odd of Object.values(odds)) {
+  for (const [key, odd] of Object.entries(odds)) {
     const dk = odd?.byBookmaker?.[BOOKMAKER]
     if (!dk) continue
 
-    // Determine bet type + side (prefer explicit fields, else parse oddID).
-    let betType = odd.betTypeID
-    let side = odd.sideID
-    if ((!betType || !side) && typeof odd.oddID === "string") {
-      const parts = odd.oddID.split("-")
-      side = side ?? parts[parts.length - 1]
-      betType = betType ?? parts[parts.length - 2]
-    }
+    // Authoritative: parse the oddID and require an exact full-game main line.
+    const oddID = odd.oddID ?? key
+    const seg = parseOddID(oddID)
+    if (!seg || !isFullGameMainLine(seg)) continue
 
     const price = toNum(dk.odds)
     if (dk.lastUpdatedAt) updatedAts.push(dk.lastUpdatedAt)
 
-    if (betType === "sp") {
+    if (seg.betTypeID === "sp") {
       const spread = toNum(dk.spread)
-      if (side === "home") {
+      if (seg.sideID === "home") {
         market.spread.home = spread
         market.spread.homePrice = price
-      } else if (side === "away") {
+        market.sourceOddIDs.spread = oddID
+      } else {
         market.spread.away = spread
         market.spread.awayPrice = price
       }
-    } else if (betType === "ml") {
-      if (side === "home") market.moneyline.home = price
-      else if (side === "away") market.moneyline.away = price
-    } else if (betType === "ou") {
+    } else if (seg.betTypeID === "ml") {
+      if (seg.sideID === "home") {
+        market.moneyline.home = price
+        market.sourceOddIDs.moneyline = oddID
+      } else {
+        market.moneyline.away = price
+      }
+    } else if (seg.betTypeID === "ou") {
       const points = toNum(dk.overUnder)
       if (points != null) market.total.points = points
-      if (side === "over") market.total.overPrice = price
-      else if (side === "under") market.total.underPrice = price
+      if (seg.sideID === "over") {
+        market.total.overPrice = price
+        market.sourceOddIDs.total = oddID
+      } else {
+        market.total.underPrice = price
+      }
     }
   }
 
@@ -167,6 +252,10 @@ function normalizeMarket(event: SgoEvent): NormalizedMarket {
   } else if (market.spread.away != null && market.spread.home == null) {
     market.spread.home = -market.spread.away
   }
+
+  // Sanity validator: flag (do not drop/replace) an implausible full-game total.
+  const points = market.total.points
+  market.total.withinPlausibleRange = points == null ? true : points >= TOTAL_MIN && points <= TOTAL_MAX
 
   market.available =
     market.spread.home != null ||
@@ -229,14 +318,48 @@ export async function fetchSgoNcaafEvents(options?: {
   return all
 }
 
-/** Fetch + normalize NCAAF DraftKings odds into a clean, matchable list. */
-export async function getSgoNormalizedEvents(): Promise<SgoNormalizedEvent[]> {
-  const events = await fetchSgoNcaafEvents()
-  return events.map((ev) => ({
+/** Reduce a single raw SGO event to the normalized, matchable shape. */
+export function normalizeSgoEvent(ev: SgoEvent): SgoNormalizedEvent {
+  return {
     eventID: ev.eventID ?? "",
     homeName: teamName(ev.teams?.home),
     awayName: teamName(ev.teams?.away),
     kickoff: ev.status?.startsAt ?? null,
     market: normalizeMarket(ev),
-  }))
+  }
+}
+
+/** Fetch + normalize NCAAF DraftKings odds into a clean, matchable list. */
+export async function getSgoNormalizedEvents(): Promise<SgoNormalizedEvent[]> {
+  const events = await fetchSgoNcaafEvents()
+  return events.map(normalizeSgoEvent)
+}
+
+/**
+ * Diagnostic: list every DraftKings odd on a raw event with its parsed oddID
+ * segments and whether it qualifies as a full-game main line. Lets us audit the
+ * raw market structure and confirm derivative markets are excluded.
+ */
+export function debugDkOddIDs(ev: SgoEvent) {
+  const out: Array<{
+    oddID: string
+    segments: OddSegments | null
+    fullGameMainLine: boolean
+    dk: { odds: string | number | null; spread: string | number | null; overUnder: string | number | null }
+  }> = []
+  const odds = ev.odds
+  if (!odds || typeof odds !== "object") return out
+  for (const [key, odd] of Object.entries(odds)) {
+    const dk = odd?.byBookmaker?.[BOOKMAKER]
+    if (!dk) continue
+    const oddID = odd.oddID ?? key
+    const seg = parseOddID(oddID)
+    out.push({
+      oddID,
+      segments: seg,
+      fullGameMainLine: seg ? isFullGameMainLine(seg) : false,
+      dk: { odds: dk.odds ?? null, spread: dk.spread ?? null, overUnder: dk.overUnder ?? null },
+    })
+  }
+  return out
 }

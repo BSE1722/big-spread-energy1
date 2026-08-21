@@ -53,6 +53,8 @@ export interface GameWithOdds {
   neutralSite: boolean
   home: { name: string; abbr: string }
   away: { name: string; abbr: string }
+  /** SGO event id backing this line (null when unavailable). Keys line history. */
+  sgoEventID: string | null
   market: NormalizedMarket
   lineHistory: LineHistory
   oddsStatus: "matched" | "unavailable"
@@ -127,7 +129,8 @@ function unavailableMarket(): NormalizedMarket {
     available: false,
     spread: { home: null, away: null, homePrice: null, awayPrice: null },
     moneyline: { home: null, away: null },
-    total: { points: null, overPrice: null, underPrice: null },
+    total: { points: null, overPrice: null, underPrice: null, withinPlausibleRange: true },
+    sourceOddIDs: { spread: null, moneyline: null, total: null },
     updatedAt: null,
   }
 }
@@ -174,6 +177,7 @@ export function matchOddsToCfbd(
     const pushUnavailable = (reason: string) => {
       games.push({
         ...base,
+        sgoEventID: null,
         market: unavailableMarket(),
         lineHistory: emptyLineHistory(),
         oddsStatus: "unavailable",
@@ -214,6 +218,7 @@ export function matchOddsToCfbd(
 
     games.push({
       ...base,
+      sgoEventID: best.ev.eventID || null,
       market: best.ev.market,
       lineHistory: seedLineHistory(best.ev.market),
       oddsStatus: "matched",
