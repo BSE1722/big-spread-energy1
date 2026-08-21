@@ -1,6 +1,6 @@
 "use client"
 
-import { useLiveBoard, formatKickoff } from "@/lib/use-live-board"
+import { useLiveBoard, formatKickoff, formatKickoffDate } from "@/lib/use-live-board"
 import { getTeamRank } from "@/lib/bse"
 
 function TickerTeam({ name, abbr }: { name: string; abbr: string }) {
@@ -35,6 +35,7 @@ export function LiveTicker() {
               key={`${g.id}-${i}`}
               className="flex items-center gap-2 whitespace-nowrap px-2 font-mono text-xs"
             >
+              <span className="font-semibold text-primary">{formatKickoffDate(g.kickoff)}</span>
               <TickerTeam name={g.away.name} abbr={g.away.abbr} />
               <span className="text-foreground">@</span>
               <TickerTeam name={g.home.name} abbr={g.home.abbr} />
