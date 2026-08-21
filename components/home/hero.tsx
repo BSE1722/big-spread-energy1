@@ -1,6 +1,13 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { TrendingUp, ShieldCheck, Crosshair, Zap, Menu } from 'lucide-react'
+import { getTeamRank } from '@/lib/bse'
+
+// A real Week 1 2026 marquee matchup, used as the illustrative Pro sample card.
+function rankedName(name: string) {
+  const rank = getTeamRank(name)
+  return rank != null ? `#${rank} ${name}` : name
+}
 
 // Describes what the BSE model measures — not fabricated performance claims.
 const stats = [
@@ -143,17 +150,22 @@ function PhoneCard() {
           <Zap className="mt-2 h-4 w-4 fill-primary text-primary" />
         </div>
 
-        {/* matchup */}
+        {/* matchup — real Week 1 game, illustrative sample numbers */}
         <div className="border-t border-border/60 px-4 py-4">
-          <div className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
-            Ohio State @ Penn State
+          <div className="flex items-center justify-between">
+            <span className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
+              {rankedName('Louisville')} @ {rankedName('Ole Miss')}
+            </span>
           </div>
+          <span className="mt-1 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Week 1 · Sample
+          </span>
           <dl className="mt-3 space-y-2 text-sm">
-            <Row label="Market Spread" value=" OSU -6.5 " />
-            <Row label="BSE Projection" value="-9.2" />
+            <Row label="Market Spread" value="MISS -3.5" />
+            <Row label="BSE Projection" value="-6.0" />
             <div className="flex items-center justify-between border-t border-border/60 pt-2">
               <dt className="font-semibold text-primary">Spread Edge</dt>
-              <dd className="font-display text-base font-bold text-primary">+2.7</dd>
+              <dd className="font-display text-base font-bold text-primary">+2.5</dd>
             </div>
           </dl>
          <Link

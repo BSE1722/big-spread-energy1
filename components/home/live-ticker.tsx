@@ -1,6 +1,17 @@
 "use client"
 
 import { useLiveBoard, formatKickoff } from "@/lib/use-live-board"
+import { getTeamRank } from "@/lib/bse"
+
+function TickerTeam({ name, abbr }: { name: string; abbr: string }) {
+  const rank = getTeamRank(name) ?? getTeamRank(abbr)
+  return (
+    <span className="text-muted-foreground">
+      {rank != null && <span className="mr-1 font-semibold text-primary">#{rank}</span>}
+      {abbr}
+    </span>
+  )
+}
 
 export function LiveTicker() {
   const { games, week, loading, error } = useLiveBoard()
@@ -17,9 +28,9 @@ export function LiveTicker() {
               key={`${g.id}-${i}`}
               className="flex items-center gap-2 whitespace-nowrap px-2 font-mono text-xs"
             >
-              <span className="text-muted-foreground">{g.away.abbr}</span>
+              <TickerTeam name={g.away.name} abbr={g.away.abbr} />
               <span className="text-foreground">@</span>
-              <span className="text-muted-foreground">{g.home.abbr}</span>
+              <TickerTeam name={g.home.name} abbr={g.home.abbr} />
               <span className="text-foreground/70">{formatKickoff(g.kickoff, g.kickoffTBD)}</span>
             </div>
           ))}
