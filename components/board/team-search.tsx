@@ -180,13 +180,6 @@ Find a team&apos;s next games
 </h2>
 </div>
 
-      <div className="flex items-center gap-2">
-        <CalendarClock className="size-4 text-primary" />
-        <h2 className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
-          Find a team&apos;s next games
-        </h2>
-      </div>
-
       {/* Search input */}
       <div className="relative mt-3">
         <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3">
