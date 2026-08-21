@@ -7,6 +7,7 @@
  */
 
 export * from "./types"
+export * from "./season"
 export * from "./odds"
 export * from "./leagues"
 export * from "./model"

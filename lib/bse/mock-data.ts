@@ -14,6 +14,7 @@
  */
 
 import type { DataSource, GameSeed, League, RawTeamMetrics, Sport, Sportsbook } from "./types"
+import { getCurrentContext } from "./season"
 
 /** All values below are demo data. This flag is stamped onto every Game. */
 export const MOCK_DATA_SOURCE: DataSource = "mock"
@@ -24,17 +25,18 @@ export const MOCK_DATA_LABEL = "Demo data — not real odds. Model tracking begi
 /** When this mock snapshot was authored (stamped as `lastUpdated`). */
 export const MOCK_SNAPSHOT_TIME = "2026-08-18T14:00:00.000Z"
 
+/**
+ * Active season/week for the whole site. This is now DERIVED from the single
+ * source of truth in `./season` (date-driven, Week 1 floor for 2026) instead of
+ * being hard-coded. Everything that reads `CURRENT_CONTEXT` (board header, game
+ * stamps, week labels) advances automatically as the season progresses.
+ */
 export const CURRENT_CONTEXT: {
   sport: Sport
   league: League
   season: number
   week: number
-} = {
-  sport: "football",
-  league: "ncaaf",
-  season: 2026,
-  week: 12,
-}
+} = getCurrentContext()
 
 /**
  * Opponent-adjusted team metric PLACEHOLDERS. These are demo stand-ins for the
