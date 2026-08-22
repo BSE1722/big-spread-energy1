@@ -122,14 +122,14 @@ export function formatKickoff(iso: string, tbd: boolean): string {
   return `${day} ${time} ET`
 }
 
-/** DD/MM date for an ISO kickoff, in ET (e.g. "05/09"). */
+/** Unambiguous day-first date for an ISO kickoff, in ET (e.g. "29 Aug", "5 Sep"). */
 export function formatKickoffDate(iso: string): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
+    day: "numeric",
+    month: "short",
     timeZone: "America/New_York",
   }).formatToParts(new Date(iso))
   const day = parts.find((p) => p.type === "day")?.value ?? "--"
   const month = parts.find((p) => p.type === "month")?.value ?? "--"
-  return `${day}/${month}`
+  return `${day} ${month}`
 }

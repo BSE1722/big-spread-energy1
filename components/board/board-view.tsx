@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { ArrowDownUp, TrendingUp, TrendingDown } from "lucide-react"
-import { useLiveBoard, formatKickoff, type LiveBoardGame } from "@/lib/use-live-board"
+import { useLiveBoard, formatKickoff, formatKickoffDate, type LiveBoardGame } from "@/lib/use-live-board"
 import { TeamName } from "@/components/team-name"
 import { cn } from "@/lib/utils"
 
@@ -135,9 +135,24 @@ function fmtSpread(n: number | null): string {
   return n > 0 ? `+${n.toFixed(1)}` : n.toFixed(1)
 }
 
+/**
+ * The market spread is stored home-relative. The favorite is the team giving
+ * points (the side with the negative number): home when marketSpread < 0,
+ * away when > 0. Returns the favored team's abbreviation paired with its own
+ * (negative) spread, e.g. "TCU -7.5". Falls back to a plain PK / placeholder.
+ */
+function favoredSpread(g: LiveBoardGame): string {
+  const s = g.marketSpread
+  if (s == null) return PLACEHOLDER
+  if (s === 0) return "PK"
+  const favAbbr = s < 0 ? g.home.abbr : g.away.abbr
+  const favLine = s < 0 ? s : -s
+  return `${favAbbr} ${favLine.toFixed(1)}`
+}
+
 function marketVals(g: LiveBoardGame, market: Market) {
   return market === "spread"
-    ? { mkt: fmtSpread(g.marketSpread), fair: fmtSpread(g.fairSpread), edge: g.edgeSpread }
+    ? { mkt: favoredSpread(g), fair: fmtSpread(g.fairSpread), edge: g.edgeSpread }
     : {
         mkt: g.marketTotal == null ? PLACEHOLDER : g.marketTotal.toFixed(1),
         fair: g.fairTotal == null ? PLACEHOLDER : g.fairTotal.toFixed(1),
@@ -179,6 +194,7 @@ function BoardRow({ g, market }: { g: LiveBoardGame; market: Market }) {
         </div>
       </td>
       <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
+        <span className="text-foreground/80">{formatKickoffDate(g.kickoff)}</span>{" "}
         {formatKickoff(g.kickoff, g.kickoffTBD)}
         {g.neutralSite && <span className="ml-1 opacity-60">· N</span>}
       </td>
@@ -217,6 +233,7 @@ function BoardCard({ g, market }: { g: LiveBoardGame; market: Market }) {
             <TeamName name={g.home.name} abbr={g.home.abbr} label="abbr" size="sm" />
           </div>
           <div className="mt-1 font-mono text-[11px] text-muted-foreground">
+            <span className="text-foreground/80">{formatKickoffDate(g.kickoff)}</span>{" · "}
             {formatKickoff(g.kickoff, g.kickoffTBD)}
             {g.neutralSite && " · Neutral"}
           </div>
