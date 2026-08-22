@@ -5,8 +5,9 @@
  * - Auth: `x-api-key: process.env.SGO_API` (never exposed to the client).
  * - CFBD remains the source of truth for schedules/identity; this module only
  *   provides market lines to be matched against CFBD games elsewhere.
- * - Odds are cached at the data layer (Next fetch `revalidate`) so visitors
- *   share one cached response instead of each triggering a new upstream call.
+ * - MANUAL-ONLY: this client is invoked exclusively by the admin refresh job.
+ *   There is no timed revalidation and no visitor-triggered pull; the frozen
+ *   result is persisted in the durable odds snapshot (see lib/odds-snapshot).
  *
  * SGO odds model: an event's `odds` map is keyed by
  *   `{statID}-{statEntityID}-{periodID}-{betTypeID}-{sideID}`
@@ -18,8 +19,11 @@
 const SGO_BASE_URL = "https://api.sportsgameodds.com/v2"
 const BOOKMAKER = "draftkings" as const
 
-/** How long a cached odds pull stays fresh (seconds). Tune in one place. */
-export const ODDS_CACHE_SECONDS = 300
+/**
+ * @deprecated Odds are no longer time-cached. Refreshes are manual-only and the
+ * result is frozen in the durable snapshot. Retained only for compatibility.
+ */
+export const ODDS_CACHE_SECONDS = 0
 
 /*
  * Strict market selection.
@@ -298,9 +302,12 @@ export async function fetchSgoNcaafEvents(options?: {
     })
     if (cursor) params.set("cursor", cursor)
 
+    // MANUAL-ONLY: no timed revalidation. This fetch runs only during an
+    // admin-triggered refresh, so we always pull fresh and never cache at the
+    // data layer (the frozen result lives in the durable snapshot instead).
     const res = await fetch(`${SGO_BASE_URL}/events?${params.toString()}`, {
       headers: { "x-api-key": apiKey, Accept: "application/json" },
-      next: { revalidate: ODDS_CACHE_SECONDS },
+      cache: "no-store",
     })
 
     if (!res.ok) {
