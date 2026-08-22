@@ -122,6 +122,23 @@ export function formatKickoff(iso: string, tbd: boolean): string {
   return `${day} ${time} ET`
 }
 
+/**
+ * The market spread is stored home-relative (negative = home favored). Returns
+ * the favorite — the team giving points — beside its own negative line, e.g.
+ * "TCU -7.5". Returns "PK" for a pick'em and null when no market spread exists,
+ * so callers can apply their own placeholder.
+ */
+export function formatFavoredSpread(
+  g: Pick<LiveBoardGame, "marketSpread" | "home" | "away">,
+): string | null {
+  const s = g.marketSpread
+  if (s == null) return null
+  if (s === 0) return "PK"
+  const favAbbr = s < 0 ? g.home.abbr : g.away.abbr
+  const favLine = s < 0 ? s : -s
+  return `${favAbbr} ${favLine.toFixed(1)}`
+}
+
 /** Unambiguous day-first date for an ISO kickoff, in ET (e.g. "29 Aug", "5 Sep"). */
 export function formatKickoffDate(iso: string): string {
   const parts = new Intl.DateTimeFormat("en-GB", {

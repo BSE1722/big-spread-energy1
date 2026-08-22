@@ -11,7 +11,13 @@ import {
   Calendar,
   ArrowRight,
 } from 'lucide-react'
-import { useLiveBoard, formatKickoff, type LiveBoardGame } from '@/lib/use-live-board'
+import {
+  useLiveBoard,
+  formatKickoff,
+  formatKickoffDate,
+  formatFavoredSpread,
+  type LiveBoardGame,
+} from '@/lib/use-live-board'
 import { TeamName } from '@/components/team-name'
 
 const tabs = [
@@ -110,10 +116,11 @@ export function TopEdges() {
                           <Matchup game={g} />
                         </td>
                         <td className="px-4 py-4 text-center font-mono text-xs text-muted-foreground">
+                          <span className="text-foreground/80">{formatKickoffDate(g.kickoff)}</span>{' '}
                           {formatKickoff(g.kickoff, g.kickoffTBD)}
                         </td>
                         <td className="px-4 py-4 text-center font-mono text-foreground">
-                          {g.marketSpread == null ? PLACEHOLDER : fmtSpread(g.marketSpread)}
+                          {formatFavoredSpread(g) ?? PLACEHOLDER}
                         </td>
                         <td className="px-4 py-4 text-center font-mono text-foreground">
                           {g.fairSpread == null ? (
@@ -163,7 +170,7 @@ export function TopEdges() {
                     <div className="mt-3 grid grid-cols-3 gap-2 text-center font-mono text-xs">
                       <Cell
                         label="Market"
-                        value={g.marketSpread == null ? PLACEHOLDER : fmtSpread(g.marketSpread)}
+                        value={formatFavoredSpread(g) ?? PLACEHOLDER}
                       />
                       <Cell
                         label="BSE"
@@ -176,6 +183,7 @@ export function TopEdges() {
                       />
                     </div>
                     <div className="mt-3 font-mono text-xs text-muted-foreground">
+                      <span className="text-foreground/80">{formatKickoffDate(g.kickoff)}</span>{' · '}
                       {formatKickoff(g.kickoff, g.kickoffTBD)}
                     </div>
                   </div>
