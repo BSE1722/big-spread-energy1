@@ -12,8 +12,24 @@ export interface LiveBoardGame {
   neutralSite: boolean
   away: { name: string; abbr: string }
   home: { name: string; abbr: string }
+
+  // Live DraftKings markets (SportsGameOdds). Home-relative spread; null = unavailable.
   marketSpread: number | null
   marketTotal: number | null
+  marketMoneyline?: { home: number | null; away: number | null }
+  oddsStatus?: "matched" | "unavailable"
+
+  // Internal audit metadata (traceability) — not rendered, preserved for auditability.
+  odds?: {
+    bookmaker: string
+    sgoEventID: string | null
+    sourceOddIDs: { spread: string | null; moneyline: string | null; total: string | null }
+    updatedAt: string | null
+    totalWithinPlausibleRange: boolean
+    rawTotalPoints: number | null
+  }
+
+  // BSE model output — null until the engine is wired.
   fairSpread: number | null
   fairTotal: number | null
   edgeSpread: number | null
