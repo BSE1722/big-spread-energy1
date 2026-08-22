@@ -135,9 +135,24 @@ function fmtSpread(n: number | null): string {
   return n > 0 ? `+${n.toFixed(1)}` : n.toFixed(1)
 }
 
+/**
+ * The market spread is stored home-relative. The favorite is the team giving
+ * points (the side with the negative number): home when marketSpread < 0,
+ * away when > 0. Returns the favored team's abbreviation paired with its own
+ * (negative) spread, e.g. "TCU -7.5". Falls back to a plain PK / placeholder.
+ */
+function favoredSpread(g: LiveBoardGame): string {
+  const s = g.marketSpread
+  if (s == null) return PLACEHOLDER
+  if (s === 0) return "PK"
+  const favAbbr = s < 0 ? g.home.abbr : g.away.abbr
+  const favLine = s < 0 ? s : -s
+  return `${favAbbr} ${favLine.toFixed(1)}`
+}
+
 function marketVals(g: LiveBoardGame, market: Market) {
   return market === "spread"
-    ? { mkt: fmtSpread(g.marketSpread), fair: fmtSpread(g.fairSpread), edge: g.edgeSpread }
+    ? { mkt: favoredSpread(g), fair: fmtSpread(g.fairSpread), edge: g.edgeSpread }
     : {
         mkt: g.marketTotal == null ? PLACEHOLDER : g.marketTotal.toFixed(1),
         fair: g.fairTotal == null ? PLACEHOLDER : g.fairTotal.toFixed(1),
