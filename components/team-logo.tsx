@@ -1,6 +1,28 @@
 import Image from "next/image"
-import { getTeamBranding } from "@/lib/bse"
+import { getTeamBranding, resolveAbbr } from "@/lib/bse"
 import { cn } from "@/lib/utils"
+
+/**
+ * Compact monogram for the logo chip. Prefers the canonical CFBD abbreviation
+ * from the registry; if the team is unknown, falls back to initials derived
+ * from the name (never the full name, which would overflow the chip).
+ */
+function chipMonogram(name: string, abbr: string): string {
+  const resolved = resolveAbbr(name) ?? resolveAbbr(abbr)
+  if (resolved) return resolved
+  const candidate = (abbr || name).trim()
+  if (candidate && candidate.length <= 4 && !candidate.includes(" ")) {
+    return candidate.toUpperCase()
+  }
+  // Initials from the school name, e.g. "Tennessee State" -> "TS".
+  const initials = name
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 3)
+  return (initials || candidate.slice(0, 3)).toUpperCase()
+}
 
 const SIZES = {
   sm: { box: "h-6 w-6", text: "text-[9px]", px: 24 },
@@ -56,7 +78,7 @@ export function TeamLogo({
         className,
       )}
     >
-      {abbr}
+      {chipMonogram(name, abbr)}
     </span>
   )
 }

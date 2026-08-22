@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getCfbdGames } from "@/lib/cfbd"
+import { getCurrentContext } from "@/lib/bse/season"
 
 export async function GET(request: NextRequest) {
 try {
@@ -12,9 +13,11 @@ return NextResponse.json(
 )
 }
 
+const ctx = getCurrentContext()
+
 const games = await getCfbdGames({
-year: 2026,
-seasonType: "regular",
+year: ctx.season,
+seasonType: ctx.seasonType,
 team,
 })
 

@@ -9,11 +9,10 @@ import {
   LineChart,
   Trophy,
   Calendar,
-  ChevronDown,
   ArrowRight,
 } from 'lucide-react'
-import { games, formatSpread } from '@/lib/data'
-import { TeamLogo } from '@/components/team-logo'
+import { useLiveBoard, formatKickoff, type LiveBoardGame } from '@/lib/use-live-board'
+import { TeamName } from '@/components/team-name'
 
 const tabs = [
   { id: 'edges', label: 'Top Edges', icon: Zap },
@@ -23,21 +22,22 @@ const tabs = [
   { id: 'ratings', label: 'BSE Ratings', icon: Trophy },
 ]
 
-// win probability implied from the model, derived from edge + rating
-function winProb(edge: number, rating: number): number {
-  const p = 50 + edge * 3.5 + (rating - 75) * 0.4
-  return Math.min(78, Math.max(52, Math.round(p)))
-}
-
-function betSignal(rating: number): { label: string; strong: boolean } | null {
-  if (rating >= 90) return { label: 'Strong Play', strong: true }
-  if (rating >= 70) return { label: 'Play', strong: false }
-  return null
-}
+const PLACEHOLDER = '—'
 
 export function TopEdges() {
   const [active, setActive] = useState('edges')
-  const rows = [...games].sort((a, b) => b.edgeSpread - a.edgeSpread).slice(0, 5)
+  const { games, week, projectionsAvailable, loading, error } = useLiveBoard()
+
+  // When projections exist, rank by edge; until then show the week's marquee
+  // matchups in kickoff order so the homepage reflects the real slate.
+  const rows = [...games]
+    .sort((a, b) => {
+      if (projectionsAvailable) {
+        return (b.edgeSpread ?? -Infinity) - (a.edgeSpread ?? -Infinity)
+      }
+      return new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime()
+    })
+    .slice(0, 5)
 
   return (
     <section className="border-b border-border/60 bg-background py-14">
@@ -64,96 +64,124 @@ export function TopEdges() {
                 )
               })}
             </div>
-            <button className="inline-flex w-fit items-center gap-2 rounded-md border border-border px-3.5 py-2 font-display text-xs font-bold uppercase tracking-wider text-foreground">
+            <span className="inline-flex w-fit items-center gap-2 rounded-md border border-border px-3.5 py-2 font-display text-xs font-bold uppercase tracking-wider text-foreground">
               <Calendar className="h-4 w-4 text-primary" />
-              Week 12
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            </button>
+              {week ? `Week ${week}` : 'Week —'}
+            </span>
           </div>
 
           <div className="p-4 sm:p-6">
             <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-foreground">
-              Top Edges This Week
+              {projectionsAvailable ? 'Top Edges This Week' : "This Week's Games"}
             </h2>
 
+            {loading && (
+              <p className="font-mono text-sm text-muted-foreground">Loading live games…</p>
+            )}
+            {error && !loading && (
+              <p className="font-mono text-sm text-destructive">{`Unable to load games: ${error}`}</p>
+            )}
+            {!loading && !error && rows.length === 0 && (
+              <p className="font-mono text-sm text-muted-foreground">
+                No games scheduled for this week yet.
+              </p>
+            )}
+
             {/* Desktop table */}
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                    <th className="py-3 pr-4 font-medium">Matchup</th>
-                    <th className="px-4 py-3 text-center font-medium">Market Spread</th>
-                    <th className="px-4 py-3 text-center font-medium">BSE Projection</th>
-                    <th className="px-4 py-3 text-center font-medium text-primary">
-                      Spread Edge ▾
-                    </th>
-                    <th className="px-4 py-3 text-center font-medium">BSE Rating</th>
-                    <th className="px-4 py-3 text-center font-medium">Win Prob.</th>
-                    <th className="px-4 py-3 text-center font-medium">Bet Signal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {rows.map((g) => {
-                    const signal = betSignal(g.bseRating)
-                    return (
+            {rows.length > 0 && (
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                      <th className="py-3 pr-4 font-medium">Matchup</th>
+                      <th className="px-4 py-3 text-center font-medium">Kickoff</th>
+                      <th className="px-4 py-3 text-center font-medium">Market Spread</th>
+                      <th className="px-4 py-3 text-center font-medium">BSE Projection</th>
+                      <th className="px-4 py-3 text-center font-medium text-primary">
+                        Spread Edge
+                      </th>
+                      <th className="px-4 py-3 text-center font-medium">BSE Rating</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {rows.map((g) => (
                       <tr key={g.id} className="transition-colors hover:bg-secondary/40">
                         <td className="py-4 pr-4">
                           <Matchup game={g} />
                         </td>
-                        <td className="px-4 py-4 text-center font-mono text-foreground">
-                          {formatSpread(g.marketSpread)}
+                        <td className="px-4 py-4 text-center font-mono text-xs text-muted-foreground">
+                          {formatKickoff(g.kickoff, g.kickoffTBD)}
                         </td>
                         <td className="px-4 py-4 text-center font-mono text-foreground">
-                          {formatSpread(g.fairSpread)}
+                          {g.marketSpread == null ? PLACEHOLDER : fmtSpread(g.marketSpread)}
+                        </td>
+                        <td className="px-4 py-4 text-center font-mono text-foreground">
+                          {g.fairSpread == null ? (
+                            <span className="text-muted-foreground">{PLACEHOLDER}</span>
+                          ) : (
+                            fmtSpread(g.fairSpread)
+                          )}
                         </td>
                         <td className="px-4 py-4 text-center font-mono font-bold text-primary">
-                          +{g.edgeSpread.toFixed(1)}
+                          {g.edgeSpread == null ? (
+                            <span className="text-muted-foreground">{PLACEHOLDER}</span>
+                          ) : (
+                            `+${g.edgeSpread.toFixed(1)}`
+                          )}
                         </td>
                         <td className="px-4 py-4 text-center">
-                          <span className="inline-flex h-8 w-10 items-center justify-center rounded border border-primary/50 font-display text-sm font-bold text-primary">
-                            {g.bseRating}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-center font-mono text-foreground">
-                          {winProb(g.edgeSpread, g.bseRating)}%
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          {signal && <SignalBadge {...signal} />}
+                          {g.bseRating == null ? (
+                            <span className="font-mono text-muted-foreground">{PLACEHOLDER}</span>
+                          ) : (
+                            <span className="inline-flex h-8 w-10 items-center justify-center rounded border border-primary/50 font-display text-sm font-bold text-primary">
+                              {g.bseRating}
+                            </span>
+                          )}
                         </td>
                       </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             {/* Mobile cards */}
-            <div className="space-y-3 md:hidden">
-              {rows.map((g) => {
-                const signal = betSignal(g.bseRating)
-                return (
+            {rows.length > 0 && (
+              <div className="space-y-3 md:hidden">
+                {rows.map((g) => (
                   <div key={g.id} className="rounded-lg border border-border bg-secondary/30 p-4">
                     <div className="flex items-center justify-between">
                       <Matchup game={g} />
-                      <span className="inline-flex h-8 w-10 items-center justify-center rounded border border-primary/50 font-display text-sm font-bold text-primary">
-                        {g.bseRating}
-                      </span>
+                      {g.bseRating == null ? (
+                        <span className="font-mono text-xs text-muted-foreground">{PLACEHOLDER}</span>
+                      ) : (
+                        <span className="inline-flex h-8 w-10 items-center justify-center rounded border border-primary/50 font-display text-sm font-bold text-primary">
+                          {g.bseRating}
+                        </span>
+                      )}
                     </div>
                     <div className="mt-3 grid grid-cols-3 gap-2 text-center font-mono text-xs">
-                      <Cell label="Market" value={formatSpread(g.marketSpread)} />
-                      <Cell label="BSE" value={formatSpread(g.fairSpread)} />
-                      <Cell label="Edge" value={`+${g.edgeSpread.toFixed(1)}`} accent />
+                      <Cell
+                        label="Market"
+                        value={g.marketSpread == null ? PLACEHOLDER : fmtSpread(g.marketSpread)}
+                      />
+                      <Cell
+                        label="BSE"
+                        value={g.fairSpread == null ? PLACEHOLDER : fmtSpread(g.fairSpread)}
+                      />
+                      <Cell
+                        label="Edge"
+                        value={g.edgeSpread == null ? PLACEHOLDER : `+${g.edgeSpread.toFixed(1)}`}
+                        accent={g.edgeSpread != null}
+                      />
                     </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="font-mono text-xs text-muted-foreground">
-                        Win {winProb(g.edgeSpread, g.bseRating)}%
-                      </span>
-                      {signal && <SignalBadge {...signal} />}
+                    <div className="mt-3 font-mono text-xs text-muted-foreground">
+                      {formatKickoff(g.kickoff, g.kickoffTBD)}
                     </div>
                   </div>
-                )
-              })}
-            </div>
+                ))}
+              </div>
+            )}
 
             <div className="mt-6 text-center">
               <Link
@@ -170,35 +198,17 @@ export function TopEdges() {
   )
 }
 
-function Matchup({ game }: { game: (typeof games)[number] }) {
-  return (
-    <div className="flex items-center gap-2 font-display text-sm">
-      <span className="flex items-center gap-1.5 font-semibold text-foreground">
-        <TeamLogo name={game.away.name} abbr={game.away.abbr} size="sm" />
-        {game.away.rank && <span className="text-muted-foreground">{game.away.rank} </span>}
-        {game.away.name}
-      </span>
-      <span className="text-muted-foreground">@</span>
-      <span className="flex items-center gap-1.5 font-semibold text-foreground">
-        <TeamLogo name={game.home.name} abbr={game.home.abbr} size="sm" />
-        {game.home.rank && <span className="text-muted-foreground">{game.home.rank} </span>}
-        {game.home.name}
-      </span>
-    </div>
-  )
+function fmtSpread(n: number): string {
+  return n > 0 ? `+${n.toFixed(1)}` : n.toFixed(1)
 }
 
-function SignalBadge({ label, strong }: { label: string; strong: boolean }) {
+function Matchup({ game }: { game: LiveBoardGame }) {
   return (
-    <span
-      className={`inline-flex items-center rounded-md px-2.5 py-1 font-display text-[10px] font-bold uppercase tracking-wider ${
-        strong
-          ? 'bg-primary text-primary-foreground'
-          : 'border border-primary/50 text-primary'
-      }`}
-    >
-      {label}
-    </span>
+    <div className="flex items-center gap-2 font-display text-sm">
+      <TeamName name={game.away.name} abbr={game.away.abbr} size="sm" />
+      <span className="text-muted-foreground">@</span>
+      <TeamName name={game.home.name} abbr={game.home.abbr} size="sm" />
+    </div>
   )
 }
 

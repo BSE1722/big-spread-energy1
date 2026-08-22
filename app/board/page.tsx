@@ -4,7 +4,7 @@ import { BoardView } from "@/components/board/board-view"
 import { RatingsTable } from "@/components/board/ratings-table"
 import { TeamSearch } from "@/components/board/team-search"
 import { DemoDataBanner } from "@/components/demo-data-banner"
-import { CURRENT_CONTEXT } from "@/lib/bse"
+import { seasonEyebrow } from "@/lib/bse"
 
 export const metadata: Metadata = {
   title: "The Board — Live Lines & BSE Fair Lines | Big Spread Energy",
@@ -16,7 +16,7 @@ export default function BoardPage() {
   return (
     <main>
       <PageHeader
-        eyebrow={`${CURRENT_CONTEXT.league.toUpperCase()} · Week ${CURRENT_CONTEXT.week} · ${CURRENT_CONTEXT.season}`}
+        eyebrow={seasonEyebrow()}
         title="The Board"
         description="Every game, every market line. BSE Projections use AI, Internal formulas, and recurring news to produce the best reads for your bet. Our 0–100 BSE Rating is built to compare multiple sportsbooks and surface the best available outcome."
       />
