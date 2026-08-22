@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { ArrowDownUp, TrendingUp, TrendingDown } from "lucide-react"
-import { useLiveBoard, formatKickoff, type LiveBoardGame } from "@/lib/use-live-board"
+import { useLiveBoard, formatKickoff, formatKickoffDate, type LiveBoardGame } from "@/lib/use-live-board"
 import { TeamName } from "@/components/team-name"
 import { cn } from "@/lib/utils"
 
@@ -179,6 +179,7 @@ function BoardRow({ g, market }: { g: LiveBoardGame; market: Market }) {
         </div>
       </td>
       <td className="px-4 py-3.5 font-mono text-xs text-muted-foreground">
+        <span className="text-foreground/80">{formatKickoffDate(g.kickoff)}</span>{" "}
         {formatKickoff(g.kickoff, g.kickoffTBD)}
         {g.neutralSite && <span className="ml-1 opacity-60">· N</span>}
       </td>
@@ -217,6 +218,7 @@ function BoardCard({ g, market }: { g: LiveBoardGame; market: Market }) {
             <TeamName name={g.home.name} abbr={g.home.abbr} label="abbr" size="sm" />
           </div>
           <div className="mt-1 font-mono text-[11px] text-muted-foreground">
+            <span className="text-foreground/80">{formatKickoffDate(g.kickoff)}</span>{" · "}
             {formatKickoff(g.kickoff, g.kickoffTBD)}
             {g.neutralSite && " · Neutral"}
           </div>
