@@ -6,8 +6,10 @@
  * based: there is no background revalidation and no visitor-triggered upstream
  * call. Only `refreshSnapshot()` (admin action) ever hits SportsGameOdds.
  *
- * Storage: a single private Vercel Blob at a stable pathname, overwritten on
- * each refresh. The prior snapshot's lines are carried forward into each game's
+ * Storage: a single public Vercel Blob at a stable pathname, overwritten on
+ * each refresh (public to match the connected Blob store; it contains only
+ * sportsbook market data already shown on the public Board). The prior
+ * snapshot's lines are carried forward into each game's
  * lineHistory (opening / previous / current + movement) so line movement can be
  * computed later without changing the BSE model or UI.
  */
@@ -53,7 +55,7 @@ export interface RefreshSummary {
  */
 export async function loadSnapshot(): Promise<OddsSnapshot | null> {
   try {
-    const result = await get(SNAPSHOT_PATHNAME, { access: "private" })
+    const result = await get(SNAPSHOT_PATHNAME, { access: "public" })
     if (!result || !result.stream) return null
     const text = await new Response(result.stream).text()
     if (!text) return null
@@ -67,7 +69,7 @@ export async function loadSnapshot(): Promise<OddsSnapshot | null> {
 
 async function saveSnapshot(snapshot: OddsSnapshot): Promise<void> {
   await put(SNAPSHOT_PATHNAME, JSON.stringify(snapshot), {
-    access: "private",
+    access: "public",
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: "application/json",
@@ -83,7 +85,7 @@ interface RefreshLock {
 
 async function readLock(): Promise<RefreshLock | null> {
   try {
-    const result = await get(LOCK_PATHNAME, { access: "private" })
+    const result = await get(LOCK_PATHNAME, { access: "public" })
     if (!result || !result.stream) return null
     const text = await new Response(result.stream).text()
     if (!text) return null
@@ -95,7 +97,7 @@ async function readLock(): Promise<RefreshLock | null> {
 
 async function writeLock(lock: RefreshLock): Promise<void> {
   await put(LOCK_PATHNAME, JSON.stringify(lock), {
-    access: "private",
+    access: "public",
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: "application/json",
