@@ -13,7 +13,7 @@ export default function ParlayAnalyzerPage() {
   return (
     <main>
       <PageHeader
-        eyebrow="Analyzer"
+        eyebrow="BSE Analyzer"
         title="Parlay Analyzer"
         description="Build or paste a parlay and BSE grades the whole ticket — every leg gets its own probability, edge, EV, and a KEEP / REMOVE / REPLACE call, then we analyze correlation and joint probability across the ticket."
       />
