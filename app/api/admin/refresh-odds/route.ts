@@ -45,12 +45,18 @@ function isAuthorized(request: NextRequest): boolean {
 function describeLimit(usage: SgoUsageReport | null): string {
   if (!usage) return "unknown limit (usage lookup unavailable)"
   switch (usage.limitHit) {
-    case "per-minute":
+    case "per-minute-requests":
       return "per-minute request limit"
-    case "hourly":
+    case "per-hour-requests":
       return "hourly request limit"
-    case "monthly-objects":
-      return "monthly objects limit"
+    case "per-hour-entities":
+      return "hourly objects (entities) limit"
+    case "per-day-requests":
+      return "daily request limit"
+    case "per-day-entities":
+      return "daily objects (entities) limit"
+    case "per-month-entities":
+      return "monthly objects (entities) limit"
     default:
       return "unknown limit (could not determine from usage)"
   }

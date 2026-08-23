@@ -21,8 +21,18 @@ const BOOKMAKER = "draftkings" as const
 
 /* ----------------------------- Rate limiting ----------------------------- */
 
-/** Which SGO quota tripped, when we can tell from /account/usage. */
-export type SgoLimitKind = "per-minute" | "hourly" | "monthly-objects" | "unknown"
+/**
+ * Which SGO quota tripped. SGO enforces separate request and entity ("objects")
+ * caps per time window; these are the ones the `amateur`/paid tiers expose.
+ */
+export type SgoLimitKind =
+  | "per-minute-requests"
+  | "per-hour-requests"
+  | "per-hour-entities"
+  | "per-day-requests"
+  | "per-day-entities"
+  | "per-month-entities"
+  | "unknown"
 
 /**
  * Thrown when SGO responds 429. Carries the parsed Retry-After delay (seconds)
@@ -50,21 +60,38 @@ export function parseRetryAfter(value: string | null): number | null {
   return null
 }
 
+/**
+ * A single quota. `max` is null when SGO reports "unlimited". `current` is null
+ * when SGO omits it (e.g. it doesn't report current-requests for per-month).
+ * `exceeded` is true when current >= a finite max.
+ */
 export interface SgoUsageQuota {
   current: number | null
-  max: number | null
+  max: number | null // null === unlimited
   remaining: number | null
+  unlimited: boolean
+  exceeded: boolean
+}
+
+/** Requests + entities ("objects") caps for one time window. */
+export interface SgoUsageWindow {
+  requests: SgoUsageQuota
+  entities: SgoUsageQuota
 }
 
 export interface SgoUsageReport {
   fetchedAt: string
-  perMinute: SgoUsageQuota
-  hourly: SgoUsageQuota
-  monthlyObjects: SgoUsageQuota
-  /** Best-effort determination of which quota is currently exhausted. */
+  tier: string | null
+  perMinute: SgoUsageWindow
+  perHour: SgoUsageWindow
+  perDay: SgoUsageWindow
+  perMonth: SgoUsageWindow
+  /** Which quota is currently exceeded (the cause of a 429), if any. */
   limitHit: SgoLimitKind
-  /** Raw payload for admin visibility. Contains no API key. */
-  raw: unknown
+  /** True when we parsed the documented rateLimits shape successfully. */
+  parsed: boolean
+  /** Populated only when the endpoint errored or returned an unexpected schema. */
+  error?: { httpStatus: number | null; body: string }
 }
 
 /**
@@ -396,74 +423,114 @@ export async function getSgoNormalizedEvents(): Promise<SgoNormalizedEvent[]> {
   return events.map(normalizeSgoEvent)
 }
 
-/* ------------------------------ Account usage ----------------------------- */
+/* ------------------------------ Account usage -----------------------------
+ *
+ * Real /account/usage shape (verified against production, amateur tier):
+ *   { success, data: { tier, rateLimits: {
+ *       "per-second" | "per-minute" | "per-hour" | "per-day" | "per-month": {
+ *         "max-requests":    number | "unlimited",
+ *         "current-requests": number,        // omitted on per-month
+ *         "max-entities":    number | "unlimited",
+ *         "current-entities": number,        // omitted on per-second/minute
+ *       }, ... } } }
+ *
+ * "entities" are SGO's "objects" (the monthly-objects cap). A value of the
+ * literal string "unlimited" means no cap for that field.
+ */
 
-/** Breadth-first search for the first numeric value under any of `keys`. */
-function deepFindNumber(obj: unknown, keys: string[]): number | null {
-  const wanted = new Set(keys.map((k) => k.toLowerCase()))
-  const queue: unknown[] = [obj]
-  let steps = 0
-  while (queue.length && steps < 5000) {
-    const cur = queue.shift()
-    steps++
-    if (cur && typeof cur === "object") {
-      for (const [k, v] of Object.entries(cur as Record<string, unknown>)) {
-        if (wanted.has(k.toLowerCase())) {
-          const n = typeof v === "number" ? v : Number(v)
-          if (Number.isFinite(n)) return n
-        }
-        if (v && typeof v === "object") queue.push(v)
-      }
-    }
+const EMPTY_QUOTA: SgoUsageQuota = {
+  current: null,
+  max: null,
+  remaining: null,
+  unlimited: false,
+  exceeded: false,
+}
+
+/** Coerce an unknown JSON scalar to something toNum accepts. */
+function asScalar(v: unknown): string | number | null {
+  return typeof v === "number" || typeof v === "string" ? v : null
+}
+
+/** Parse one "max-*"/"current-*" pair into a quota, treating "unlimited" as no cap. */
+function parseQuota(rawMax: unknown, rawCurrent: unknown): SgoUsageQuota {
+  const unlimited = rawMax === "unlimited"
+  const max = typeof rawMax === "number" ? rawMax : unlimited ? null : toNum(asScalar(rawMax))
+  const current = typeof rawCurrent === "number" ? rawCurrent : toNum(asScalar(rawCurrent))
+  const remaining = max != null && current != null ? max - current : null
+  const exceeded = !unlimited && max != null && current != null && current >= max
+  return { current, max, remaining, unlimited, exceeded }
+}
+
+function parseWindow(win: unknown): SgoUsageWindow {
+  const w = (win ?? {}) as Record<string, unknown>
+  return {
+    requests: parseQuota(w["max-requests"], w["current-requests"]),
+    entities: parseQuota(w["max-entities"], w["current-entities"]),
   }
-  return null
 }
 
-function quota(obj: unknown, currentKeys: string[], maxKeys: string[], remainingKeys: string[]): SgoUsageQuota {
-  const current = deepFindNumber(obj, currentKeys)
-  const max = deepFindNumber(obj, maxKeys)
-  let remaining = deepFindNumber(obj, remainingKeys)
-  if (remaining == null && max != null && current != null) remaining = max - current
-  return { current, max, remaining }
-}
-
-/** Normalize whatever /account/usage returns into a stable, key-free report. */
+/** Parse the documented /account/usage schema into a stable, credential-free report. */
 export function interpretUsage(payload: unknown): SgoUsageReport {
-  const root = (payload as { data?: unknown })?.data ?? payload
+  const data = (payload as { data?: Record<string, unknown> })?.data
+  const rl = (data?.rateLimits ?? {}) as Record<string, unknown>
+  const tier = typeof data?.tier === "string" ? (data.tier as string) : null
 
-  const perMinute = quota(
-    root,
-    ["per_minute", "perMinute", "requestsPerMinute", "requests_per_minute", "minute"],
-    ["per_minute_limit", "perMinuteLimit", "maxPerMinute", "rateLimit", "rate_limit", "limitPerMinute"],
-    ["remaining", "requestsRemaining", "requests_remaining", "remainingPerMinute"],
-  )
-  const hourly = quota(
-    root,
-    ["per_hour", "perHour", "requestsPerHour", "requests_per_hour", "hour", "hourly"],
-    ["per_hour_limit", "perHourLimit", "maxPerHour", "limitPerHour"],
-    ["remainingPerHour", "hourlyRemaining"],
-  )
-  const monthlyObjects = quota(
-    root,
-    ["objects", "monthlyObjects", "monthly_objects", "objects_this_month", "entities", "per_month", "perMonth"],
-    ["objects_limit", "monthlyObjectsLimit", "maxObjects", "objectLimit", "per_month_limit"],
-    ["objectsRemaining", "remainingObjects", "monthlyObjectsRemaining"],
-  )
+  const perMinute = parseWindow(rl["per-minute"])
+  const perHour = parseWindow(rl["per-hour"])
+  const perDay = parseWindow(rl["per-day"])
+  const perMonth = parseWindow(rl["per-month"])
+  const parsed = Object.keys(rl).length > 0
 
-  const exhausted = (q: SgoUsageQuota) =>
-    (q.remaining != null && q.remaining <= 0) || (q.current != null && q.max != null && q.current >= q.max)
-
+  // Determine which cap is exceeded, in escalating-window order. Entity caps are
+  // the ones most likely to trip for this workload (many objects per request).
   let limitHit: SgoLimitKind = "unknown"
-  if (exhausted(perMinute)) limitHit = "per-minute"
-  else if (exhausted(hourly)) limitHit = "hourly"
-  else if (exhausted(monthlyObjects)) limitHit = "monthly-objects"
+  if (perMinute.requests.exceeded) limitHit = "per-minute-requests"
+  else if (perHour.requests.exceeded) limitHit = "per-hour-requests"
+  else if (perHour.entities.exceeded) limitHit = "per-hour-entities"
+  else if (perDay.requests.exceeded) limitHit = "per-day-requests"
+  else if (perDay.entities.exceeded) limitHit = "per-day-entities"
+  else if (perMonth.entities.exceeded) limitHit = "per-month-entities"
 
-  return { fetchedAt: new Date().toISOString(), perMinute, hourly, monthlyObjects, limitHit, raw: root }
+  return {
+    fetchedAt: new Date().toISOString(),
+    tier,
+    perMinute,
+    perHour,
+    perDay,
+    perMonth,
+    limitHit,
+    parsed,
+  }
+}
+
+/** A report for the error/unexpected-schema case: exact status + sanitized body. */
+function usageErrorReport(httpStatus: number | null, body: string): SgoUsageReport {
+  return {
+    fetchedAt: new Date().toISOString(),
+    tier: null,
+    perMinute: { requests: EMPTY_QUOTA, entities: EMPTY_QUOTA },
+    perHour: { requests: EMPTY_QUOTA, entities: EMPTY_QUOTA },
+    perDay: { requests: EMPTY_QUOTA, entities: EMPTY_QUOTA },
+    perMonth: { requests: EMPTY_QUOTA, entities: EMPTY_QUOTA },
+    limitHit: "unknown",
+    parsed: false,
+    error: { httpStatus, body: sanitizeUsageBody(body) },
+  }
+}
+
+/** Strip anything credential-shaped from a raw body before returning it to admin. */
+function sanitizeUsageBody(body: string): string {
+  let out = body.slice(0, 800)
+  // Redact any key/token/secret-looking field values, and the keyID SGO echoes.
+  out = out.replace(/("(?:[a-zA-Z]*(?:key|token|secret|authorization|apikey)[a-zA-Z]*)"\s*:\s*)"[^"]*"/gi, '$1"[REDACTED]"')
+  return out
 }
 
 /**
- * Query SGO /account/usage to see current quota status. Read-only, single
- * request, no retries. Never returns the API key.
+ * Query SGO /account/usage. Read-only, single request, no retries. Never returns
+ * SGO_API or any header. On a non-2xx or unexpected schema, returns a report
+ * carrying the exact HTTP status and a sanitized body instead of throwing, so
+ * the admin panel can show the real problem rather than "? / ?".
  */
 export async function fetchSgoAccountUsage(): Promise<SgoUsageReport> {
   const apiKey = process.env.SGO_API
@@ -474,14 +541,30 @@ export async function fetchSgoAccountUsage(): Promise<SgoUsageReport> {
     cache: "no-store",
   })
 
+  const text = await res.text()
+
   if (res.status === 429) {
-    throw new SgoRateLimitError(parseRetryAfter(res.headers.get("retry-after")))
+    const usage = safeInterpret(text)
+    throw new SgoRateLimitError(parseRetryAfter(res.headers.get("retry-after")), usage)
   }
   if (!res.ok) {
-    throw new Error(`SGO usage request failed: ${res.status} ${res.statusText}`)
+    return usageErrorReport(res.status, text)
   }
 
-  return interpretUsage(await res.json())
+  const report = safeInterpret(text)
+  if (!report || !report.parsed) {
+    return usageErrorReport(res.status, text)
+  }
+  return report
+}
+
+/** Parse JSON + interpret, swallowing parse errors (returns null on bad JSON). */
+function safeInterpret(text: string): SgoUsageReport | null {
+  try {
+    return interpretUsage(JSON.parse(text))
+  } catch {
+    return null
+  }
 }
 
 /**

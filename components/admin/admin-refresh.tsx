@@ -24,21 +24,33 @@ interface UsageQuota {
   current: number | null
   max: number | null
   remaining: number | null
+  unlimited: boolean
+  exceeded: boolean
+}
+
+interface UsageWindow {
+  requests: UsageQuota
+  entities: UsageQuota
 }
 
 interface UsageReport {
   fetchedAt: string
-  perMinute: UsageQuota
-  hourly: UsageQuota
-  monthlyObjects: UsageQuota
-  limitHit: "per-minute" | "hourly" | "monthly-objects" | "unknown"
+  tier: string | null
+  perMinute: UsageWindow
+  perHour: UsageWindow
+  perDay: UsageWindow
+  perMonth: UsageWindow
+  limitHit: string
+  parsed: boolean
+  error?: { httpStatus: number | null; body: string }
 }
 
 function fmtQuota(q: UsageQuota | undefined): string {
   if (!q) return "—"
-  const used = q.current ?? "?"
-  const max = q.max != null ? q.max : "?"
-  const rem = q.remaining != null ? ` (${q.remaining} left)` : ""
+  if (q.unlimited) return "unlimited"
+  const used = q.current != null ? q.current.toLocaleString() : "—"
+  const max = q.max != null ? q.max.toLocaleString() : "—"
+  const rem = q.remaining != null ? ` (${q.remaining.toLocaleString()} left)` : ""
   return `${used} / ${max}${rem}`
 }
 
@@ -202,20 +214,77 @@ export function AdminRefresh() {
 
       {usage && (
         <div className="mt-5 rounded-md border border-border bg-background px-4 py-3">
-          <p className="text-sm font-semibold text-foreground">SportsGameOdds usage</p>
-          <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 font-mono text-xs">
-            <dt className="text-muted-foreground">Per-minute requests</dt>
-            <dd className="text-right text-foreground">{fmtQuota(usage.perMinute)}</dd>
-            <dt className="text-muted-foreground">Hourly requests</dt>
-            <dd className="text-right text-foreground">{fmtQuota(usage.hourly)}</dd>
-            <dt className="text-muted-foreground">Monthly objects</dt>
-            <dd className="text-right text-foreground">{fmtQuota(usage.monthlyObjects)}</dd>
-            <dt className="text-muted-foreground">Limit currently hit</dt>
-            <dd className="text-right text-foreground">{usage.limitHit}</dd>
-          </dl>
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Values are best-effort readings from /account/usage; unknown fields show as “?”.
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-foreground">SportsGameOdds usage</p>
+            {usage.tier && (
+              <span className="rounded bg-secondary px-2 py-0.5 font-mono text-[11px] text-secondary-foreground">
+                tier: {usage.tier}
+              </span>
+            )}
+          </div>
+
+          {usage.error ? (
+            <div className="mt-2">
+              <p className="font-mono text-xs text-destructive-foreground">
+                HTTP {usage.error.httpStatus ?? "?"} — unexpected response
+              </p>
+              <pre className="mt-2 max-h-48 overflow-auto rounded bg-secondary p-2 font-mono text-[11px] text-foreground">
+                {usage.error.body}
+              </pre>
+            </div>
+          ) : (
+            <>
+              <table className="mt-2 w-full font-mono text-xs">
+                <thead>
+                  <tr className="text-muted-foreground">
+                    <th className="py-1 text-left font-medium">Window</th>
+                    <th className="py-1 text-right font-medium">Requests (used / max)</th>
+                    <th className="py-1 text-right font-medium">Objects (used / max)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(
+                    [
+                      ["Per-minute", usage.perMinute],
+                      ["Per-hour", usage.perHour],
+                      ["Per-day", usage.perDay],
+                      ["Per-month", usage.perMonth],
+                    ] as const
+                  ).map(([label, w]) => (
+                    <tr key={label} className="border-t border-border/60">
+                      <td className="py-1 text-left text-foreground">{label}</td>
+                      <td
+                        className={`py-1 text-right ${w.requests.exceeded ? "font-semibold text-destructive-foreground" : "text-foreground"}`}
+                      >
+                        {fmtQuota(w.requests)}
+                      </td>
+                      <td
+                        className={`py-1 text-right ${w.entities.exceeded ? "font-semibold text-destructive-foreground" : "text-foreground"}`}
+                      >
+                        {fmtQuota(w.entities)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <div className="mt-2 flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Limit currently hit</span>
+                <span
+                  className={
+                    usage.limitHit === "unknown"
+                      ? "font-mono text-foreground"
+                      : "font-mono font-semibold text-destructive-foreground"
+                  }
+                >
+                  {usage.limitHit}
+                </span>
+              </div>
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                {'"Objects" are SGO entities. "unlimited" means no cap for that field. Read at '}
+                {fmtTime(usage.fetchedAt)}.
+              </p>
+            </>
+          )}
         </div>
       )}
 
