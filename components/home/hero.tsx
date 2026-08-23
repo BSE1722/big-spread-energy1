@@ -49,9 +49,9 @@ export function Hero() {
           <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">
             Every matchup. Every line. One proprietary BSE rating buit to show you where the market looks right - and where it doesn't. <br />
             Ready to bet outside the box? Don't just read the lines. Challenge them! <br />
-            
+            <br />
             They set the line. We put it on trial.<br />
-            
+            <br />
             BSE isn't another picks or "locks" site.
             It's an independent betting intelligence platform built to answer one questions before you wager:
            Do the numbers actually support this bet?
