@@ -161,8 +161,8 @@ function PhoneCard() {
             Week 1 · Sample
           </span>
           <dl className="mt-3 space-y-2 text-sm">
-            <Row label="Market Spread" value="MISS -3.5" />
-            <Row label="BSE Projection" value="-6.0" />
+            <Row label="Market Spread" value="MISS -6.5" />
+            <Row label="BSE Projection" value="-8.5" />
             <div className="flex items-center justify-between border-t border-border/60 pt-2">
               <dt className="font-semibold text-primary">Spread Edge</dt>
               <dd className="font-display text-base font-bold text-primary">+2.5</dd>
