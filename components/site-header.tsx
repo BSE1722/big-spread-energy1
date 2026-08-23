@@ -44,18 +44,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Link
-            href="/login"
-            className={cn(buttonVariants({ variant: "outline" }), "h-10 px-5 font-display font-semibold uppercase tracking-wide")}
-          >
-            Log In
-          </Link>
-          <Link
-            href="/signup"
-            className={cn(buttonVariants({ variant: "default" }), "h-10 px-5 font-display font-semibold uppercase tracking-wide")}
-          >
-            Join BSE Pro
-          </Link>
+          <AuthNav />
         </div>
 
         <button
@@ -86,20 +75,7 @@ export function SiteHeader() {
               </Link>
             ))}
             <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
-              <Link
-                href="/login"
-                onClick={() => setOpen(false)}
-                className={cn(buttonVariants({ variant: "outline" }), "h-11 font-display font-semibold uppercase tracking-wide")}
-              >
-                Log In
-              </Link>
-              <Link
-                href="/signup"
-                onClick={() => setOpen(false)}
-                className={cn(buttonVariants({ variant: "default" }), "h-11 font-display font-semibold uppercase tracking-wide")}
-              >
-                Join BSE Pro
-              </Link>
+              <AuthNav variant="mobile" onNavigate={() => setOpen(false)} />
             </div>
           </nav>
         </div>
