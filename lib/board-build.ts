@@ -74,19 +74,55 @@ export async function getCfbdGameLites(ctx: SeasonContextLite): Promise<CfbdGame
   }))
 }
 
+/** Pad (ms) applied on each side of the week's kickoff range for the SGO window. */
+const WEEK_WINDOW_PAD_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Derive an SGO date window [startsAfter, startsBefore] from the target week's
+ * CFBD kickoffs (min − 1 day … max + 1 day). Bounding the odds pull to the week
+ * instead of the whole season is the primary entity-usage saver. Returns nulls
+ * when no kickoffs are available (caller then omits the window).
+ */
+export function deriveWeekWindow(games: CfbdGameLite[]): {
+  startsAfter: string | null
+  startsBefore: string | null
+} {
+  const times = games
+    .map((g) => Date.parse(g.kickoff))
+    .filter((t) => Number.isFinite(t))
+  if (times.length === 0) return { startsAfter: null, startsBefore: null }
+  const min = Math.min(...times)
+  const max = Math.max(...times)
+  return {
+    startsAfter: new Date(min - WEEK_WINDOW_PAD_MS).toISOString(),
+    startsBefore: new Date(max + WEEK_WINDOW_PAD_MS).toISOString(),
+  }
+}
+
 /**
  * Perform a FRESH build: CFBD schedule + a live SGO/DraftKings pull, matched
  * together. This is the ONLY path that calls SportsGameOdds. The live board
  * never calls this — it reads a saved snapshot instead.
+ *
+ * CFBD is fetched FIRST so we can bound the SGO pull to the target week's date
+ * window and request only the DraftKings main-line markets — retrieving only
+ * the exact games/markets/bookmaker we need and minimizing SGO entity usage.
  */
 export async function buildFreshMatch(ctx: SeasonContextLite): Promise<{
   cfbdGames: CfbdGameLite[]
   match: MatchResult
 }> {
-  const [cfbdGames, sgoEvents] = await Promise.all([
-    getCfbdGameLites(ctx),
-    getSgoNormalizedEvents(),
-  ])
+  const cfbdGames = await getCfbdGameLites(ctx)
+  const { startsAfter, startsBefore } = deriveWeekWindow(cfbdGames)
+
+  const sgoEvents = await getSgoNormalizedEvents({
+    ...(startsAfter ? { startsAfter } : {}),
+    ...(startsBefore ? { startsBefore } : {}),
+    // A single week fits well within two pages of the date-windowed result.
+    maxPages: 2,
+    // oddIDs defaults to the 3 DraftKings main lines (spread/total/moneyline).
+  })
+
   const match = matchOddsToCfbd(cfbdGames, sgoEvents)
   return { cfbdGames, match }
 }
