@@ -62,6 +62,38 @@ function fmtTime(iso: string | null): string {
   })
 }
 
+/**
+ * Read a fetch Response WITHOUT assuming it is JSON. An empty body, HTML error
+ * page, or a gateway/timeout response would make res.json() throw; instead we
+ * read the text once and parse defensively. Returns the parsed JSON when
+ * possible, plus the raw text and status so callers can show the real problem.
+ */
+async function readResponseSafely(res: Response): Promise<{
+  ok: boolean
+  status: number
+  json: Record<string, unknown> | null
+  rawText: string
+}> {
+  const rawText = await res.text().catch(() => "")
+  let json: Record<string, unknown> | null = null
+  const contentType = res.headers.get("content-type") ?? ""
+  if (rawText && (contentType.includes("application/json") || rawText.trimStart().startsWith("{"))) {
+    try {
+      json = JSON.parse(rawText) as Record<string, unknown>
+    } catch {
+      json = null
+    }
+  }
+  return { ok: res.ok, status: res.status, json, rawText }
+}
+
+/** Build a human message when the response body was not usable JSON. */
+function nonJsonMessage(status: number, rawText: string): string {
+  const body = rawText.trim().slice(0, 300)
+  const suffix = body ? `: ${body}` : " (empty response body)"
+  return `Server returned a non-JSON response (HTTP ${status})${suffix}`
+}
+
 export function AdminRefresh() {
   const [secret, setSecret] = useState("")
   const [status, setStatus] = useState<SnapshotStatus | null>(null)
@@ -81,9 +113,10 @@ export function AdminRefresh() {
         method: "GET",
         headers: { "x-admin-secret": secret },
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data?.error ?? `Request failed (${res.status})`)
-      setStatus(data as SnapshotStatus)
+      const { status, json, rawText } = await readResponseSafely(res)
+      if (!json) throw new Error(nonJsonMessage(status, rawText))
+      if (!res.ok) throw new Error((json.error as string) ?? `Request failed (${status})`)
+      setStatus(json as unknown as SnapshotStatus)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load status")
     } finally {
@@ -100,27 +133,33 @@ export function AdminRefresh() {
         method: "POST",
         headers: { "x-admin-secret": secret },
       })
-      const data = await res.json()
+      const { status, json, rawText } = await readResponseSafely(res)
+
+      // Non-JSON / empty body (gateway error, timeout, etc.): show status + body.
+      if (!json) {
+        setNotice(nonJsonMessage(status, rawText))
+        return
+      }
 
       // Rate limited (429) or a refresh already running (409): show a clear,
       // non-destructive message. The frozen snapshot is unchanged either way.
-      if (res.status === 429 || res.status === 409) {
-        if (data?.usage) setUsage(data.usage as UsageReport)
-        setNotice(data?.error ?? "SportsGameOdds is temporarily unavailable. Snapshot unchanged.")
+      if (status === 429 || status === 409) {
+        if (json.usage) setUsage(json.usage as unknown as UsageReport)
+        setNotice((json.error as string) ?? "SportsGameOdds is temporarily unavailable. Snapshot unchanged.")
         return
       }
-      if (!res.ok) throw new Error(data?.error ?? `Refresh failed (${res.status})`)
+      if (!res.ok) throw new Error((json.error as string) ?? `Refresh failed (${status})`)
 
-      setResult(data as RefreshResult)
+      setResult(json as unknown as RefreshResult)
       // Reflect the new snapshot in the status panel too.
       setStatus({
         hasSnapshot: true,
-        snapshotAt: data.snapshotAt,
-        previousSnapshotAt: data.previousSnapshotAt,
+        snapshotAt: json.snapshotAt as string,
+        previousSnapshotAt: (json.previousSnapshotAt as string) ?? null,
         season: null,
         week: null,
-        matched: data.matched,
-        unmatched: data.unmatched,
+        matched: json.matched as number,
+        unmatched: json.unmatched as number,
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : "Refresh failed")
@@ -138,13 +177,14 @@ export function AdminRefresh() {
         method: "GET",
         headers: { "x-admin-secret": secret },
       })
-      const data = await res.json()
-      if (res.status === 429) {
-        setNotice(data?.error ?? "SportsGameOdds rate limit reached.")
+      const { status, json, rawText } = await readResponseSafely(res)
+      if (!json) throw new Error(nonJsonMessage(status, rawText))
+      if (status === 429) {
+        setNotice((json.error as string) ?? "SportsGameOdds rate limit reached.")
         return
       }
-      if (!res.ok) throw new Error(data?.error ?? `Usage lookup failed (${res.status})`)
-      setUsage(data.usage as UsageReport)
+      if (!res.ok) throw new Error((json.error as string) ?? `Usage lookup failed (${status})`)
+      setUsage(json.usage as unknown as UsageReport)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Usage lookup failed")
     } finally {

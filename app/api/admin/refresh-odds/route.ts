@@ -110,9 +110,82 @@ function rateLimitMessage(retryAfterSeconds: number | null, usage: SgoUsageRepor
   return `SportsGameOdds rate limit reached (${which}). Try again in ${secs}. Existing frozen snapshot was NOT changed.`
 }
 
+/**
+ * Inspect a usage report and return the first exhausted quota (if any). Used as
+ * a PRE-FLIGHT gate so we never fire an odds request when we already know a cap
+ * is blown — this avoids wasting entity/request budget on a guaranteed 429.
+ */
+function firstExhaustedQuota(usage: SgoUsageReport): {
+  kind: string
+  current: number | null
+  max: number | null
+} | null {
+  const checks: Array<{ kind: string; q: { current: number | null; max: number | null; exceeded: boolean } }> = [
+    { kind: "per-minute-requests", q: usage.perMinute.requests },
+    { kind: "per-hour-requests", q: usage.perHour.requests },
+    { kind: "per-hour-entities", q: usage.perHour.entities },
+    { kind: "per-day-requests", q: usage.perDay.requests },
+    { kind: "per-day-entities", q: usage.perDay.entities },
+    { kind: "per-month-entities", q: usage.perMonth.entities },
+  ]
+  for (const c of checks) {
+    if (c.q.exceeded) return { kind: c.kind, current: c.q.current, max: c.q.max }
+  }
+  return null
+}
+
+/** Clean message for a pre-flight abort (before any odds request was made). */
+function preflightMessage(kind: string, current: number | null, max: number | null): string {
+  const used = current != null ? current.toLocaleString() : "?"
+  const cap = max != null ? max.toLocaleString() : "?"
+  return `SportsGameOdds ${kind.replace(/-/g, " ")} quota is exhausted (${used} / ${cap}). Refresh aborted BEFORE any odds request; the existing frozen snapshot was NOT changed.`
+}
+
 export async function POST(request: NextRequest) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
+  }
+
+  // PRE-FLIGHT: check SGO account usage BEFORE attempting any odds request. If a
+  // quota (e.g. monthly entities) is already exhausted, abort here so we never
+  // spend budget on a call that is guaranteed to 429. This is a single
+  // request-based /account/usage read; it does not consume entity budget.
+  try {
+    const usage = await fetchSgoAccountUsage()
+    const blocked = firstExhaustedQuota(usage)
+    if (blocked) {
+      console.error(`[v0] refresh pre-flight abort: ${blocked.kind} exhausted; no odds request made`)
+      return NextResponse.json(
+        {
+          ok: false,
+          rateLimited: true,
+          preflight: true,
+          limitHit: blocked.kind,
+          usage,
+          snapshotChanged: false,
+          error: preflightMessage(blocked.kind, blocked.current, blocked.max),
+        },
+        { status: 429 },
+      )
+    }
+  } catch (error) {
+    // If the usage probe itself is rate limited, abort too — a refresh would
+    // only make it worse. Any other probe error is non-fatal: fall through and
+    // let the refresh attempt proceed (it has its own 429 handling).
+    if (error instanceof SgoRateLimitError) {
+      return NextResponse.json(
+        {
+          ok: false,
+          rateLimited: true,
+          preflight: true,
+          retryAfterSeconds: error.retryAfterSeconds,
+          snapshotChanged: false,
+          error: rateLimitMessage(error.retryAfterSeconds, error.usage ?? null),
+        },
+        { status: 429 },
+      )
+    }
+    console.log("[v0] usage pre-flight probe failed (non-fatal), proceeding:", (error as Error)?.message)
   }
 
   // Prevent double-clicks / concurrent refreshes from firing overlapping pulls.
