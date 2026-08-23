@@ -78,7 +78,7 @@ export function TopEdges() {
 
           <div className="p-4 sm:p-6">
             <h2 className="mb-4 font-display text-lg font-bold uppercase tracking-wide text-foreground">
-              {projectionsAvailable ? 'Top Edges This Week' : "This Week's Games"}
+              {projectionsAvailable ? 'Top Edges This Week' : "BSE Top Rated Games"}
             </h2>
 
             {loading && (
