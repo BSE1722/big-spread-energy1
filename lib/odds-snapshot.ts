@@ -17,6 +17,10 @@ import { buildFreshMatch, type SeasonContextLite } from "@/lib/board-build"
 import type { GameWithOdds, LineHistory } from "@/lib/odds-match"
 
 const SNAPSHOT_PATHNAME = "odds/draftkings-snapshot.json"
+const LOCK_PATHNAME = "odds/refresh.lock.json"
+
+/** A running refresh older than this is treated as stale (crashed) and cleared. */
+const LOCK_STALE_MS = 2 * 60 * 1000
 
 export interface OddsSnapshot {
   /** ISO timestamp this snapshot was captured (i.e. when the refresh ran). */
@@ -68,6 +72,65 @@ async function saveSnapshot(snapshot: OddsSnapshot): Promise<void> {
     allowOverwrite: true,
     contentType: "application/json",
   })
+}
+
+/* --------------------------- Concurrency lock ----------------------------- */
+
+interface RefreshLock {
+  lockedAt: string
+  released: boolean
+}
+
+async function readLock(): Promise<RefreshLock | null> {
+  try {
+    const result = await get(LOCK_PATHNAME, { access: "private" })
+    if (!result || !result.stream) return null
+    const text = await new Response(result.stream).text()
+    if (!text) return null
+    return JSON.parse(text) as RefreshLock
+  } catch {
+    return null
+  }
+}
+
+async function writeLock(lock: RefreshLock): Promise<void> {
+  await put(LOCK_PATHNAME, JSON.stringify(lock), {
+    access: "private",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: "application/json",
+  })
+}
+
+/**
+ * Try to acquire the refresh lock. Prevents double-clicks / concurrent refreshes
+ * from firing overlapping SGO pulls. A held-but-stale lock (crashed run older
+ * than LOCK_STALE_MS) is reclaimed. Returns whether we got the lock.
+ *
+ * Note: Blob has no atomic compare-and-swap, so this is a best-effort guard for
+ * a single admin user rather than a distributed mutex — sufficient to stop the
+ * realistic case (impatient double-clicks) without adding a database.
+ */
+export async function acquireRefreshLock(): Promise<{ acquired: boolean; heldSince: string | null }> {
+  const existing = await readLock()
+  const now = Date.now()
+  if (existing && !existing.released) {
+    const age = now - Date.parse(existing.lockedAt)
+    if (Number.isFinite(age) && age < LOCK_STALE_MS) {
+      return { acquired: false, heldSince: existing.lockedAt }
+    }
+  }
+  await writeLock({ lockedAt: new Date(now).toISOString(), released: false })
+  return { acquired: true, heldSince: null }
+}
+
+/** Release the refresh lock. Safe to call even if it was never acquired. */
+export async function releaseRefreshLock(): Promise<void> {
+  try {
+    await writeLock({ lockedAt: new Date().toISOString(), released: true })
+  } catch (err) {
+    console.log("[v0] releaseRefreshLock failed (non-fatal):", (err as Error)?.message)
+  }
 }
 
 /* ------------------------------ Line movement ----------------------------- */
@@ -124,7 +187,15 @@ export async function refreshSnapshot(ctx: SeasonContextLite): Promise<RefreshSu
   const prevByCfbdId = new Map<string, GameWithOdds>()
   if (previous) for (const g of previous.games) prevByCfbdId.set(g.cfbdId, g)
 
+  // The full fetch + match runs BEFORE we touch storage. If this throws (e.g.
+  // SgoRateLimitError on 429), we return without ever calling saveSnapshot, so
+  // the existing frozen snapshot is left exactly as-is.
   const { match } = await buildFreshMatch(ctx)
+
+  // Atomicity guard: never overwrite a good snapshot with an empty result.
+  if (match.games.length === 0) {
+    throw new Error("Refresh produced no games; existing snapshot was not changed.")
+  }
 
   const games: GameWithOdds[] = match.games.map((g) => ({
     ...g,
