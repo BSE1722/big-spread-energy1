@@ -1,5 +1,5 @@
 import { Check } from "lucide-react"
-import { formatKickoff, formatKickoffDate } from "@/lib/use-live-board"
+import { formatKickoff, formatKickoffDate } from "@/lib/format-kickoff"
 import { TeamName } from "@/components/team-name"
 import { BseRatingBadge } from "@/components/board/bse-rating-badge"
 

@@ -6,7 +6,6 @@ import { getCfbdGameLites } from "@/lib/board-build"
 import { loadSnapshot } from "@/lib/odds-snapshot"
 import { getAccessState, canViewBreakdown } from "@/lib/access"
 import type { GameWithOdds } from "@/lib/odds-match"
-import { SiteHeader } from "@/components/site-header"
 import { BreakdownHeader } from "@/components/breakdown/breakdown-header"
 import { BreakdownLocked } from "@/components/breakdown/breakdown-locked"
 import { BreakdownFull } from "@/components/breakdown/breakdown-full"
@@ -58,9 +57,7 @@ export default async function GameBreakdownPage({
   }
 
   return (
-    <div className="min-h-dvh bg-background">
-      <SiteHeader />
-      <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
+    <main className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
         <Link
           href="/board"
           className="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
@@ -81,7 +78,6 @@ export default async function GameBreakdownPage({
             gameId={gameId}
           />
         )}
-      </main>
-    </div>
+    </main>
   )
 }
