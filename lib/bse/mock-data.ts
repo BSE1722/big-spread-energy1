@@ -20,8 +20,14 @@ import { getTeamColor } from "./teams"
 /** All values below are demo data. This flag is stamped onto every Game. */
 export const MOCK_DATA_SOURCE: DataSource = "mock"
 
-/** Human-facing banner text so mock data is never mistaken for live odds. */
-export const MOCK_DATA_LABEL = "Demo data — not real odds. Model tracking begins Week 1."
+/**
+ * Human-facing banner text. Market lines shown on the Board are live
+ * (SportsGameOdds / DraftKings); the BSE Rating and model edges are what
+ * publish before kickoff. Kept honest so nothing on a live surface is
+ * mislabeled as fake, and nothing pending is implied to already exist.
+ */
+export const MOCK_DATA_LABEL =
+  "Market lines are live. BSE Ratings & model edges publish before kickoff."
 
 /** When this mock snapshot was authored (stamped as `lastUpdated`). */
 export const MOCK_SNAPSHOT_TIME = "2026-08-18T14:00:00.000Z"
