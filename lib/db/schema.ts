@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, unique } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, boolean, integer, unique, doublePrecision, jsonb, index } from "drizzle-orm/pg-core"
 
 // ---------------------------------------------------------------------------
 // Better Auth tables (camelCase columns match Better Auth defaults — do not
@@ -99,3 +99,88 @@ export const subscriptions = pgTable("subscriptions", {
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
+
+// ---------------------------------------------------------------------------
+// Weather ingestion (INFRASTRUCTURE ONLY — no model math here).
+//
+// SOURCE-OF-TRUTH SPLIT (unchanged):
+//   - CFBD  → schedule, teams, kickoff, venue identity.
+//   - SGO/DraftKings → betting markets (frozen Blob snapshot, never touched here).
+//   - Weather → this pair of tables ONLY. Fully independent of the odds snapshot.
+// ---------------------------------------------------------------------------
+
+/**
+ * Static CFBD venue reference: real stadium coordinates + dome flag + timezone.
+ * Weather is tied to THESE coordinates and the scheduled kickoff — never the
+ * team's home city. `dome = true` means outdoor weather is not a factor and we
+ * skip the forecast fetch entirely.
+ */
+export const venues = pgTable("venues", {
+  id: integer("id").primaryKey(), // CFBD venue_id
+  name: text("name"),
+  city: text("city"),
+  state: text("state"),
+  countryCode: text("country_code"),
+  timezone: text("timezone"),
+  latitude: doublePrecision("latitude"),
+  longitude: doublePrecision("longitude"),
+  elevation: doublePrecision("elevation"),
+  dome: boolean("dome").notNull().default(false),
+  grass: boolean("grass"),
+  capacity: integer("capacity"),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+})
+
+/**
+ * Append-only historical weather forecasts per game. Each refresh inserts a new
+ * row (keyed by cfbdGameId + fetchedAt) so we retain the full forecast history,
+ * the lead time before kickoff, and the exact game-time reading the model will
+ * eventually consume (`isFinalPregame`). `raw` keeps the full provider payload
+ * for auditing/backtesting. NO fair-line or BSE-rating math lives here.
+ */
+export const gameWeather = pgTable(
+  "game_weather",
+  {
+    id: text("id").primaryKey(),
+    season: integer("season").notNull(),
+    week: integer("week").notNull(),
+    cfbdGameId: text("cfbdGameId").notNull(),
+    venueId: integer("venueId"),
+    kickoff: timestamp("kickoff", { withTimezone: true }),
+    kickoffTBD: boolean("kickoffTBD").notNull().default(false),
+    /** Dome/indoor: outdoor weather intentionally not applied. */
+    indoor: boolean("indoor").notNull().default(false),
+    provider: text("provider").notNull(),
+    fetchedAt: timestamp("fetchedAt", { withTimezone: true }).notNull().defaultNow(),
+    /** The exact forecast hour requested (== kickoff hour in venue tz). */
+    forecastValidFor: timestamp("forecastValidFor", { withTimezone: true }),
+    /** Minutes between fetchedAt and kickoff (forecast lead time). */
+    leadTimeMinutes: integer("leadTimeMinutes"),
+    /** Set on the last pre-kickoff reading — the official game-time record. */
+    isFinalPregame: boolean("isFinalPregame").notNull().default(false),
+    /** ok | indoor | pending_kickoff | unavailable */
+    dataStatus: text("dataStatus").notNull().default("ok"),
+    temperatureF: doublePrecision("temperatureF"),
+    apparentTemperatureF: doublePrecision("apparentTemperatureF"),
+    humidityPct: doublePrecision("humidityPct"),
+    windSpeedMph: doublePrecision("windSpeedMph"),
+    windGustMph: doublePrecision("windGustMph"),
+    windDirectionDeg: doublePrecision("windDirectionDeg"),
+    precipitationProbabilityPct: doublePrecision("precipitationProbabilityPct"),
+    precipitationIntensityMm: doublePrecision("precipitationIntensityMm"),
+    precipitationType: text("precipitationType"),
+    rainMm: doublePrecision("rainMm"),
+    snowfallCm: doublePrecision("snowfallCm"),
+    cloudCoverPct: doublePrecision("cloudCoverPct"),
+    weatherCode: integer("weatherCode"),
+    weatherDescription: text("weatherDescription"),
+    severe: boolean("severe").notNull().default(false),
+    raw: jsonb("raw"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    gameFetched: unique("game_weather_game_fetched_unique").on(t.cfbdGameId, t.fetchedAt),
+    gameIdx: index("game_weather_game_idx").on(t.cfbdGameId, t.fetchedAt),
+    seasonWeekIdx: index("game_weather_season_week_idx").on(t.season, t.week),
+  }),
+)

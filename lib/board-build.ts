@@ -25,6 +25,8 @@ interface CfbdGame {
   startDate: string
   startTimeTBD: boolean
   neutralSite: boolean
+  venueId: number | null
+  venue: string | null
   homeTeam: string
   homeClassification: string | null
   homePoints: number | null
@@ -69,6 +71,8 @@ export async function getCfbdGameLites(ctx: SeasonContextLite): Promise<CfbdGame
     kickoff: g.startDate,
     kickoffTBD: g.startTimeTBD,
     neutralSite: g.neutralSite,
+    venueId: g.venueId ?? null,
+    venueName: g.venue ?? null,
     away: { name: g.awayTeam, abbr: abbr(g.awayTeam) },
     home: { name: g.homeTeam, abbr: abbr(g.homeTeam) },
   }))

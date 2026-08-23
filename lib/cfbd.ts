@@ -59,3 +59,24 @@ throw new Error(
 
 return response.json()
 }
+
+/**
+ * CFBD /venues — static reference data (stadium coordinates, dome flag,
+ * timezone, city/state). Cached aggressively; venues almost never change.
+ * Used ONLY to resolve a game's real stadium location for weather — never
+ * touches the schedule or odds paths.
+ */
+export async function getCfbdVenues() {
+  const response = await fetch(`${CFBD_BASE_URL}/venues`, {
+    headers: getHeaders(),
+    next: { revalidate: 604800 }, // 7 days
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      `CFBD venues request failed: ${response.status} ${response.statusText}`,
+    )
+  }
+
+  return response.json()
+}
