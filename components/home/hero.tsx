@@ -41,19 +41,18 @@ export function Hero() {
           </h1>
 
           <p className="mt-6 max-w-md text-pretty text-lg font-semibold leading-relaxed text-foreground sm:text-xl">
-            Bring us the bet you&apos;re thinking about making. We&apos;ll tell
-            you whether the numbers actually support it.
+            THEIR LINE. OUR LINE. YOUR EDGE.
+            Sportsbooks tell you what the line is. 
+            BSE calculates where the line SHOULD be. 
           </p>
 
           <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">
-            BSE combines deep college football analytics wtih market data to break down matchups,
-            compare sportbook lines to our projections, track line movement, score betting edges,
-            and analyze CUSTOM parlays leg-by-leg. 
-            We flag the weak legs, explain what&apos;s hurting the ticket,
-            and recommend a mathematically stronger version when one exists.
-            This isn&apos;t another picks or &ldquo;locks&rdquo; site — it&apos;s
-            a decision engine built to answer one question before you wager: do
-            the numbers actually support this bet?
+            Every matchup. Every line. One proprietary BSE rating buit to show you where the market looks right - and where it doesn't.
+            Ready to bet outside the box? Don't just read the lines. Challenge them!
+            Or use our tools to fill your pockets. The house doesn't always win. 
+            BSE isn't another picks or "locks" site.
+            It's an independent betting intelligence platform built to answer one questions before you wager:
+           Do the numbers actually support this bet?
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
