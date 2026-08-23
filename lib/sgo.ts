@@ -355,15 +355,34 @@ function normalizeMarket(event: SgoEvent): NormalizedMarket {
  * Fetch NCAAF events (with DraftKings odds) from SGO, following pagination.
  * Cached at the data layer so concurrent visitors share one upstream call.
  */
+/**
+ * Main-line oddIDs we actually use: DraftKings spread, moneyline, and total.
+ * We pass ONE side of each; `includeOpposingOddIDs=true` returns the other side.
+ * This keeps the payload to the exact markets the Board consumes and guarantees
+ * we never pull props, alternates, halves, or team totals.
+ */
+export const MAIN_LINE_ODD_IDS = [
+  "points-home-game-sp-home", // spread (home) -> opposing gives away
+  "points-home-game-ml-home", // moneyline (home) -> opposing gives away
+  "points-all-game-ou-over", // total (over) -> opposing gives under
+] as const
+
 export async function fetchSgoNcaafEvents(options?: {
   limitPerPage?: number
   maxPages?: number
+  /** ISO instant; only events starting at/after this are returned. */
+  startsAfter?: string
+  /** ISO instant; only events starting at/before this are returned. */
+  startsBefore?: string
+  /** Restrict to these oddIDs. Defaults to the 3 main lines. Pass null for all. */
+  oddIDs?: readonly string[] | null
 }): Promise<SgoEvent[]> {
   const apiKey = process.env.SGO_API
   if (!apiKey) throw new Error("SGO_API is not configured")
 
   const limit = options?.limitPerPage ?? 100
   const maxPages = options?.maxPages ?? 4
+  const oddIDs = options?.oddIDs === null ? null : (options?.oddIDs ?? MAIN_LINE_ODD_IDS)
 
   const all: SgoEvent[] = []
   let cursor: string | undefined
@@ -375,6 +394,15 @@ export async function fetchSgoNcaafEvents(options?: {
       oddsAvailable: "true",
       limit: String(limit),
     })
+    // Date window (the primary entity saver): bound the pull to the target week
+    // instead of the entire NCAAF season.
+    if (options?.startsAfter) params.set("startsAfter", options.startsAfter)
+    if (options?.startsBefore) params.set("startsBefore", options.startsBefore)
+    // Market filter: request only the exact main lines we consume, both sides.
+    if (oddIDs && oddIDs.length > 0) {
+      params.set("oddIDs", oddIDs.join(","))
+      params.set("includeOpposingOddIDs", "true")
+    }
     if (cursor) params.set("cursor", cursor)
 
     // MANUAL-ONLY: no timed revalidation. This fetch runs only during an
@@ -418,8 +446,10 @@ export function normalizeSgoEvent(ev: SgoEvent): SgoNormalizedEvent {
 }
 
 /** Fetch + normalize NCAAF DraftKings odds into a clean, matchable list. */
-export async function getSgoNormalizedEvents(): Promise<SgoNormalizedEvent[]> {
-  const events = await fetchSgoNcaafEvents()
+export async function getSgoNormalizedEvents(
+  options?: Parameters<typeof fetchSgoNcaafEvents>[0],
+): Promise<SgoNormalizedEvent[]> {
+  const events = await fetchSgoNcaafEvents(options)
   return events.map(normalizeSgoEvent)
 }
 
