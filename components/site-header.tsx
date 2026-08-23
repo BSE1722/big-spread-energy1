@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { Logo } from "@/components/logo"
-import { buttonVariants } from "@/components/ui/button"
+import { AuthNav } from "@/components/auth/auth-nav"
 import { cn } from "@/lib/utils"
 
 const nav = [
