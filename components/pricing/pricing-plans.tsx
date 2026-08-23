@@ -2,13 +2,17 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Check } from "lucide-react"
-import { buttonVariants } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { FREE_FEATURES, PRO_FEATURES } from "@/lib/bse"
+import { useAccess } from "@/lib/use-access"
+import { ProCheckout } from "@/components/pricing/pro-checkout"
 
 const plans = [
   {
+    id: "rookie",
     name: "Rookie",
     tagline: "Get enough edge to understand what you're missing",
     monthly: 0,
@@ -18,6 +22,7 @@ const plans = [
     features: FREE_FEATURES,
   },
   {
+    id: "pro",
     name: "BSE Pro",
     tagline: "The complete BSE betting terminal",
     monthly: 29.99,
@@ -27,6 +32,7 @@ const plans = [
     features: PRO_FEATURES,
   },
   {
+    id: "black",
     name: "BSE Black",
     tagline: "The model behind the model",
     monthly: 99.99,
@@ -51,9 +57,24 @@ const plans = [
 
 export function PricingPlans() {
   const [annual, setAnnual] = useState(true)
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const router = useRouter()
+  const { access } = useAccess()
+
+  const tier = access?.tier ?? "guest"
+  const interval = annual ? "year" : "month"
 
   return (
     <div>
+      {checkoutOpen && (
+        <ProCheckout
+          interval={interval}
+          onClose={() => {
+            setCheckoutOpen(false)
+            router.push("/board")
+          }}
+        />
+      )}
       <div className="flex items-center justify-center gap-3">
         <span className={cn("font-mono text-xs uppercase tracking-wide", !annual ? "text-foreground" : "text-muted-foreground")}>
           Monthly
@@ -113,15 +134,13 @@ export function PricingPlans() {
                 </span>
               </div>
 
-              <Link
-                href="/signup"
-                className={cn(
-                  buttonVariants({ variant: plan.highlight ? "default" : "outline" }),
-                  "mt-6 h-11 font-display font-semibold uppercase tracking-wide",
-                )}
-              >
-                {plan.cta}
-              </Link>
+              <PlanCta
+                planId={plan.id}
+                label={plan.cta}
+                highlight={plan.highlight}
+                tier={tier}
+                onGoPro={() => setCheckoutOpen(true)}
+              />
 
               <ul className="mt-6 flex flex-col gap-3 border-t border-border pt-6">
                 {plan.features.map((f) => (
@@ -136,5 +155,71 @@ export function PricingPlans() {
         })}
       </div>
     </div>
+  )
+}
+
+const ctaClass = (highlight: boolean) =>
+  cn(
+    buttonVariants({ variant: highlight ? "default" : "outline" }),
+    "mt-6 h-11 w-full font-display font-semibold uppercase tracking-wide",
+  )
+
+function PlanCta({
+  planId,
+  label,
+  highlight,
+  tier,
+  onGoPro,
+}: {
+  planId: string
+  label: string
+  highlight: boolean
+  tier: "guest" | "rookie" | "pro"
+  onGoPro: () => void
+}) {
+  // BSE Black — sales-led, not a self-serve Stripe plan.
+  if (planId === "black") {
+    return (
+      <Link href="mailto:hello@bigspreadenergy.com?subject=BSE%20Black" className={ctaClass(highlight)}>
+        {label}
+      </Link>
+    )
+  }
+
+  // Rookie (free) plan.
+  if (planId === "rookie") {
+    if (tier === "guest") {
+      return (
+        <Link href="/signup" className={ctaClass(highlight)}>
+          {label}
+        </Link>
+      )
+    }
+    return (
+      <Link href="/board" className={ctaClass(highlight)}>
+        {tier === "rookie" ? "Your current plan" : "Go to Board"}
+      </Link>
+    )
+  }
+
+  // BSE Pro — Stripe subscription.
+  if (tier === "pro") {
+    return (
+      <Link href="/board" className={ctaClass(highlight)}>
+        You&apos;re Pro
+      </Link>
+    )
+  }
+  if (tier === "guest") {
+    return (
+      <Link href={`/signup?next=${encodeURIComponent("/pricing")}`} className={ctaClass(highlight)}>
+        {label}
+      </Link>
+    )
+  }
+  return (
+    <Button onClick={onGoPro} className={ctaClass(highlight)}>
+      {label}
+    </Button>
   )
 }

@@ -109,18 +109,9 @@ export function useLiveBoard(): LiveBoardState {
   return state
 }
 
-/** Format an ISO kickoff into the board's "Sat 12:00 PM ET" style. */
-export function formatKickoff(iso: string, tbd: boolean): string {
-  const d = new Date(iso)
-  const day = d.toLocaleDateString("en-US", { weekday: "short", timeZone: "America/New_York" })
-  if (tbd) return `${day} · TBD`
-  const time = d.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: "America/New_York",
-  })
-  return `${day} ${time} ET`
-}
+// Pure kickoff formatters live in a non-client module so Server Components can
+// use them too; re-exported here for existing client board consumers.
+export { formatKickoff, formatKickoffDate } from "@/lib/format-kickoff"
 
 /**
  * The market spread is stored home-relative (negative = home favored). Returns
@@ -139,14 +130,4 @@ export function formatFavoredSpread(
   return `${favAbbr} ${favLine.toFixed(1)}`
 }
 
-/** Unambiguous day-first date for an ISO kickoff, in ET (e.g. "29 Aug", "5 Sep"). */
-export function formatKickoffDate(iso: string): string {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-    timeZone: "America/New_York",
-  }).formatToParts(new Date(iso))
-  const day = parts.find((p) => p.type === "day")?.value ?? "--"
-  const month = parts.find((p) => p.type === "month")?.value ?? "--"
-  return `${day} ${month}`
-}
+

@@ -27,6 +27,9 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-positive: var(--positive);
+  --color-rating-strong: var(--rating-strong);
+  --color-rating-mid: var(--rating-mid);
+  --color-rating-weak: var(--rating-weak);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -63,6 +66,11 @@
   --positive: oklch(0.86 0.24 148);
   --destructive: oklch(0.62 0.22 22);
   --destructive-foreground: oklch(0.98 0.004 260);
+
+  /* BSE Rating bands: 80-100 green, 60-79 yellow, 0-59 red */
+  --rating-strong: oklch(0.86 0.24 148);
+  --rating-mid: oklch(0.82 0.16 90);
+  --rating-weak: oklch(0.62 0.22 22);
 
   --border: oklch(1 0 0 / 9%);
   --input: oklch(1 0 0 / 12%);
