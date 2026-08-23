@@ -158,7 +158,7 @@ function PhoneCard() {
             </span>
           </div>
           <span className="mt-1 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Week 1 · Sample
+            Week 1 · BSE Choice
           </span>
           <dl className="mt-3 space-y-2 text-sm">
             <Row label="Market Spread" value="MISS -6.5" />
