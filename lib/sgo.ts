@@ -19,6 +19,54 @@
 const SGO_BASE_URL = "https://api.sportsgameodds.com/v2"
 const BOOKMAKER = "draftkings" as const
 
+/* ----------------------------- Rate limiting ----------------------------- */
+
+/** Which SGO quota tripped, when we can tell from /account/usage. */
+export type SgoLimitKind = "per-minute" | "hourly" | "monthly-objects" | "unknown"
+
+/**
+ * Thrown when SGO responds 429. Carries the parsed Retry-After delay (seconds)
+ * and, when we could fetch it, the usage report identifying which limit tripped.
+ * Never carries or exposes the API key.
+ */
+export class SgoRateLimitError extends Error {
+  readonly retryAfterSeconds: number | null
+  usage: SgoUsageReport | null
+  constructor(retryAfterSeconds: number | null, usage: SgoUsageReport | null = null) {
+    super("SportsGameOdds rate limit reached (HTTP 429).")
+    this.name = "SgoRateLimitError"
+    this.retryAfterSeconds = retryAfterSeconds
+    this.usage = usage
+  }
+}
+
+/** Parse a Retry-After header value: delta-seconds OR an HTTP date. */
+export function parseRetryAfter(value: string | null): number | null {
+  if (!value) return null
+  const secs = Number(value)
+  if (Number.isFinite(secs)) return Math.max(0, Math.ceil(secs))
+  const when = Date.parse(value)
+  if (!Number.isNaN(when)) return Math.max(0, Math.ceil((when - Date.now()) / 1000))
+  return null
+}
+
+export interface SgoUsageQuota {
+  current: number | null
+  max: number | null
+  remaining: number | null
+}
+
+export interface SgoUsageReport {
+  fetchedAt: string
+  perMinute: SgoUsageQuota
+  hourly: SgoUsageQuota
+  monthlyObjects: SgoUsageQuota
+  /** Best-effort determination of which quota is currently exhausted. */
+  limitHit: SgoLimitKind
+  /** Raw payload for admin visibility. Contains no API key. */
+  raw: unknown
+}
+
 /**
  * @deprecated Odds are no longer time-cached. Refreshes are manual-only and the
  * result is frozen in the durable snapshot. Retained only for compatibility.
@@ -310,6 +358,12 @@ export async function fetchSgoNcaafEvents(options?: {
       cache: "no-store",
     })
 
+    if (res.status === 429) {
+      // Rate limited. Do NOT retry/loop — surface immediately so the caller can
+      // report a clear message and leave the frozen snapshot untouched.
+      throw new SgoRateLimitError(parseRetryAfter(res.headers.get("retry-after")))
+    }
+
     if (!res.ok) {
       throw new Error(`SGO events request failed: ${res.status} ${res.statusText}`)
     }
@@ -340,6 +394,94 @@ export function normalizeSgoEvent(ev: SgoEvent): SgoNormalizedEvent {
 export async function getSgoNormalizedEvents(): Promise<SgoNormalizedEvent[]> {
   const events = await fetchSgoNcaafEvents()
   return events.map(normalizeSgoEvent)
+}
+
+/* ------------------------------ Account usage ----------------------------- */
+
+/** Breadth-first search for the first numeric value under any of `keys`. */
+function deepFindNumber(obj: unknown, keys: string[]): number | null {
+  const wanted = new Set(keys.map((k) => k.toLowerCase()))
+  const queue: unknown[] = [obj]
+  let steps = 0
+  while (queue.length && steps < 5000) {
+    const cur = queue.shift()
+    steps++
+    if (cur && typeof cur === "object") {
+      for (const [k, v] of Object.entries(cur as Record<string, unknown>)) {
+        if (wanted.has(k.toLowerCase())) {
+          const n = typeof v === "number" ? v : Number(v)
+          if (Number.isFinite(n)) return n
+        }
+        if (v && typeof v === "object") queue.push(v)
+      }
+    }
+  }
+  return null
+}
+
+function quota(obj: unknown, currentKeys: string[], maxKeys: string[], remainingKeys: string[]): SgoUsageQuota {
+  const current = deepFindNumber(obj, currentKeys)
+  const max = deepFindNumber(obj, maxKeys)
+  let remaining = deepFindNumber(obj, remainingKeys)
+  if (remaining == null && max != null && current != null) remaining = max - current
+  return { current, max, remaining }
+}
+
+/** Normalize whatever /account/usage returns into a stable, key-free report. */
+export function interpretUsage(payload: unknown): SgoUsageReport {
+  const root = (payload as { data?: unknown })?.data ?? payload
+
+  const perMinute = quota(
+    root,
+    ["per_minute", "perMinute", "requestsPerMinute", "requests_per_minute", "minute"],
+    ["per_minute_limit", "perMinuteLimit", "maxPerMinute", "rateLimit", "rate_limit", "limitPerMinute"],
+    ["remaining", "requestsRemaining", "requests_remaining", "remainingPerMinute"],
+  )
+  const hourly = quota(
+    root,
+    ["per_hour", "perHour", "requestsPerHour", "requests_per_hour", "hour", "hourly"],
+    ["per_hour_limit", "perHourLimit", "maxPerHour", "limitPerHour"],
+    ["remainingPerHour", "hourlyRemaining"],
+  )
+  const monthlyObjects = quota(
+    root,
+    ["objects", "monthlyObjects", "monthly_objects", "objects_this_month", "entities", "per_month", "perMonth"],
+    ["objects_limit", "monthlyObjectsLimit", "maxObjects", "objectLimit", "per_month_limit"],
+    ["objectsRemaining", "remainingObjects", "monthlyObjectsRemaining"],
+  )
+
+  const exhausted = (q: SgoUsageQuota) =>
+    (q.remaining != null && q.remaining <= 0) || (q.current != null && q.max != null && q.current >= q.max)
+
+  let limitHit: SgoLimitKind = "unknown"
+  if (exhausted(perMinute)) limitHit = "per-minute"
+  else if (exhausted(hourly)) limitHit = "hourly"
+  else if (exhausted(monthlyObjects)) limitHit = "monthly-objects"
+
+  return { fetchedAt: new Date().toISOString(), perMinute, hourly, monthlyObjects, limitHit, raw: root }
+}
+
+/**
+ * Query SGO /account/usage to see current quota status. Read-only, single
+ * request, no retries. Never returns the API key.
+ */
+export async function fetchSgoAccountUsage(): Promise<SgoUsageReport> {
+  const apiKey = process.env.SGO_API
+  if (!apiKey) throw new Error("SGO_API is not configured")
+
+  const res = await fetch(`${SGO_BASE_URL}/account/usage`, {
+    headers: { "x-api-key": apiKey, Accept: "application/json" },
+    cache: "no-store",
+  })
+
+  if (res.status === 429) {
+    throw new SgoRateLimitError(parseRetryAfter(res.headers.get("retry-after")))
+  }
+  if (!res.ok) {
+    throw new Error(`SGO usage request failed: ${res.status} ${res.statusText}`)
+  }
+
+  return interpretUsage(await res.json())
 }
 
 /**
