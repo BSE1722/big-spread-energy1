@@ -1,0 +1,156 @@
+/**
+ * Durable, MANUAL-ONLY DraftKings odds snapshot.
+ *
+ * The board reads whatever snapshot is stored here and shows those exact lines
+ * until an admin explicitly triggers a refresh. Nothing on this path is time-
+ * based: there is no background revalidation and no visitor-triggered upstream
+ * call. Only `refreshSnapshot()` (admin action) ever hits SportsGameOdds.
+ *
+ * Storage: a single private Vercel Blob at a stable pathname, overwritten on
+ * each refresh. The prior snapshot's lines are carried forward into each game's
+ * lineHistory (opening / previous / current + movement) so line movement can be
+ * computed later without changing the BSE model or UI.
+ */
+
+import { put, get } from "@vercel/blob"
+import { buildFreshMatch, type SeasonContextLite } from "@/lib/board-build"
+import type { GameWithOdds, LineHistory } from "@/lib/odds-match"
+
+const SNAPSHOT_PATHNAME = "odds/draftkings-snapshot.json"
+
+export interface OddsSnapshot {
+  /** ISO timestamp this snapshot was captured (i.e. when the refresh ran). */
+  snapshotAt: string
+  /** ISO timestamp of the snapshot this one replaced (for movement context). */
+  previousSnapshotAt: string | null
+  season: number
+  week: number
+  seasonType: string
+  matchedCount: number
+  unmatchedCount: number
+  unmatched: { cfbdId: string; matchup: string; reason: string }[]
+  /** Frozen matched/unavailable games with their DraftKings markets. */
+  games: GameWithOdds[]
+}
+
+export interface RefreshSummary {
+  refreshed: number
+  matched: number
+  unmatched: number
+  snapshotAt: string
+  previousSnapshotAt: string | null
+}
+
+/* ------------------------------- Load / Save ------------------------------ */
+
+/**
+ * Read the stored snapshot. Returns null when none exists yet. NEVER triggers a
+ * SportsGameOdds request — it only reads durable storage.
+ */
+export async function loadSnapshot(): Promise<OddsSnapshot | null> {
+  try {
+    const result = await get(SNAPSHOT_PATHNAME, { access: "private" })
+    if (!result || !result.stream) return null
+    const text = await new Response(result.stream).text()
+    if (!text) return null
+    return JSON.parse(text) as OddsSnapshot
+  } catch (err) {
+    // A missing blob is a normal "no snapshot yet" state, not an error.
+    console.log("[v0] loadSnapshot: no existing snapshot or read failed:", (err as Error)?.message)
+    return null
+  }
+}
+
+async function saveSnapshot(snapshot: OddsSnapshot): Promise<void> {
+  await put(SNAPSHOT_PATHNAME, JSON.stringify(snapshot), {
+    access: "private",
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType: "application/json",
+  })
+}
+
+/* ------------------------------ Line movement ----------------------------- */
+
+/** Carry a prior game's lines forward so opening/previous/movement are tracked. */
+function withLineMovement(next: GameWithOdds, prev: GameWithOdds | undefined): LineHistory {
+  const curSpread = next.market.spread.home
+  const curTotal = next.market.total.points
+
+  if (!prev) {
+    // First time we've seen this game: opening === current, no movement yet.
+    return {
+      openingSpread: curSpread,
+      previousSpread: null,
+      currentSpread: curSpread,
+      spreadMovement: null,
+      openingTotal: curTotal,
+      previousTotal: null,
+      currentTotal: curTotal,
+      totalMovement: null,
+    }
+  }
+
+  const ph = prev.lineHistory
+  const openingSpread = ph.openingSpread ?? prev.market.spread.home ?? curSpread
+  const previousSpread = prev.market.spread.home
+  const openingTotal = ph.openingTotal ?? prev.market.total.points ?? curTotal
+  const previousTotal = prev.market.total.points
+
+  return {
+    openingSpread,
+    previousSpread,
+    currentSpread: curSpread,
+    spreadMovement:
+      curSpread != null && previousSpread != null ? Number((curSpread - previousSpread).toFixed(2)) : null,
+    openingTotal,
+    previousTotal,
+    currentTotal: curTotal,
+    totalMovement:
+      curTotal != null && previousTotal != null ? Number((curTotal - previousTotal).toFixed(2)) : null,
+  }
+}
+
+/* -------------------------------- Refresh --------------------------------- */
+
+/**
+ * MANUAL refresh (admin-only). Pulls fresh CFBD + SGO/DraftKings, matches them
+ * with the validated logic, folds in line movement vs the prior snapshot, saves
+ * the new snapshot, and returns a summary. This is the ONLY function that hits
+ * SportsGameOdds.
+ */
+export async function refreshSnapshot(ctx: SeasonContextLite): Promise<RefreshSummary> {
+  const previous = await loadSnapshot()
+  const prevByCfbdId = new Map<string, GameWithOdds>()
+  if (previous) for (const g of previous.games) prevByCfbdId.set(g.cfbdId, g)
+
+  const { match } = await buildFreshMatch(ctx)
+
+  const games: GameWithOdds[] = match.games.map((g) => ({
+    ...g,
+    lineHistory: withLineMovement(g, prevByCfbdId.get(g.cfbdId)),
+  }))
+
+  const snapshotAt = new Date().toISOString()
+  const snapshot: OddsSnapshot = {
+    snapshotAt,
+    previousSnapshotAt: previous?.snapshotAt ?? null,
+    season: ctx.season,
+    week: ctx.week,
+    seasonType: ctx.seasonType,
+    matchedCount: match.matchedCount,
+    unmatchedCount: match.unmatchedCount,
+    unmatched: match.unmatched,
+    games,
+  }
+
+  await saveSnapshot(snapshot)
+
+  return {
+    refreshed: games.length,
+    matched: match.matchedCount,
+    unmatched: match.unmatchedCount,
+    snapshotAt,
+    previousSnapshotAt: snapshot.previousSnapshotAt,
+  }
+}
