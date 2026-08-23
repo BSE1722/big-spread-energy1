@@ -142,7 +142,7 @@ function PhoneCard() {
             BSE Rating
           </span>
           <span className="my-1 font-display text-7xl font-bold leading-none text-primary text-glow">
-            91
+            87
           </span>
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
             Big Spread Alert
@@ -165,7 +165,7 @@ function PhoneCard() {
             <Row label="BSE Projection" value="-8.5" />
             <div className="flex items-center justify-between border-t border-border/60 pt-2">
               <dt className="font-semibold text-primary">Spread Edge</dt>
-              <dd className="font-display text-base font-bold text-primary">+2.5</dd>
+              <dd className="font-display text-base font-bold text-primary">+2.0</dd>
             </div>
           </dl>
          <Link
