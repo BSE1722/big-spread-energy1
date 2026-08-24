@@ -1,0 +1,437 @@
+{
+  "generatedAt": "2026-08-24T21:18:50.474Z",
+  "freeze": {
+    "pHash": "d7eef8d0f2af81ef9043803bd47aa23f45fa23064866ea378252815131a85f8a",
+    "sHash": "6ef33c33e79f61146a87ffba857c3ffc7800be7f1f867607322239c591ab9a5c"
+  },
+  "grid": {
+    "ridge": {
+      "lambda": [
+        1,
+        10,
+        30,
+        100,
+        300
+      ]
+    },
+    "elasticnet": {
+      "lambda": [
+        0.5,
+        1,
+        3
+      ],
+      "l1ratio": [
+        0.2,
+        0.5,
+        0.8
+      ]
+    },
+    "gbt": {
+      "depth": [
+        2,
+        3
+      ],
+      "learningRate": [
+        0.05,
+        0.1
+      ],
+      "maxTrees": 300,
+      "minLeaf": 30,
+      "maxBins": 48,
+      "patience": 20
+    }
+  },
+  "foldSummary": [
+    {
+      "fold": "fold1",
+      "family": "A_independent",
+      "model": "ridge",
+      "hp": {
+        "lambda": 100
+      },
+      "n": 773,
+      "testMae": 12.482343713463433,
+      "mktMae": 12.141009055627425,
+      "improvement": -0.3413346578360077
+    },
+    {
+      "fold": "fold1",
+      "family": "A_independent",
+      "model": "elasticnet",
+      "hp": {
+        "lambda": 0.5,
+        "l1ratio": 0.8
+      },
+      "n": 773,
+      "testMae": 12.613042851236663,
+      "mktMae": 12.141009055627425,
+      "improvement": -0.47203379560923864
+    },
+    {
+      "fold": "fold1",
+      "family": "A_independent",
+      "model": "gbt",
+      "hp": {
+        "depth": 3,
+        "learningRate": 0.05,
+        "nTrees": 104
+      },
+      "n": 773,
+      "testMae": 12.76661377358491,
+      "mktMae": 12.141009055627425,
+      "improvement": -0.6256047179574846
+    },
+    {
+      "fold": "fold1",
+      "family": "B_residual",
+      "model": "market_anchored_ridge",
+      "hp": {
+        "lambda": 300
+      },
+      "n": 773,
+      "testMae": 12.11584748157921,
+      "mktMae": 12.141009055627425,
+      "improvement": 0.025161574048214064
+    },
+    {
+      "fold": "fold1",
+      "family": "B_residual",
+      "model": "elasticnet",
+      "hp": {
+        "lambda": 0.5,
+        "l1ratio": 0.2
+      },
+      "n": 773,
+      "testMae": 12.110944492678039,
+      "mktMae": 12.141009055627425,
+      "improvement": 0.030064562949386087
+    },
+    {
+      "fold": "fold1",
+      "family": "B_residual",
+      "model": "gbt",
+      "hp": {
+        "depth": 3,
+        "learningRate": 0.1,
+        "nTrees": 10
+      },
+      "n": 773,
+      "testMae": 12.155103290421039,
+      "mktMae": 12.141009055627425,
+      "improvement": -0.014094234793613936
+    },
+    {
+      "fold": "fold2",
+      "family": "A_independent",
+      "model": "ridge",
+      "hp": {
+        "lambda": 1
+      },
+      "n": 534,
+      "testMae": 13.488015908627974,
+      "mktMae": 12.894194756554308,
+      "improvement": -0.5938211520736658
+    },
+    {
+      "fold": "fold2",
+      "family": "A_independent",
+      "model": "elasticnet",
+      "hp": {
+        "lambda": 0.5,
+        "l1ratio": 0.8
+      },
+      "n": 534,
+      "testMae": 13.392436648190918,
+      "mktMae": 12.894194756554308,
+      "improvement": -0.49824189163661003
+    },
+    {
+      "fold": "fold2",
+      "family": "A_independent",
+      "model": "gbt",
+      "hp": {
+        "depth": 2,
+        "learningRate": 0.1,
+        "nTrees": 101
+      },
+      "n": 534,
+      "testMae": 13.380698916730134,
+      "mktMae": 12.894194756554308,
+      "improvement": -0.48650416017582643
+    },
+    {
+      "fold": "fold2",
+      "family": "B_residual",
+      "model": "market_anchored_ridge",
+      "hp": {
+        "lambda": 300
+      },
+      "n": 534,
+      "testMae": 13.002919451188335,
+      "mktMae": 12.894194756554308,
+      "improvement": -0.10872469463402723
+    },
+    {
+      "fold": "fold2",
+      "family": "B_residual",
+      "model": "elasticnet",
+      "hp": {
+        "lambda": 0.5,
+        "l1ratio": 0.2
+      },
+      "n": 534,
+      "testMae": 12.925681428786174,
+      "mktMae": 12.894194756554308,
+      "improvement": -0.03148667223186585
+    },
+    {
+      "fold": "fold2",
+      "family": "B_residual",
+      "model": "gbt",
+      "hp": {
+        "depth": 3,
+        "learningRate": 0.1,
+        "nTrees": 7
+      },
+      "n": 534,
+      "testMae": 12.865445552832133,
+      "mktMae": 12.894194756554308,
+      "improvement": 0.0287492037221746
+    },
+    {
+      "fold": "fold3",
+      "family": "A_independent",
+      "model": "ridge",
+      "hp": {
+        "lambda": 1
+      },
+      "n": 770,
+      "testMae": 13.379795123386915,
+      "mktMae": 12.564285714285715,
+      "improvement": -0.8155094091011996
+    },
+    {
+      "fold": "fold3",
+      "family": "A_independent",
+      "model": "elasticnet",
+      "hp": {
+        "lambda": 0.5,
+        "l1ratio": 0.8
+      },
+      "n": 770,
+      "testMae": 13.47449383114415,
+      "mktMae": 12.564285714285715,
+      "improvement": -0.9102081168584348
+    },
+    {
+      "fold": "fold3",
+      "family": "A_independent",
+      "model": "gbt",
+      "hp": {
+        "depth": 2,
+        "learningRate": 0.1,
+        "nTrees": 101
+      },
+      "n": 770,
+      "testMae": 13.423402675735867,
+      "mktMae": 12.564285714285715,
+      "improvement": -0.8591169614501517
+    },
+    {
+      "fold": "fold3",
+      "family": "B_residual",
+      "model": "market_anchored_ridge",
+      "hp": {
+        "lambda": 300
+      },
+      "n": 770,
+      "testMae": 12.545795930491565,
+      "mktMae": 12.564285714285715,
+      "improvement": 0.018489783794150227
+    },
+    {
+      "fold": "fold3",
+      "family": "B_residual",
+      "model": "elasticnet",
+      "hp": {
+        "lambda": 0.5,
+        "l1ratio": 0.2
+      },
+      "n": 770,
+      "testMae": 12.531804297320091,
+      "mktMae": 12.564285714285715,
+      "improvement": 0.032481416965623566
+    },
+    {
+      "fold": "fold3",
+      "family": "B_residual",
+      "model": "gbt",
+      "hp": {
+        "depth": 3,
+        "learningRate": 0.1,
+        "nTrees": 7
+      },
+      "n": 770,
+      "testMae": 12.51904048754149,
+      "mktMae": 12.564285714285715,
+      "improvement": 0.04524522674422471
+    },
+    {
+      "fold": "fold4",
+      "family": "A_independent",
+      "model": "ridge",
+      "hp": {
+        "lambda": 1
+      },
+      "n": 776,
+      "testMae": 12.664796878233428,
+      "mktMae": 12.027061855670103,
+      "improvement": -0.6377350225633247
+    },
+    {
+      "fold": "fold4",
+      "family": "A_independent",
+      "model": "elasticnet",
+      "hp": {
+        "lambda": 0.5,
+        "l1ratio": 0.8
+      },
+      "n": 776,
+      "testMae": 12.678151315324657,
+      "mktMae": 12.027061855670103,
+      "improvement": -0.6510894596545533
+    },
+    {
+      "fold": "fold4",
+      "family": "A_independent",
+      "model": "gbt",
+      "hp": {
+        "depth": 2,
+        "learningRate": 0.1,
+        "nTrees": 54
+      },
+      "n": 776,
+      "testMae": 12.728563859658298,
+      "mktMae": 12.027061855670103,
+      "improvement": -0.7015020039881943
+    },
+    {
+      "fold": "fold4",
+      "family": "B_residual",
+      "model": "market_anchored_ridge",
+      "hp": {
+        "lambda": 100
+      },
+      "n": 776,
+      "testMae": 12.089273489756936,
+      "mktMae": 12.027061855670103,
+      "improvement": -0.06221163408683239
+    },
+    {
+      "fold": "fold4",
+      "family": "B_residual",
+      "model": "elasticnet",
+      "hp": {
+        "lambda": 0.5,
+        "l1ratio": 0.8
+      },
+      "n": 776,
+      "testMae": 12.028721189778716,
+      "mktMae": 12.027061855670103,
+      "improvement": -0.0016593341086128532
+    },
+    {
+      "fold": "fold4",
+      "family": "B_residual",
+      "model": "gbt",
+      "hp": {
+        "depth": 3,
+        "learningRate": 0.1,
+        "nTrees": 8
+      },
+      "n": 776,
+      "testMae": 11.988292473912887,
+      "mktMae": 12.027061855670103,
+      "improvement": 0.03876938175721634
+    },
+    {
+      "fold": "fold5",
+      "family": "A_independent",
+      "model": "ridge",
+      "hp": {
+        "lambda": 300
+      },
+      "n": 791,
+      "testMae": 12.628792378495794,
+      "mktMae": 12.183944374209862,
+      "improvement": -0.44484800428593196
+    },
+    {
+      "fold": "fold5",
+      "family": "A_independent",
+      "model": "elasticnet",
+      "hp": {
+        "lambda": 0.5,
+        "l1ratio": 0.8
+      },
+      "n": 791,
+      "testMae": 12.589408241816342,
+      "mktMae": 12.183944374209862,
+      "improvement": -0.4054638676064801
+    },
+    {
+      "fold": "fold5",
+      "family": "A_independent",
+      "model": "gbt",
+      "hp": {
+        "depth": 3,
+        "learningRate": 0.1,
+        "nTrees": 85
+      },
+      "n": 791,
+      "testMae": 12.631585565069525,
+      "mktMae": 12.183944374209862,
+      "improvement": -0.44764119085966314
+    },
+    {
+      "fold": "fold5",
+      "family": "B_residual",
+      "model": "market_anchored_ridge",
+      "hp": {
+        "lambda": 300
+      },
+      "n": 791,
+      "testMae": 12.170970842487048,
+      "mktMae": 12.183944374209862,
+      "improvement": 0.012973531722813902
+    },
+    {
+      "fold": "fold5",
+      "family": "B_residual",
+      "model": "elasticnet",
+      "hp": {
+        "lambda": 1,
+        "l1ratio": 0.5
+      },
+      "n": 791,
+      "testMae": 12.173089086072437,
+      "mktMae": 12.183944374209862,
+      "improvement": 0.010855288137424424
+    },
+    {
+      "fold": "fold5",
+      "family": "B_residual",
+      "model": "gbt",
+      "hp": {
+        "depth": 3,
+        "learningRate": 0.05,
+        "nTrees": 52
+      },
+      "n": 791,
+      "testMae": 12.225204380151906,
+      "mktMae": 12.183944374209862,
+      "improvement": -0.041260005942044486
+    }
+  ],
+  "persisted": 21864
+}
