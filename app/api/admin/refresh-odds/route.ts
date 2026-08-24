@@ -3,6 +3,7 @@ import { timingSafeEqual } from "node:crypto"
 import { getCurrentContext } from "@/lib/bse/season"
 import { refreshSnapshot, loadSnapshot, acquireRefreshLock, releaseRefreshLock } from "@/lib/odds-snapshot"
 import { SgoRateLimitError, fetchSgoAccountUsage, type SgoUsageReport } from "@/lib/sgo"
+import { isAdmin } from "@/lib/admin-auth"
 
 /**
  * ADMIN-ONLY manual odds refresh.
@@ -30,7 +31,7 @@ function presentedSecret(request: NextRequest): string {
   return auth.toLowerCase().startsWith("bearer ") ? auth.slice(7) : ""
 }
 
-function isAuthorized(request: NextRequest): boolean {
+function hasValidSecret(request: NextRequest): boolean {
   const expected = process.env.ADMIN_REFRESH_SECRET
   if (!expected) return false // fail closed when not configured
   const presented = presentedSecret(request)
@@ -39,6 +40,16 @@ function isAuthorized(request: NextRequest): boolean {
   const b = Buffer.from(expected)
   if (a.length !== b.length) return false
   return timingSafeEqual(a, b)
+}
+
+/**
+ * Authorized if EITHER: (a) a valid machine secret is presented (for cron /
+ * scripts), OR (b) the request comes from a signed-in admin session (for the
+ * dashboard UI). Both are server-side checks; the UI never sees the secret.
+ */
+async function isAuthorized(request: NextRequest): Promise<boolean> {
+  if (hasValidSecret(request)) return true
+  return await isAdmin()
 }
 
 /** Human-readable summary of which quota tripped, for the admin message. */
@@ -63,7 +74,7 @@ function describeLimit(usage: SgoUsageReport | null): string {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!(await isAuthorized(request))) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
   }
 
@@ -142,7 +153,7 @@ function preflightMessage(kind: string, current: number | null, max: number | nu
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!(await isAuthorized(request))) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
   }
 

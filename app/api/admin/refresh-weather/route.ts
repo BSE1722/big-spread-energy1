@@ -4,6 +4,7 @@ import { getCurrentContext } from "@/lib/bse/season"
 import { refreshWeather } from "@/lib/weather/refresh"
 import { syncVenues, venueCount } from "@/lib/weather/venues"
 import { getWeekWeather } from "@/lib/weather/store"
+import { isAdmin } from "@/lib/admin-auth"
 
 /**
  * ADMIN-ONLY weather ingestion.
@@ -27,7 +28,7 @@ function presentedSecret(request: NextRequest): string {
   return auth.toLowerCase().startsWith("bearer ") ? auth.slice(7) : ""
 }
 
-function isAuthorized(request: NextRequest): boolean {
+function hasValidSecret(request: NextRequest): boolean {
   const expected = process.env.ADMIN_REFRESH_SECRET
   if (!expected) return false // fail closed when not configured
   const presented = presentedSecret(request)
@@ -38,8 +39,14 @@ function isAuthorized(request: NextRequest): boolean {
   return timingSafeEqual(a, b)
 }
 
+/** Valid machine secret (cron/scripts) OR a signed-in admin session (UI). */
+async function isAuthorized(request: NextRequest): Promise<boolean> {
+  if (hasValidSecret(request)) return true
+  return await isAdmin()
+}
+
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!(await isAuthorized(request))) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
   }
 
@@ -74,7 +81,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!(await isAuthorized(request))) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 })
   }
 

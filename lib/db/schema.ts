@@ -10,6 +10,9 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("emailVerified").notNull().default(false),
   image: text("image"),
+  // Authorization role. 'admin' unlocks the owner dashboard + admin APIs.
+  // Enforced server-side only; never trust a client-supplied role.
+  role: text("role").notNull().default("user"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
@@ -95,10 +98,56 @@ export const subscriptions = pgTable("subscriptions", {
   stripeCustomerId: text("stripeCustomerId"),
   stripeSubscriptionId: text("stripeSubscriptionId"),
   priceId: text("priceId"),
+  priceInterval: text("priceInterval"),
+  currentPeriodStart: timestamp("currentPeriodStart", { withTimezone: true }),
   currentPeriodEnd: timestamp("currentPeriodEnd"),
+  // When true, the sub is set to end at currentPeriodEnd (user canceled but
+  // still has paid access until then). canceledAt is when Stripe fully ended it.
+  cancelAtPeriodEnd: boolean("cancelAtPeriodEnd").notNull().default(false),
+  canceledAt: timestamp("canceledAt", { withTimezone: true }),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
+
+/**
+ * Webhook idempotency ledger. Every Stripe event ID we finish processing is
+ * recorded here; the webhook refuses to process an ID that already exists, so
+ * Stripe's at-least-once redelivery can never double-apply a lifecycle change.
+ */
+export const processedStripeEvents = pgTable("processed_stripe_events", {
+  id: text("id").primaryKey(), // Stripe event id (evt_...)
+  type: text("type").notNull(),
+  processedAt: timestamp("processedAt", { withTimezone: true }).notNull().defaultNow(),
+})
+
+/**
+ * Append-only payment/subscription audit trail, populated from verified Stripe
+ * webhook events. Powers the admin dashboard's payment history. Never written
+ * from the client.
+ */
+export const paymentHistory = pgTable(
+  "payment_history",
+  {
+    id: text("id").primaryKey(),
+    userId: text("userId"),
+    stripeCustomerId: text("stripeCustomerId"),
+    stripeInvoiceId: text("stripeInvoiceId"),
+    stripeEventId: text("stripeEventId"),
+    // invoice.paid | invoice.payment_failed | subscription.canceled | ...
+    type: text("type").notNull(),
+    status: text("status"),
+    amount: integer("amount"), // minor units (cents)
+    currency: text("currency"),
+    description: text("description"),
+    periodStart: timestamp("periodStart", { withTimezone: true }),
+    periodEnd: timestamp("periodEnd", { withTimezone: true }),
+    occurredAt: timestamp("occurredAt", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("payment_history_user_idx").on(t.userId, t.occurredAt),
+  }),
+)
 
 // ---------------------------------------------------------------------------
 // Weather ingestion (INFRASTRUCTURE ONLY — no model math here).
