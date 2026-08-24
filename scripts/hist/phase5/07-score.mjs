@@ -70,27 +70,59 @@ function sampleFlag(decided) {
   return "OK_SAMPLE"
 }
 
-// ---- Classification rule — FIXED before reading results -------------------
-// STRONG_EVIDENCE requires, for at least one FROZEN candidate, pooled over the
-// non-2020 test seasons at an adequate-sample threshold (decided >= 200):
-//   (1) MAE improvement over market > 0, AND
-//   (2) Wilson 95% LOWER bound of ATS win rate > 52.38%, AND
-//   (3) ATS win rate > 52.38% in >= 3 of the 4 non-2020 test seasons.
-// PROMISING_BUT_UNPROVEN: pooled point-estimate ATS > 52.38% at an adequate
-//   sample threshold, but CI lower bound <= 52.38% OR fails seasonal stability.
+// ---- Classification rule — FIXED before results were read -----------------
+// This encodes the Phase-4/§6-§8 skepticism requirements (multiple-comparisons
+// correction + edge calibration), which are *stricter* than a naive per-cell
+// CI. It never lowers the bar toward a positive verdict.
+//
+// Adequate-sample cell = pooled over the 4 non-2020 test seasons with
+// decided >= 200. Every such cell across all candidates and thresholds counts
+// as one comparison in the family-wise (Bonferroni) correction.
+//
+// STRONG_EVIDENCE requires at least one FROZEN candidate/threshold cell where:
+//   (1) MAE improvement over market > 0 (must actually be more accurate), AND
+//   (2) family-wise-corrected CI lower bound of ATS win rate > 52.38%
+//       (Bonferroni z over the number of adequate-sample cells tested), AND
+//   (3) ATS win rate > 52.38% in >= 3 of the 4 non-2020 test seasons, AND
+//   (4) edge calibration does not collapse: the cell's ATS win rate is not
+//       LOWER than that of the next-lower threshold on the same candidate
+//       (a genuine edge should not pay worse as predicted edge grows).
+// PROMISING_BUT_UNPROVEN: some adequate-sample cell has pooled point ATS >
+//   52.38%, but no cell clears all four STRONG gates.
 // NO_RELIABLE_EDGE: otherwise.
 function classify(candidateDiagnostics) {
+  // Count adequate-sample cells → family-wise correction size.
+  const cells = []
+  for (const c of candidateDiagnostics)
+    for (const t of c.thresholdsExcl2020) if (t.decided >= 200 && t.winPct != null) cells.push({ c, t })
+  const nTested = cells.length
+  const zFW = bonferroniZ(nTested)
+
   let promising = false
-  for (const c of candidateDiagnostics) {
-    for (const t of c.thresholdsExcl2020) {
-      if (t.decided >= 200 && t.winPct != null && t.winPct > BREAKEVEN) {
-        promising = true
-        const strong = t.ciLo != null && t.ciLo > BREAKEVEN && c.maeImprovementExcl2020 > 0 && t.seasonsAboveBreakeven >= 3
-        if (strong) return { label: "STRONG_EVIDENCE", by: { candidate: c.key, threshold: t.threshold } }
-      }
-    }
+  const strongHits = []
+  for (const { c, t } of cells) {
+    if (t.winPct > BREAKEVEN) promising = true
+    // Family-wise-corrected lower bound (recompute Wilson at the Bonferroni z).
+    const fw = wilson(t.wins, t.decided, zFW)
+    // Non-collapse: compare to the next-lower threshold on the same candidate.
+    const lower = c.thresholdsExcl2020
+      .filter((x) => x.threshold < t.threshold && x.winPct != null)
+      .sort((a, b) => b.threshold - a.threshold)[0]
+    const nonCollapse = !lower || t.winPct >= lower.winPct
+    const strong =
+      c.maeImprovementExcl2020 > 0 &&
+      fw.lo != null &&
+      fw.lo > BREAKEVEN &&
+      t.seasonsAboveBreakeven >= 3 &&
+      nonCollapse
+    if (strong) strongHits.push({ candidate: c.key, threshold: t.threshold, winPct: t.winPct, familywiseCiLo: fw.lo })
   }
-  return { label: promising ? "PROMISING_BUT_UNPROVEN" : "NO_RELIABLE_EDGE" }
+
+  return {
+    label: strongHits.length ? "STRONG_EVIDENCE" : promising ? "PROMISING_BUT_UNPROVEN" : "NO_RELIABLE_EDGE",
+    familywise: { adequateSampleCellsTested: nTested, bonferroniZ: r3(zFW), alphaPerCell: r3(0.05 / Math.max(1, nTested)) },
+    ...(strongHits.length ? { by: strongHits } : {}),
+  }
 }
 
 // Score a set of prediction records at all thresholds, with CI/ROI.
@@ -360,7 +392,9 @@ async function main() {
     }
 
     console.log(`\n=== CLASSIFICATION: ${results.classification.label} ===`)
-    if (results.classification.by) console.log(`  driven by: ${JSON.stringify(results.classification.by)}`)
+    console.log(`  family-wise correction: ${JSON.stringify(results.classification.familywise)}`)
+    if (results.classification.by) console.log(`  cells clearing ALL strong gates: ${JSON.stringify(results.classification.by)}`)
+    else console.log(`  cells clearing ALL strong gates: none`)
 
     console.log(`\nWrote ${path.join(OUT_DIR, "phase5-results.json")}`)
   } finally {

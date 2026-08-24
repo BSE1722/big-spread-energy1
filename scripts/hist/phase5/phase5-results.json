@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-24T21:20:59.984Z",
+  "generatedAt": "2026-08-24T21:25:04.422Z",
   "breakeven": 52.38,
   "candidates": {
     "A_independent::elasticnet": {
@@ -3446,10 +3446,11 @@
     }
   },
   "classification": {
-    "label": "STRONG_EVIDENCE",
-    "by": {
-      "candidate": "B_residual::gbt",
-      "threshold": 1
+    "label": "PROMISING_BUT_UNPROVEN",
+    "familywise": {
+      "adequateSampleCellsTested": 23,
+      "bonferroniZ": 3.065,
+      "alphaPerCell": 0.002
     }
   }
 }
