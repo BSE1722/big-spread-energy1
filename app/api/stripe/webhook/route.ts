@@ -39,6 +39,22 @@ const RELEVANT = new Set<string>([
   "invoice.payment_failed",
 ])
 
+/**
+ * Resolve the subscription id from an Invoice. On the installed Stripe API
+ * version the reference lives at `parent.subscription_details.subscription`
+ * (older versions used a top-level `invoice.subscription`). We read both
+ * defensively without assuming either is on the static type.
+ */
+function invoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  const parentSub = (invoice as unknown as {
+    parent?: { subscription_details?: { subscription?: string | { id: string } | null } | null } | null
+  }).parent?.subscription_details?.subscription
+  const legacySub = (invoice as unknown as { subscription?: string | { id: string } | null }).subscription
+  const ref = parentSub ?? legacySub ?? null
+  if (!ref) return null
+  return typeof ref === "string" ? ref : ref.id
+}
+
 export async function POST(req: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET
 
@@ -140,8 +156,7 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
     case "invoice.paid": {
       const invoice = event.data.object as Stripe.Invoice
       // Keep local state fresh on renewal, then log the payment.
-      const subId =
-        typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id ?? null
+      const subId = invoiceSubscriptionId(invoice)
       let userId: string | null = null
       if (subId) {
         const sub = await stripe.subscriptions.retrieve(subId)
@@ -170,8 +185,7 @@ async function handleEvent(event: Stripe.Event): Promise<void> {
       // Mirror Stripe's resulting status (usually past_due) so access reflects
       // reality; Stripe keeps the sub until its dunning settings expire it,
       // at which point subscription.updated -> unpaid/canceled arrives.
-      const subId =
-        typeof invoice.subscription === "string" ? invoice.subscription : invoice.subscription?.id ?? null
+      const subId = invoiceSubscriptionId(invoice)
       let userId: string | null = null
       if (subId) {
         const sub = await stripe.subscriptions.retrieve(subId)

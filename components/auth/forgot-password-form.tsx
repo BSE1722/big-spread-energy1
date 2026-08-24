@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { forgetPassword } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 
 /**
@@ -20,7 +20,7 @@ export function ForgotPasswordForm() {
     setBusy(true)
     const email = String(new FormData(e.currentTarget).get("email") || "").trim()
     try {
-      await forgetPassword({ email, redirectTo: "/reset-password" })
+      await authClient.requestPasswordReset({ email, redirectTo: "/reset-password" })
     } catch {
       // Swallow — we intentionally don't reveal failures/existence.
     }

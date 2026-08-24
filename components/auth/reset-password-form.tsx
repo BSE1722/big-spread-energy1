@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { resetPassword } from "@/lib/auth-client"
+import { authClient } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 
 /**
@@ -63,7 +63,7 @@ function ResetPasswordInner() {
 
     setBusy(true)
     try {
-      const { error } = await resetPassword({ newPassword: password, token })
+      const { error } = await authClient.resetPassword({ newPassword: password, token })
       if (error) {
         setError("We couldn't reset your password. The link may have expired — request a new one.")
         setBusy(false)
