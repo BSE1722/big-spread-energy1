@@ -511,3 +511,101 @@ async function finishRun(
 export async function listGradingRuns(limit = 10): Promise<GradingRun[]> {
   return db.select().from(gradingRuns).orderBy(desc(gradingRuns.startedAt)).limit(limit)
 }
+
+/* --------------------------------------------------------------------------
+ * Admin publishing helper — builds the list of games/markets an admin can
+ * freeze right now, from the SAME durable snapshot publishPick reads. Options
+ * already published (per game+market) are omitted. This is UI convenience only:
+ * publishPick re-derives every frozen value server-side, so the client can
+ * never influence the recorded line or price.
+ * ------------------------------------------------------------------------ */
+
+export interface PublishOption {
+  market: Market
+  pickSide: PickSide
+  label: string
+  lineValue: number | null
+  priceAmerican: number | null
+}
+
+export interface PublishableGame {
+  gameId: string
+  matchup: string
+  homeTeam: string
+  awayTeam: string
+  kickoffIso: string
+  book: string
+  options: PublishOption[]
+}
+
+export async function listPublishableGames(): Promise<PublishableGame[]> {
+  const snapshot = await loadSnapshot()
+  if (!snapshot) return []
+
+  // Which (gameId, market) pairs already have an official pick.
+  const existing = await db
+    .select({ gameId: predictions.gameId, market: predictions.market })
+    .from(predictions)
+  const taken = new Set(existing.map((e) => `${e.gameId}::${e.market}`))
+
+  const now = Date.now()
+  const games: PublishableGame[] = []
+
+  for (const g of snapshot.games) {
+    if (g.oddsStatus !== "matched" || !g.market.available) continue
+    const kickoffMs = Date.parse(g.kickoff)
+    if (Number.isFinite(kickoffMs) && now >= kickoffMs) continue // kickoff passed
+
+    const m = g.market
+    const options: PublishOption[] = []
+
+    const addSpread = (side: PickSide, line: number | null, price: number | null, team: string) => {
+      if (line == null) return
+      options.push({ market: "spread", pickSide: side, label: `${team} ${fmtSigned(line)}`, lineValue: line, priceAmerican: price })
+    }
+    if (!taken.has(`${g.cfbdId}::spread`)) {
+      addSpread("home", m.spread.home, m.spread.homePrice ?? null, g.home.name)
+      addSpread("away", m.spread.away, m.spread.awayPrice ?? null, g.away.name)
+    }
+
+    if (!taken.has(`${g.cfbdId}::total`) && m.total.points != null && m.total.withinPlausibleRange) {
+      options.push({
+        market: "total",
+        pickSide: "over",
+        label: `Over ${m.total.points}`,
+        lineValue: m.total.points,
+        priceAmerican: m.total.overPrice ?? null,
+      })
+      options.push({
+        market: "total",
+        pickSide: "under",
+        label: `Under ${m.total.points}`,
+        lineValue: m.total.points,
+        priceAmerican: m.total.underPrice ?? null,
+      })
+    }
+
+    if (!taken.has(`${g.cfbdId}::moneyline`)) {
+      if (m.moneyline.home != null)
+        options.push({ market: "moneyline", pickSide: "home", label: `${g.home.name} ML`, lineValue: null, priceAmerican: m.moneyline.home })
+      if (m.moneyline.away != null)
+        options.push({ market: "moneyline", pickSide: "away", label: `${g.away.name} ML`, lineValue: null, priceAmerican: m.moneyline.away })
+    }
+
+    if (options.length === 0) continue
+
+    games.push({
+      gameId: g.cfbdId,
+      matchup: `${g.away.name} @ ${g.home.name}`,
+      homeTeam: g.home.name,
+      awayTeam: g.away.name,
+      kickoffIso: new Date(kickoffMs).toISOString(),
+      book: m.bookmaker,
+      options,
+    })
+  }
+
+  // Soonest kickoff first.
+  games.sort((a, b) => Date.parse(a.kickoffIso) - Date.parse(b.kickoffIso))
+  return games
+}
