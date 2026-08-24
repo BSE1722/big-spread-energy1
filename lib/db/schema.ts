@@ -150,6 +150,122 @@ export const paymentHistory = pgTable(
 )
 
 // ---------------------------------------------------------------------------
+// BSE Verified Track Record.
+//
+// SCOPE: only picks an admin EXPLICITLY publishes as an Official BSE Pick live
+// here. The Board may analyze every game of the week; those never enter this
+// table. Each row is FROZEN IMMUTABLY at publication (before kickoff) and later
+// graded from official CFBD final scores. There is intentionally NO `void`
+// status and NO edit path — corrections are append-only (see below) so a
+// published loss can never be hidden or rewritten.
+// ---------------------------------------------------------------------------
+
+/**
+ * One Official BSE Pick, frozen at publication. The UNIQUE (gameId, market)
+ * constraint guarantees exactly one official selection per game/market — you
+ * cannot publish both sides of a spread/moneyline as separate official picks.
+ */
+export const predictions = pgTable(
+  "predictions",
+  {
+    id: text("id").primaryKey(),
+    // CFBD identity (gameId is `cfbd-<id>`), used to batch-grade by week.
+    gameId: text("gameId").notNull(),
+    season: integer("season").notNull(),
+    week: integer("week").notNull(),
+    seasonType: text("seasonType").notNull(),
+    homeTeam: text("homeTeam").notNull(),
+    awayTeam: text("awayTeam").notNull(),
+
+    // Publication + kickoff. Frozen at publish; kickoff only closes the market
+    // to NEW official picks — it does not change an already-frozen row.
+    publishedAt: timestamp("publishedAt", { withTimezone: true }).notNull().defaultNow(),
+    kickoff: timestamp("kickoff", { withTimezone: true }).notNull(),
+
+    // The pick itself.
+    market: text("market").notNull(), // spread | total | moneyline
+    pickSide: text("pickSide").notNull(), // home | away | over | under
+    pickLabel: text("pickLabel").notNull(), // e.g. "Georgia -6.5" / "Over 58.5"
+
+    // Frozen REAL market (required). Grading always uses lineValue.
+    lineValue: doublePrecision("lineValue"), // null only for moneyline
+    priceAmerican: integer("priceAmerican"), // frozen American odds for units
+    book: text("book").notNull().default("draftkings"),
+    marketSnapshotAt: timestamp("marketSnapshotAt", { withTimezone: true }),
+
+    // Frozen model fields — REAL value or NULL. Never fabricated.
+    bseRating: doublePrecision("bseRating"),
+    fairLine: doublePrecision("fairLine"),
+    edgeValue: doublePrecision("edgeValue"),
+    winProb: doublePrecision("winProb"),
+    modelIsPlaceholder: boolean("modelIsPlaceholder").notNull().default(true),
+    // REQUIRED. "manual-pre-model" now; "BSE-v1.0" once the real model ships.
+    // Historical picks are NEVER recomputed with a newer version.
+    modelVersion: text("modelVersion").notNull(),
+
+    // Tamper-evidence. Server-generated only; the client never supplies it.
+    lockHash: text("lockHash").notNull(),
+    publishedBy: text("publishedBy"), // admin userId
+
+    // Result (filled by grading).
+    status: text("status").notNull().default("locked"), // locked | graded
+    homeScore: integer("homeScore"),
+    awayScore: integer("awayScore"),
+    grade: text("grade"), // win | loss | push
+    unitsDelta: doublePrecision("unitsDelta"),
+    gradedAt: timestamp("gradedAt", { withTimezone: true }),
+    gradedSource: text("gradedSource"), // e.g. "cfbd"
+
+    hasCorrection: boolean("hasCorrection").notNull().default(false),
+    createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    gameMarketUnique: unique("predictions_game_market_unique").on(t.gameId, t.market),
+    statusIdx: index("predictions_status_idx").on(t.status),
+    seasonWeekIdx: index("predictions_season_week_idx").on(t.season, t.week, t.seasonType),
+    // Eligibility query for grading: locked picks past kickoff.
+    statusKickoffIdx: index("predictions_status_kickoff_idx").on(t.status, t.kickoff),
+  }),
+)
+
+/**
+ * Append-only correction audit. If a genuine technical/data error must be
+ * corrected, a row is inserted here recording the original value, corrected
+ * value, reason, admin, and time. The ORIGINAL prediction row is never
+ * overwritten — the public page shows both. Corrections can never delete a pick
+ * or hide a loss.
+ */
+export const predictionCorrections = pgTable("prediction_corrections", {
+  id: text("id").primaryKey(),
+  predictionId: text("predictionId").notNull(),
+  field: text("field").notNull(),
+  originalValue: text("originalValue"),
+  correctedValue: text("correctedValue"),
+  reason: text("reason").notNull(),
+  adminUserId: text("adminUserId"),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+})
+
+/**
+ * Internal API-usage log for the grading engine. Every grading run (cron or
+ * manual) appends a row so the admin can confirm CFBD requests are conserved.
+ * Never exposed publicly.
+ */
+export const gradingRuns = pgTable("grading_runs", {
+  id: text("id").primaryKey(),
+  trigger: text("trigger").notNull(), // cron | manual
+  startedAt: timestamp("startedAt", { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp("finishedAt", { withTimezone: true }),
+  eligibleCount: integer("eligibleCount").notNull().default(0),
+  weekGroups: integer("weekGroups").notNull().default(0),
+  cfbdRequests: integer("cfbdRequests").notNull().default(0),
+  gradedCount: integer("gradedCount").notNull().default(0),
+  reason: text("reason"),
+  error: text("error"),
+})
+
+// ---------------------------------------------------------------------------
 // Weather ingestion (INFRASTRUCTURE ONLY — no model math here).
 //
 // SOURCE-OF-TRUTH SPLIT (unchanged):
