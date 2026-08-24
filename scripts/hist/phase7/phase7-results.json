@@ -1,0 +1,4819 @@
+{
+  "generatedAt": "2026-08-24T22:14:41.903Z",
+  "oosGames": 3644,
+  "testSeasons": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+  ],
+  "hypothesesScored": 74,
+  "eligibleHypotheses": 62,
+  "multipleComparison": {
+    "bonferroniAlpha": 0.001,
+    "bhFdrQ": 0.1,
+    "bhCutoffP": 0.001,
+    "rawSig": 5,
+    "bonfSig": 0,
+    "bhSig": 1
+  },
+  "sanity": {
+    "perfect": 100,
+    "anti": 0,
+    "alwaysHome": 49.8
+  },
+  "topRaw": [
+    {
+      "family": "model_edge[B_residual::gbt]",
+      "T": 2,
+      "winPct": 56.9,
+      "n": 283,
+      "ci": {
+        "lo": 51.1,
+        "hi": 62.5
+      },
+      "roi": 8.6,
+      "rawP": 0.024,
+      "bh": false,
+      "seasonsAbove50": "5/5"
+    },
+    {
+      "family": "model_edge[B_residual::market_anchored_ridge]",
+      "T": 3,
+      "winPct": 56.4,
+      "n": 172,
+      "ci": {
+        "lo": 48.9,
+        "hi": 63.6
+      },
+      "roi": 7.7,
+      "rawP": 0.109,
+      "bh": false,
+      "seasonsAbove50": "4/5"
+    },
+    {
+      "family": "model_edge[B_residual::gbt]",
+      "T": 1,
+      "winPct": 55.8,
+      "n": 880,
+      "ci": {
+        "lo": 52.5,
+        "hi": 59
+      },
+      "roi": 6.5,
+      "rawP": 0.001,
+      "bh": true,
+      "seasonsAbove50": "5/5"
+    },
+    {
+      "family": "model_edge[B_residual::elasticnet]",
+      "T": 1,
+      "winPct": 54.1,
+      "n": 501,
+      "ci": {
+        "lo": 49.7,
+        "hi": 58.4
+      },
+      "roi": 3.3,
+      "rawP": 0.074,
+      "bh": false,
+      "seasonsAbove50": "4/4"
+    },
+    {
+      "family": "model_edge[B_residual::market_anchored_ridge]",
+      "T": 2,
+      "winPct": 54.1,
+      "n": 579,
+      "ci": {
+        "lo": 50,
+        "hi": 58.1
+      },
+      "roi": 3.2,
+      "rawP": 0.056,
+      "bh": false,
+      "seasonsAbove50": "5/5"
+    },
+    {
+      "family": "model_edge[B_residual::market_anchored_ridge]",
+      "T": 1,
+      "winPct": 53.6,
+      "n": 1562,
+      "ci": {
+        "lo": 51.2,
+        "hi": 56.1
+      },
+      "roi": 2.4,
+      "rawP": 0.004,
+      "bh": false,
+      "seasonsAbove50": "5/5"
+    },
+    {
+      "family": "back_large_favorites",
+      "T": 17,
+      "winPct": 52.1,
+      "n": 704,
+      "ci": {
+        "lo": 48.4,
+        "hi": 55.8
+      },
+      "roi": -0.5,
+      "rawP": 0.274,
+      "bh": false,
+      "seasonsAbove50": "3/5"
+    },
+    {
+      "family": "back_large_favorites",
+      "T": 14,
+      "winPct": 52,
+      "n": 965,
+      "ci": {
+        "lo": 48.9,
+        "hi": 55.2
+      },
+      "roi": -0.7,
+      "rawP": 0.221,
+      "bh": false,
+      "seasonsAbove50": "3/5"
+    },
+    {
+      "family": "back_large_favorites",
+      "T": 21,
+      "winPct": 51.3,
+      "n": 454,
+      "ci": {
+        "lo": 46.7,
+        "hi": 55.9
+      },
+      "roi": -2,
+      "rawP": 0.606,
+      "bh": false,
+      "seasonsAbove50": "3/5"
+    },
+    {
+      "family": "model_edge[A_independent::ridge]",
+      "T": 3,
+      "winPct": 51.2,
+      "n": 1606,
+      "ci": {
+        "lo": 48.7,
+        "hi": 53.6
+      },
+      "roi": -2.3,
+      "rawP": 0.356,
+      "bh": false,
+      "seasonsAbove50": "5/5"
+    }
+  ],
+  "robustness": [
+    {
+      "family": "model_edge[B_residual::gbt]",
+      "threshold": 1,
+      "base": 55.8,
+      "removeBestTeam": {
+        "team": "UTSA",
+        "winPct": 55.4,
+        "n": 864
+      },
+      "removeBestConf": {
+        "conf": "SEC",
+        "winPct": 55.4,
+        "n": 780
+      },
+      "concentrationDriven": false
+    },
+    {
+      "family": "model_edge[B_residual::gbt]",
+      "threshold": 2,
+      "base": 56.9,
+      "removeBestTeam": {
+        "team": "UTSA",
+        "winPct": 56,
+        "n": 273
+      },
+      "removeBestConf": {
+        "conf": "Big Ten",
+        "winPct": 55.6,
+        "n": 243
+      },
+      "concentrationDriven": false
+    },
+    {
+      "family": "model_edge[B_residual::market_anchored_ridge]",
+      "threshold": 1,
+      "base": 53.6,
+      "removeBestTeam": {
+        "team": "Coastal Carolina",
+        "winPct": 53.4,
+        "n": 1546
+      },
+      "removeBestConf": {
+        "conf": "American Athletic",
+        "winPct": 52.8,
+        "n": 1431
+      },
+      "concentrationDriven": false
+    }
+  ],
+  "neighborhoods": {
+    "model_edge[B_residual::gbt]": [
+      {
+        "T": 1,
+        "winPct": 55.8,
+        "n": 880,
+        "ciLo": 52.5
+      },
+      {
+        "T": 2,
+        "winPct": 56.9,
+        "n": 283,
+        "ciLo": 51.1
+      }
+    ],
+    "model_edge[B_residual::market_anchored_ridge]": [
+      {
+        "T": 1,
+        "winPct": 53.6,
+        "n": 1562,
+        "ciLo": 51.2
+      },
+      {
+        "T": 2,
+        "winPct": 54.1,
+        "n": 579,
+        "ciLo": 50
+      },
+      {
+        "T": 3,
+        "winPct": 56.4,
+        "n": 172,
+        "ciLo": 48.9
+      }
+    ]
+  },
+  "classifications": [
+    {
+      "family": "model_edge[B_residual::gbt]",
+      "label": "PROMISING_BUT_UNPROVEN",
+      "reason": "multi-season + robust, but not profitability-proven or fails a correction",
+      "bestThreshold": 2,
+      "bestWinPct_excl2020": 56.9,
+      "wilson95": {
+        "lo": 51.1,
+        "hi": 62.5
+      },
+      "roiPct": 8.6,
+      "rawP": 0.024,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "5/5",
+      "neighborStable": true,
+      "concentrationDriven": false
+    },
+    {
+      "family": "fade_large_favorites",
+      "label": "REJECTED",
+      "reason": "best 49% (raw p 0.41); no raw OOS signal",
+      "bestThreshold": 7,
+      "bestWinPct_excl2020": 49,
+      "wilson95": {
+        "lo": 46.7,
+        "hi": 51.3
+      },
+      "roiPct": -6.5,
+      "rawP": 0.41,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "3/5",
+      "neighborStable": false,
+      "concentrationDriven": null
+    },
+    {
+      "family": "back_large_favorites",
+      "label": "REJECTED",
+      "reason": "best 52.1% (raw p 0.274); no raw OOS signal",
+      "bestThreshold": 17,
+      "bestWinPct_excl2020": 52.1,
+      "wilson95": {
+        "lo": 48.4,
+        "hi": 55.8
+      },
+      "roiPct": -0.5,
+      "rawP": 0.274,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "3/5",
+      "neighborStable": false,
+      "concentrationDriven": null
+    },
+    {
+      "family": "back_home_underdogs",
+      "label": "REJECTED",
+      "reason": "best 50.7% (raw p 0.682); no raw OOS signal",
+      "bestThreshold": 3,
+      "bestWinPct_excl2020": 50.7,
+      "wilson95": {
+        "lo": 47.6,
+        "hi": 53.8
+      },
+      "roiPct": -3.2,
+      "rawP": 0.682,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "2/5",
+      "neighborStable": false,
+      "concentrationDriven": null
+    },
+    {
+      "family": "back_road_underdogs",
+      "label": "REJECTED",
+      "reason": "best 50.2% (raw p 0.871); no raw OOS signal",
+      "bestThreshold": 0.5,
+      "bestWinPct_excl2020": 50.2,
+      "wilson95": {
+        "lo": 47.9,
+        "hi": 52.5
+      },
+      "roiPct": -4.1,
+      "rawP": 0.871,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "3/5",
+      "neighborStable": false,
+      "concentrationDriven": null
+    },
+    {
+      "family": "elo_vs_market",
+      "label": "REJECTED",
+      "reason": "best 49.3% (raw p 0.556); no raw OOS signal",
+      "bestThreshold": 2,
+      "bestWinPct_excl2020": 49.3,
+      "wilson95": {
+        "lo": 47.2,
+        "hi": 51.5
+      },
+      "roiPct": -5.8,
+      "rawP": 0.556,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "2/5",
+      "neighborStable": false,
+      "concentrationDriven": null
+    },
+    {
+      "family": "sp_vs_market",
+      "label": "REJECTED",
+      "reason": "best 49.3% (raw p 0.69); no raw OOS signal",
+      "bestThreshold": 10,
+      "bestWinPct_excl2020": 49.3,
+      "wilson95": {
+        "lo": 46,
+        "hi": 52.5
+      },
+      "roiPct": -5.9,
+      "rawP": 0.69,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "2/5",
+      "neighborStable": false,
+      "concentrationDriven": null
+    },
+    {
+      "family": "fpi_vs_market",
+      "label": "REJECTED",
+      "reason": "best 48.5% (raw p 0.159); no raw OOS signal",
+      "bestThreshold": 3,
+      "bestWinPct_excl2020": 48.5,
+      "wilson95": {
+        "lo": 46.4,
+        "hi": 50.6
+      },
+      "roiPct": -7.5,
+      "rawP": 0.159,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "2/5",
+      "neighborStable": false,
+      "concentrationDriven": null
+    },
+    {
+      "family": "form_vs_market",
+      "label": "REJECTED",
+      "reason": "best 48.4% (raw p 0.15); no raw OOS signal",
+      "bestThreshold": 3,
+      "bestWinPct_excl2020": 48.4,
+      "wilson95": {
+        "lo": 46.2,
+        "hi": 50.6
+      },
+      "roiPct": -7.6,
+      "rawP": 0.15,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "2/5",
+      "neighborStable": false,
+      "concentrationDriven": null
+    },
+    {
+      "family": "consensus_disagreement",
+      "label": "REJECTED",
+      "reason": "best 48.9% (raw p 0.287); no raw OOS signal",
+      "bestThreshold": 2,
+      "bestWinPct_excl2020": 48.9,
+      "wilson95": {
+        "lo": 47,
+        "hi": 50.9
+      },
+      "roiPct": -6.6,
+      "rawP": 0.287,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "2/5",
+      "neighborStable": false,
+      "concentrationDriven": null
+    },
+    {
+      "family": "model_edge[A_independent::elasticnet]",
+      "label": "REJECTED",
+      "reason": "best 50.1% (raw p 0.905); no raw OOS signal",
+      "bestThreshold": 1,
+      "bestWinPct_excl2020": 50.1,
+      "wilson95": {
+        "lo": 48.2,
+        "hi": 52.1
+      },
+      "roiPct": -4.3,
+      "rawP": 0.905,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "2/5",
+      "neighborStable": false,
+      "concentrationDriven": null
+    },
+    {
+      "family": "model_edge[A_independent::gbt]",
+      "label": "REJECTED",
+      "reason": "best 51% (raw p 0.297); no raw OOS signal",
+      "bestThreshold": 1,
+      "bestWinPct_excl2020": 51,
+      "wilson95": {
+        "lo": 49.1,
+        "hi": 53
+      },
+      "roiPct": -2.6,
+      "rawP": 0.297,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "3/5",
+      "neighborStable": false,
+      "concentrationDriven": null
+    },
+    {
+      "family": "model_edge[A_independent::ridge]",
+      "label": "REJECTED",
+      "reason": "best 51.2% (raw p 0.356); no raw OOS signal",
+      "bestThreshold": 3,
+      "bestWinPct_excl2020": 51.2,
+      "wilson95": {
+        "lo": 48.7,
+        "hi": 53.6
+      },
+      "roiPct": -2.3,
+      "rawP": 0.356,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "5/5",
+      "neighborStable": false,
+      "concentrationDriven": null
+    },
+    {
+      "family": "model_edge[B_residual::elasticnet]",
+      "label": "REJECTED",
+      "reason": "best 54.1% (raw p 0.074); no raw OOS signal",
+      "bestThreshold": 1,
+      "bestWinPct_excl2020": 54.1,
+      "wilson95": {
+        "lo": 49.7,
+        "hi": 58.4
+      },
+      "roiPct": 3.3,
+      "rawP": 0.074,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "4/4",
+      "neighborStable": false,
+      "concentrationDriven": null
+    },
+    {
+      "family": "model_edge[B_residual::market_anchored_ridge]",
+      "label": "REJECTED",
+      "reason": "best 56.4% (raw p 0.109); no raw OOS signal",
+      "bestThreshold": 3,
+      "bestWinPct_excl2020": 56.4,
+      "wilson95": {
+        "lo": 48.9,
+        "hi": 63.6
+      },
+      "roiPct": 7.7,
+      "rawP": 0.109,
+      "bonferroni": false,
+      "bhFdr": false,
+      "seasonsAbove50": "4/5",
+      "neighborStable": true,
+      "concentrationDriven": null
+    }
+  ],
+  "verdict": {
+    "strongCandidates": [],
+    "promising": [
+      "model_edge[B_residual::gbt]"
+    ],
+    "phase8Justified": false
+  },
+  "allInstances": [
+    {
+      "family": "fade_large_favorites",
+      "id": "fade_large_favorites",
+      "threshold": 7,
+      "avgAbsSignal": 16.35,
+      "avgMarketSpread": 16.35,
+      "all": {
+        "qualifying": 2168,
+        "wins": 1056,
+        "losses": 1075,
+        "pushes": 37,
+        "decided": 2131,
+        "winPct": 49.6,
+        "units": -115.1,
+        "roiPct": -5.4
+      },
+      "excl2020": {
+        "qualifying": 1837,
+        "wins": 885,
+        "losses": 921,
+        "pushes": 31,
+        "decided": 1806,
+        "winPct": 49,
+        "units": -116.53,
+        "roiPct": -6.5
+      },
+      "wilson95_excl2020": {
+        "lo": 46.7,
+        "hi": 51.3
+      },
+      "rawBinomP_excl2020": 0.41,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 476,
+          "winPct": 45.6
+        },
+        "2020": {
+          "n": 325,
+          "winPct": 52.6
+        },
+        "2021": {
+          "n": 448,
+          "winPct": 47.8
+        },
+        "2022": {
+          "n": 452,
+          "winPct": 52.7
+        },
+        "2023": {
+          "n": 430,
+          "winPct": 50.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "fade_large_favorites",
+      "id": "fade_large_favorites",
+      "threshold": 10,
+      "avgAbsSignal": 18.81,
+      "avgMarketSpread": 18.81,
+      "all": {
+        "qualifying": 1675,
+        "wins": 815,
+        "losses": 830,
+        "pushes": 30,
+        "decided": 1645,
+        "winPct": 49.5,
+        "units": -89.16,
+        "roiPct": -5.4
+      },
+      "excl2020": {
+        "qualifying": 1412,
+        "wins": 680,
+        "losses": 708,
+        "pushes": 24,
+        "decided": 1388,
+        "winPct": 49,
+        "units": -89.88,
+        "roiPct": -6.5
+      },
+      "wilson95_excl2020": {
+        "lo": 46.4,
+        "hi": 51.6
+      },
+      "rawBinomP_excl2020": 0.469,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 367,
+          "winPct": 44.1
+        },
+        "2020": {
+          "n": 257,
+          "winPct": 52.5
+        },
+        "2021": {
+          "n": 349,
+          "winPct": 47.6
+        },
+        "2022": {
+          "n": 348,
+          "winPct": 53.4
+        },
+        "2023": {
+          "n": 324,
+          "winPct": 51.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "fade_large_favorites",
+      "id": "fade_large_favorites",
+      "threshold": 14,
+      "avgAbsSignal": 21.97,
+      "avgMarketSpread": 21.97,
+      "all": {
+        "qualifying": 1158,
+        "wins": 557,
+        "losses": 577,
+        "pushes": 24,
+        "decided": 1134,
+        "winPct": 49.1,
+        "units": -70.69,
+        "roiPct": -6.2
+      },
+      "excl2020": {
+        "qualifying": 984,
+        "wins": 463,
+        "losses": 502,
+        "pushes": 19,
+        "decided": 965,
+        "winPct": 48,
+        "units": -81.13,
+        "roiPct": -8.4
+      },
+      "wilson95_excl2020": {
+        "lo": 44.8,
+        "hi": 51.1
+      },
+      "rawBinomP_excl2020": 0.221,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 268,
+          "winPct": 45.1
+        },
+        "2020": {
+          "n": 169,
+          "winPct": 55.6
+        },
+        "2021": {
+          "n": 241,
+          "winPct": 46.9
+        },
+        "2022": {
+          "n": 237,
+          "winPct": 50.6
+        },
+        "2023": {
+          "n": 219,
+          "winPct": 49.8
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "fade_large_favorites",
+      "id": "fade_large_favorites",
+      "threshold": 17,
+      "avgAbsSignal": 24.68,
+      "avgMarketSpread": 24.68,
+      "all": {
+        "qualifying": 835,
+        "wins": 400,
+        "losses": 415,
+        "pushes": 20,
+        "decided": 815,
+        "winPct": 49.1,
+        "units": -51.4,
+        "roiPct": -6.3
+      },
+      "excl2020": {
+        "qualifying": 719,
+        "wins": 337,
+        "losses": 367,
+        "pushes": 15,
+        "decided": 704,
+        "winPct": 47.9,
+        "units": -60.67,
+        "roiPct": -8.6
+      },
+      "wilson95_excl2020": {
+        "lo": 44.2,
+        "hi": 51.6
+      },
+      "rawBinomP_excl2020": 0.274,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 199,
+          "winPct": 45.2
+        },
+        "2020": {
+          "n": 111,
+          "winPct": 56.8
+        },
+        "2021": {
+          "n": 184,
+          "winPct": 46.2
+        },
+        "2022": {
+          "n": 164,
+          "winPct": 48.2
+        },
+        "2023": {
+          "n": 157,
+          "winPct": 52.9
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "fade_large_favorites",
+      "id": "fade_large_favorites",
+      "threshold": 21,
+      "avgAbsSignal": 28.1,
+      "avgMarketSpread": 28.1,
+      "all": {
+        "qualifying": 538,
+        "wins": 259,
+        "losses": 267,
+        "pushes": 12,
+        "decided": 526,
+        "winPct": 49.2,
+        "units": -31.57,
+        "roiPct": -6
+      },
+      "excl2020": {
+        "qualifying": 463,
+        "wins": 221,
+        "losses": 233,
+        "pushes": 9,
+        "decided": 454,
+        "winPct": 48.7,
+        "units": -32.11,
+        "roiPct": -7.1
+      },
+      "wilson95_excl2020": {
+        "lo": 44.1,
+        "hi": 53.3
+      },
+      "rawBinomP_excl2020": 0.606,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 138,
+          "winPct": 46.4
+        },
+        "2020": {
+          "n": 72,
+          "winPct": 52.8
+        },
+        "2021": {
+          "n": 114,
+          "winPct": 49.1
+        },
+        "2022": {
+          "n": 109,
+          "winPct": 45.9
+        },
+        "2023": {
+          "n": 93,
+          "winPct": 54.8
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "back_large_favorites",
+      "id": "back_large_favorites",
+      "threshold": 7,
+      "avgAbsSignal": 16.35,
+      "avgMarketSpread": 16.35,
+      "all": {
+        "qualifying": 2168,
+        "wins": 1075,
+        "losses": 1056,
+        "pushes": 37,
+        "decided": 2131,
+        "winPct": 50.4,
+        "units": -78.82,
+        "roiPct": -3.7
+      },
+      "excl2020": {
+        "qualifying": 1837,
+        "wins": 921,
+        "losses": 885,
+        "pushes": 31,
+        "decided": 1806,
+        "winPct": 51,
+        "units": -47.81,
+        "roiPct": -2.6
+      },
+      "wilson95_excl2020": {
+        "lo": 48.7,
+        "hi": 53.3
+      },
+      "rawBinomP_excl2020": 0.41,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 476,
+          "winPct": 54.4
+        },
+        "2020": {
+          "n": 325,
+          "winPct": 47.4
+        },
+        "2021": {
+          "n": 448,
+          "winPct": 52.2
+        },
+        "2022": {
+          "n": 452,
+          "winPct": 47.3
+        },
+        "2023": {
+          "n": 430,
+          "winPct": 49.8
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "back_large_favorites",
+      "id": "back_large_favorites",
+      "threshold": 10,
+      "avgAbsSignal": 18.81,
+      "avgMarketSpread": 18.81,
+      "all": {
+        "qualifying": 1675,
+        "wins": 830,
+        "losses": 815,
+        "pushes": 30,
+        "decided": 1645,
+        "winPct": 50.5,
+        "units": -60.53,
+        "roiPct": -3.7
+      },
+      "excl2020": {
+        "qualifying": 1412,
+        "wins": 708,
+        "losses": 680,
+        "pushes": 24,
+        "decided": 1388,
+        "winPct": 51,
+        "units": -36.43,
+        "roiPct": -2.6
+      },
+      "wilson95_excl2020": {
+        "lo": 48.4,
+        "hi": 53.6
+      },
+      "rawBinomP_excl2020": 0.469,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 367,
+          "winPct": 55.9
+        },
+        "2020": {
+          "n": 257,
+          "winPct": 47.5
+        },
+        "2021": {
+          "n": 349,
+          "winPct": 52.4
+        },
+        "2022": {
+          "n": 348,
+          "winPct": 46.6
+        },
+        "2023": {
+          "n": 324,
+          "winPct": 48.8
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "back_large_favorites",
+      "id": "back_large_favorites",
+      "threshold": 14,
+      "avgAbsSignal": 21.97,
+      "avgMarketSpread": 21.97,
+      "all": {
+        "qualifying": 1158,
+        "wins": 577,
+        "losses": 557,
+        "pushes": 24,
+        "decided": 1134,
+        "winPct": 50.9,
+        "units": -32.51,
+        "roiPct": -2.9
+      },
+      "excl2020": {
+        "qualifying": 984,
+        "wins": 502,
+        "losses": 463,
+        "pushes": 19,
+        "decided": 965,
+        "winPct": 52,
+        "units": -6.68,
+        "roiPct": -0.7
+      },
+      "wilson95_excl2020": {
+        "lo": 48.9,
+        "hi": 55.2
+      },
+      "rawBinomP_excl2020": 0.221,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 268,
+          "winPct": 54.9
+        },
+        "2020": {
+          "n": 169,
+          "winPct": 44.4
+        },
+        "2021": {
+          "n": 241,
+          "winPct": 53.1
+        },
+        "2022": {
+          "n": 237,
+          "winPct": 49.4
+        },
+        "2023": {
+          "n": 219,
+          "winPct": 50.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "back_large_favorites",
+      "id": "back_large_favorites",
+      "threshold": 17,
+      "avgAbsSignal": 24.68,
+      "avgMarketSpread": 24.68,
+      "all": {
+        "qualifying": 835,
+        "wins": 415,
+        "losses": 400,
+        "pushes": 20,
+        "decided": 815,
+        "winPct": 50.9,
+        "units": -22.76,
+        "roiPct": -2.8
+      },
+      "excl2020": {
+        "qualifying": 719,
+        "wins": 367,
+        "losses": 337,
+        "pushes": 15,
+        "decided": 704,
+        "winPct": 52.1,
+        "units": -3.4,
+        "roiPct": -0.5
+      },
+      "wilson95_excl2020": {
+        "lo": 48.4,
+        "hi": 55.8
+      },
+      "rawBinomP_excl2020": 0.274,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 199,
+          "winPct": 54.8
+        },
+        "2020": {
+          "n": 111,
+          "winPct": 43.2
+        },
+        "2021": {
+          "n": 184,
+          "winPct": 53.8
+        },
+        "2022": {
+          "n": 164,
+          "winPct": 51.8
+        },
+        "2023": {
+          "n": 157,
+          "winPct": 47.1
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "back_large_favorites",
+      "id": "back_large_favorites",
+      "threshold": 21,
+      "avgAbsSignal": 28.1,
+      "avgMarketSpread": 28.1,
+      "all": {
+        "qualifying": 538,
+        "wins": 267,
+        "losses": 259,
+        "pushes": 12,
+        "decided": 526,
+        "winPct": 50.8,
+        "units": -16.3,
+        "roiPct": -3.1
+      },
+      "excl2020": {
+        "qualifying": 463,
+        "wins": 233,
+        "losses": 221,
+        "pushes": 9,
+        "decided": 454,
+        "winPct": 51.3,
+        "units": -9.2,
+        "roiPct": -2
+      },
+      "wilson95_excl2020": {
+        "lo": 46.7,
+        "hi": 55.9
+      },
+      "rawBinomP_excl2020": 0.606,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 138,
+          "winPct": 53.6
+        },
+        "2020": {
+          "n": 72,
+          "winPct": 47.2
+        },
+        "2021": {
+          "n": 114,
+          "winPct": 50.9
+        },
+        "2022": {
+          "n": 109,
+          "winPct": 54.1
+        },
+        "2023": {
+          "n": 93,
+          "winPct": 45.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "back_home_underdogs",
+      "id": "back_home_underdogs",
+      "threshold": 0.5,
+      "avgAbsSignal": 9.42,
+      "avgMarketSpread": 9.42,
+      "all": {
+        "qualifying": 1438,
+        "wins": 708,
+        "losses": 707,
+        "pushes": 23,
+        "decided": 1415,
+        "winPct": 50,
+        "units": -63.43,
+        "roiPct": -4.5
+      },
+      "excl2020": {
+        "qualifying": 1208,
+        "wins": 594,
+        "losses": 593,
+        "pushes": 21,
+        "decided": 1187,
+        "winPct": 50,
+        "units": -53.05,
+        "roiPct": -4.5
+      },
+      "wilson95_excl2020": {
+        "lo": 47.2,
+        "hi": 52.9
+      },
+      "rawBinomP_excl2020": 1,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 303,
+          "winPct": 48.5
+        },
+        "2020": {
+          "n": 228,
+          "winPct": 50
+        },
+        "2021": {
+          "n": 299,
+          "winPct": 50.2
+        },
+        "2022": {
+          "n": 283,
+          "winPct": 52.7
+        },
+        "2023": {
+          "n": 302,
+          "winPct": 49
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "back_home_underdogs",
+      "id": "back_home_underdogs",
+      "threshold": 3,
+      "avgAbsSignal": 10.82,
+      "avgMarketSpread": 10.82,
+      "all": {
+        "qualifying": 1213,
+        "wins": 598,
+        "losses": 595,
+        "pushes": 20,
+        "decided": 1193,
+        "winPct": 50.1,
+        "units": -51.42,
+        "roiPct": -4.3
+      },
+      "excl2020": {
+        "qualifying": 1027,
+        "wins": 511,
+        "losses": 497,
+        "pushes": 19,
+        "decided": 1008,
+        "winPct": 50.7,
+        "units": -32.5,
+        "roiPct": -3.2
+      },
+      "wilson95_excl2020": {
+        "lo": 47.6,
+        "hi": 53.8
+      },
+      "rawBinomP_excl2020": 0.682,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 269,
+          "winPct": 46.8
+        },
+        "2020": {
+          "n": 185,
+          "winPct": 47
+        },
+        "2021": {
+          "n": 253,
+          "winPct": 51.4
+        },
+        "2022": {
+          "n": 240,
+          "winPct": 55
+        },
+        "2023": {
+          "n": 246,
+          "winPct": 50
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "back_home_underdogs",
+      "id": "back_home_underdogs",
+      "threshold": 7,
+      "avgAbsSignal": 14.47,
+      "avgMarketSpread": 14.47,
+      "all": {
+        "qualifying": 766,
+        "wins": 363,
+        "losses": 389,
+        "pushes": 14,
+        "decided": 752,
+        "winPct": 48.3,
+        "units": -59.03,
+        "roiPct": -7.8
+      },
+      "excl2020": {
+        "qualifying": 639,
+        "wins": 303,
+        "losses": 322,
+        "pushes": 14,
+        "decided": 625,
+        "winPct": 48.5,
+        "units": -46.57,
+        "roiPct": -7.5
+      },
+      "wilson95_excl2020": {
+        "lo": 44.6,
+        "hi": 52.4
+      },
+      "rawBinomP_excl2020": 0.472,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 170,
+          "winPct": 44.1
+        },
+        "2020": {
+          "n": 127,
+          "winPct": 47.2
+        },
+        "2021": {
+          "n": 159,
+          "winPct": 50.9
+        },
+        "2022": {
+          "n": 150,
+          "winPct": 52.7
+        },
+        "2023": {
+          "n": 146,
+          "winPct": 46.6
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "back_home_underdogs",
+      "id": "back_home_underdogs",
+      "threshold": 10,
+      "avgAbsSignal": 17.13,
+      "avgMarketSpread": 17.13,
+      "all": {
+        "qualifying": 543,
+        "wins": 254,
+        "losses": 281,
+        "pushes": 8,
+        "decided": 535,
+        "winPct": 47.5,
+        "units": -50.11,
+        "roiPct": -9.4
+      },
+      "excl2020": {
+        "qualifying": 450,
+        "wins": 210,
+        "losses": 232,
+        "pushes": 8,
+        "decided": 442,
+        "winPct": 47.5,
+        "units": -41.11,
+        "roiPct": -9.3
+      },
+      "wilson95_excl2020": {
+        "lo": 42.9,
+        "hi": 52.2
+      },
+      "rawBinomP_excl2020": 0.318,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 128,
+          "winPct": 43.8
+        },
+        "2020": {
+          "n": 93,
+          "winPct": 47.3
+        },
+        "2021": {
+          "n": 117,
+          "winPct": 47
+        },
+        "2022": {
+          "n": 100,
+          "winPct": 52
+        },
+        "2023": {
+          "n": 97,
+          "winPct": 48.5
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "back_road_underdogs",
+      "id": "back_road_underdogs",
+      "threshold": 0.5,
+      "avgAbsSignal": 12.4,
+      "avgMarketSpread": 12.4,
+      "all": {
+        "qualifying": 2204,
+        "wins": 1091,
+        "losses": 1076,
+        "pushes": 37,
+        "decided": 2167,
+        "winPct": 50.3,
+        "units": -84.28,
+        "roiPct": -3.9
+      },
+      "excl2020": {
+        "qualifying": 1900,
+        "wins": 939,
+        "losses": 931,
+        "pushes": 30,
+        "decided": 1870,
+        "winPct": 50.2,
+        "units": -77.45,
+        "roiPct": -4.1
+      },
+      "wilson95_excl2020": {
+        "lo": 47.9,
+        "hi": 52.5
+      },
+      "rawBinomP_excl2020": 0.871,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 457,
+          "winPct": 48.8
+        },
+        "2020": {
+          "n": 297,
+          "winPct": 51.2
+        },
+        "2021": {
+          "n": 462,
+          "winPct": 48.3
+        },
+        "2022": {
+          "n": 479,
+          "winPct": 53.2
+        },
+        "2023": {
+          "n": 472,
+          "winPct": 50.4
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "back_road_underdogs",
+      "id": "back_road_underdogs",
+      "threshold": 3,
+      "avgAbsSignal": 13.69,
+      "avgMarketSpread": 13.69,
+      "all": {
+        "qualifying": 1963,
+        "wins": 970,
+        "losses": 957,
+        "pushes": 36,
+        "decided": 1927,
+        "winPct": 50.3,
+        "units": -75.27,
+        "roiPct": -3.9
+      },
+      "excl2020": {
+        "qualifying": 1687,
+        "wins": 829,
+        "losses": 828,
+        "pushes": 30,
+        "decided": 1657,
+        "winPct": 50,
+        "units": -74.44,
+        "roiPct": -4.5
+      },
+      "wilson95_excl2020": {
+        "lo": 47.6,
+        "hi": 52.4
+      },
+      "rawBinomP_excl2020": 1,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 410,
+          "winPct": 47.1
+        },
+        "2020": {
+          "n": 270,
+          "winPct": 52.2
+        },
+        "2021": {
+          "n": 406,
+          "winPct": 47.8
+        },
+        "2022": {
+          "n": 424,
+          "winPct": 53.1
+        },
+        "2023": {
+          "n": 417,
+          "winPct": 52
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "back_road_underdogs",
+      "id": "back_road_underdogs",
+      "threshold": 7,
+      "avgAbsSignal": 17.37,
+      "avgMarketSpread": 17.37,
+      "all": {
+        "qualifying": 1402,
+        "wins": 693,
+        "losses": 686,
+        "pushes": 23,
+        "decided": 1379,
+        "winPct": 50.3,
+        "units": -56.06,
+        "roiPct": -4.1
+      },
+      "excl2020": {
+        "qualifying": 1198,
+        "wins": 582,
+        "losses": 599,
+        "pushes": 17,
+        "decided": 1181,
+        "winPct": 49.3,
+        "units": -69.96,
+        "roiPct": -5.9
+      },
+      "wilson95_excl2020": {
+        "lo": 46.4,
+        "hi": 52.1
+      },
+      "rawBinomP_excl2020": 0.642,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 306,
+          "winPct": 46.4
+        },
+        "2020": {
+          "n": 198,
+          "winPct": 56.1
+        },
+        "2021": {
+          "n": 289,
+          "winPct": 46
+        },
+        "2022": {
+          "n": 302,
+          "winPct": 52.6
+        },
+        "2023": {
+          "n": 284,
+          "winPct": 52.1
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "back_road_underdogs",
+      "id": "back_road_underdogs",
+      "threshold": 10,
+      "avgAbsSignal": 19.62,
+      "avgMarketSpread": 19.62,
+      "all": {
+        "qualifying": 1132,
+        "wins": 561,
+        "losses": 549,
+        "pushes": 22,
+        "decided": 1110,
+        "winPct": 50.5,
+        "units": -39.05,
+        "roiPct": -3.5
+      },
+      "excl2020": {
+        "qualifying": 962,
+        "wins": 470,
+        "losses": 476,
+        "pushes": 16,
+        "decided": 946,
+        "winPct": 49.7,
+        "units": -48.77,
+        "roiPct": -5.2
+      },
+      "wilson95_excl2020": {
+        "lo": 46.5,
+        "hi": 52.9
+      },
+      "rawBinomP_excl2020": 0.871,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 3,
+      "bySeason": {
+        "2019": {
+          "n": 239,
+          "winPct": 44.4
+        },
+        "2020": {
+          "n": 164,
+          "winPct": 55.5
+        },
+        "2021": {
+          "n": 232,
+          "winPct": 47.8
+        },
+        "2022": {
+          "n": 248,
+          "winPct": 54
+        },
+        "2023": {
+          "n": 227,
+          "winPct": 52.4
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "elo_vs_market",
+      "id": "elo_vs_market",
+      "threshold": 2,
+      "avgAbsSignal": 6,
+      "avgMarketSpread": 11.98,
+      "all": {
+        "qualifying": 2534,
+        "wins": 1237,
+        "losses": 1253,
+        "pushes": 44,
+        "decided": 2490,
+        "winPct": 49.7,
+        "units": -128.57,
+        "roiPct": -5.2
+      },
+      "excl2020": {
+        "qualifying": 2142,
+        "wins": 1039,
+        "losses": 1067,
+        "pushes": 36,
+        "decided": 2106,
+        "winPct": 49.3,
+        "units": -122.55,
+        "roiPct": -5.8
+      },
+      "wilson95_excl2020": {
+        "lo": 47.2,
+        "hi": 51.5
+      },
+      "rawBinomP_excl2020": 0.556,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 528,
+          "winPct": 47.9
+        },
+        "2020": {
+          "n": 384,
+          "winPct": 51.6
+        },
+        "2021": {
+          "n": 522,
+          "winPct": 49.2
+        },
+        "2022": {
+          "n": 540,
+          "winPct": 50
+        },
+        "2023": {
+          "n": 516,
+          "winPct": 50.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "elo_vs_market",
+      "id": "elo_vs_market",
+      "threshold": 3,
+      "avgAbsSignal": 6.91,
+      "avgMarketSpread": 12.7,
+      "all": {
+        "qualifying": 2011,
+        "wins": 985,
+        "losses": 989,
+        "pushes": 37,
+        "decided": 1974,
+        "winPct": 49.9,
+        "units": -93.63,
+        "roiPct": -4.7
+      },
+      "excl2020": {
+        "qualifying": 1699,
+        "wins": 820,
+        "losses": 850,
+        "pushes": 29,
+        "decided": 1670,
+        "winPct": 49.1,
+        "units": -104.62,
+        "roiPct": -6.3
+      },
+      "wilson95_excl2020": {
+        "lo": 46.7,
+        "hi": 51.5
+      },
+      "rawBinomP_excl2020": 0.478,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 418,
+          "winPct": 47.8
+        },
+        "2020": {
+          "n": 304,
+          "winPct": 54.3
+        },
+        "2021": {
+          "n": 412,
+          "winPct": 50
+        },
+        "2022": {
+          "n": 431,
+          "winPct": 48.7
+        },
+        "2023": {
+          "n": 409,
+          "winPct": 49.9
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "elo_vs_market",
+      "id": "elo_vs_market",
+      "threshold": 4,
+      "avgAbsSignal": 7.83,
+      "avgMarketSpread": 13.49,
+      "all": {
+        "qualifying": 1586,
+        "wins": 778,
+        "losses": 776,
+        "pushes": 32,
+        "decided": 1554,
+        "winPct": 50.1,
+        "units": -68.8,
+        "roiPct": -4.4
+      },
+      "excl2020": {
+        "qualifying": 1338,
+        "wins": 645,
+        "losses": 668,
+        "pushes": 25,
+        "decided": 1313,
+        "winPct": 49.1,
+        "units": -81.69,
+        "roiPct": -6.2
+      },
+      "wilson95_excl2020": {
+        "lo": 46.4,
+        "hi": 51.8
+      },
+      "rawBinomP_excl2020": 0.544,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 336,
+          "winPct": 49.1
+        },
+        "2020": {
+          "n": 241,
+          "winPct": 55.2
+        },
+        "2021": {
+          "n": 318,
+          "winPct": 47.5
+        },
+        "2022": {
+          "n": 344,
+          "winPct": 49.7
+        },
+        "2023": {
+          "n": 315,
+          "winPct": 50.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "elo_vs_market",
+      "id": "elo_vs_market",
+      "threshold": 6,
+      "avgAbsSignal": 9.71,
+      "avgMarketSpread": 15.55,
+      "all": {
+        "qualifying": 964,
+        "wins": 452,
+        "losses": 493,
+        "pushes": 19,
+        "decided": 945,
+        "winPct": 47.8,
+        "units": -82.13,
+        "roiPct": -8.7
+      },
+      "excl2020": {
+        "qualifying": 782,
+        "wins": 357,
+        "losses": 411,
+        "pushes": 14,
+        "decided": 768,
+        "winPct": 46.5,
+        "units": -86.49,
+        "roiPct": -11.3
+      },
+      "wilson95_excl2020": {
+        "lo": 43,
+        "hi": 50
+      },
+      "rawBinomP_excl2020": 0.056,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 196,
+          "winPct": 47.4
+        },
+        "2020": {
+          "n": 177,
+          "winPct": 53.7
+        },
+        "2021": {
+          "n": 176,
+          "winPct": 44.9
+        },
+        "2022": {
+          "n": 199,
+          "winPct": 47.2
+        },
+        "2023": {
+          "n": 197,
+          "winPct": 46.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "elo_vs_market",
+      "id": "elo_vs_market",
+      "threshold": 8,
+      "avgAbsSignal": 11.51,
+      "avgMarketSpread": 17.68,
+      "all": {
+        "qualifying": 584,
+        "wins": 270,
+        "losses": 304,
+        "pushes": 10,
+        "decided": 574,
+        "winPct": 47,
+        "units": -58.57,
+        "roiPct": -10.2
+      },
+      "excl2020": {
+        "qualifying": 471,
+        "wins": 207,
+        "losses": 257,
+        "pushes": 7,
+        "decided": 464,
+        "winPct": 44.6,
+        "units": -68.84,
+        "roiPct": -14.8
+      },
+      "wilson95_excl2020": {
+        "lo": 40.2,
+        "hi": 49.2
+      },
+      "rawBinomP_excl2020": 0.023,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 115,
+          "winPct": 44.3
+        },
+        "2020": {
+          "n": 110,
+          "winPct": 57.3
+        },
+        "2021": {
+          "n": 101,
+          "winPct": 38.6
+        },
+        "2022": {
+          "n": 138,
+          "winPct": 48.6
+        },
+        "2023": {
+          "n": 110,
+          "winPct": 45.5
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": true,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "sp_vs_market",
+      "id": "sp_vs_market",
+      "threshold": 3,
+      "avgAbsSignal": 9.79,
+      "avgMarketSpread": 11.22,
+      "all": {
+        "qualifying": 2770,
+        "wins": 1331,
+        "losses": 1391,
+        "pushes": 48,
+        "decided": 2722,
+        "winPct": 48.9,
+        "units": -181.12,
+        "roiPct": -6.7
+      },
+      "excl2020": {
+        "qualifying": 2355,
+        "wins": 1129,
+        "losses": 1186,
+        "pushes": 40,
+        "decided": 2315,
+        "winPct": 48.8,
+        "units": -159.74,
+        "roiPct": -6.9
+      },
+      "wilson95_excl2020": {
+        "lo": 46.7,
+        "hi": 50.8
+      },
+      "rawBinomP_excl2020": 0.244,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 586,
+          "winPct": 48.6
+        },
+        "2020": {
+          "n": 407,
+          "winPct": 49.6
+        },
+        "2021": {
+          "n": 573,
+          "winPct": 46.6
+        },
+        "2022": {
+          "n": 585,
+          "winPct": 49.4
+        },
+        "2023": {
+          "n": 571,
+          "winPct": 50.4
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "sp_vs_market",
+      "id": "sp_vs_market",
+      "threshold": 5,
+      "avgAbsSignal": 11.37,
+      "avgMarketSpread": 11.1,
+      "all": {
+        "qualifying": 2184,
+        "wins": 1041,
+        "losses": 1102,
+        "pushes": 41,
+        "decided": 2143,
+        "winPct": 48.6,
+        "units": -155.73,
+        "roiPct": -7.3
+      },
+      "excl2020": {
+        "qualifying": 1862,
+        "wins": 880,
+        "losses": 948,
+        "pushes": 34,
+        "decided": 1828,
+        "winPct": 48.1,
+        "units": -148.08,
+        "roiPct": -8.1
+      },
+      "wilson95_excl2020": {
+        "lo": 45.9,
+        "hi": 50.4
+      },
+      "rawBinomP_excl2020": 0.117,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 458,
+          "winPct": 49.1
+        },
+        "2020": {
+          "n": 315,
+          "winPct": 51.1
+        },
+        "2021": {
+          "n": 448,
+          "winPct": 45.3
+        },
+        "2022": {
+          "n": 462,
+          "winPct": 48.3
+        },
+        "2023": {
+          "n": 460,
+          "winPct": 49.8
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "sp_vs_market",
+      "id": "sp_vs_market",
+      "threshold": 7,
+      "avgAbsSignal": 12.89,
+      "avgMarketSpread": 10.79,
+      "all": {
+        "qualifying": 1705,
+        "wins": 830,
+        "losses": 841,
+        "pushes": 34,
+        "decided": 1671,
+        "winPct": 49.7,
+        "units": -86.53,
+        "roiPct": -5.2
+      },
+      "excl2020": {
+        "qualifying": 1450,
+        "wins": 699,
+        "losses": 723,
+        "pushes": 28,
+        "decided": 1422,
+        "winPct": 49.2,
+        "units": -87.61,
+        "roiPct": -6.2
+      },
+      "wilson95_excl2020": {
+        "lo": 46.6,
+        "hi": 51.8
+      },
+      "rawBinomP_excl2020": 0.542,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 368,
+          "winPct": 48.6
+        },
+        "2020": {
+          "n": 249,
+          "winPct": 52.6
+        },
+        "2021": {
+          "n": 342,
+          "winPct": 45.9
+        },
+        "2022": {
+          "n": 363,
+          "winPct": 48.8
+        },
+        "2023": {
+          "n": 349,
+          "winPct": 53.3
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "sp_vs_market",
+      "id": "sp_vs_market",
+      "threshold": 10,
+      "avgAbsSignal": 15.41,
+      "avgMarketSpread": 10.49,
+      "all": {
+        "qualifying": 1096,
+        "wins": 529,
+        "losses": 545,
+        "pushes": 22,
+        "decided": 1074,
+        "winPct": 49.3,
+        "units": -64.14,
+        "roiPct": -6
+      },
+      "excl2020": {
+        "qualifying": 922,
+        "wins": 446,
+        "losses": 459,
+        "pushes": 17,
+        "decided": 905,
+        "winPct": 49.3,
+        "units": -53.59,
+        "roiPct": -5.9
+      },
+      "wilson95_excl2020": {
+        "lo": 46,
+        "hi": 52.5
+      },
+      "rawBinomP_excl2020": 0.69,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 236,
+          "winPct": 47
+        },
+        "2020": {
+          "n": 169,
+          "winPct": 49.1
+        },
+        "2021": {
+          "n": 210,
+          "winPct": 45.7
+        },
+        "2022": {
+          "n": 242,
+          "winPct": 50.4
+        },
+        "2023": {
+          "n": 217,
+          "winPct": 53.9
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "fpi_vs_market",
+      "id": "fpi_vs_market",
+      "threshold": 3,
+      "avgAbsSignal": 9.13,
+      "avgMarketSpread": 11.12,
+      "all": {
+        "qualifying": 2640,
+        "wins": 1269,
+        "losses": 1323,
+        "pushes": 48,
+        "decided": 2592,
+        "winPct": 49,
+        "units": -169.48,
+        "roiPct": -6.5
+      },
+      "excl2020": {
+        "qualifying": 2232,
+        "wins": 1063,
+        "losses": 1130,
+        "pushes": 39,
+        "decided": 2193,
+        "winPct": 48.5,
+        "units": -163.73,
+        "roiPct": -7.5
+      },
+      "wilson95_excl2020": {
+        "lo": 46.4,
+        "hi": 50.6
+      },
+      "rawBinomP_excl2020": 0.159,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 580,
+          "winPct": 47.9
+        },
+        "2020": {
+          "n": 399,
+          "winPct": 51.6
+        },
+        "2021": {
+          "n": 520,
+          "winPct": 47.9
+        },
+        "2022": {
+          "n": 554,
+          "winPct": 48
+        },
+        "2023": {
+          "n": 539,
+          "winPct": 50.1
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "fpi_vs_market",
+      "id": "fpi_vs_market",
+      "threshold": 5,
+      "avgAbsSignal": 10.72,
+      "avgMarketSpread": 11.39,
+      "all": {
+        "qualifying": 2020,
+        "wins": 962,
+        "losses": 1020,
+        "pushes": 38,
+        "decided": 1982,
+        "winPct": 48.5,
+        "units": -145.54,
+        "roiPct": -7.3
+      },
+      "excl2020": {
+        "qualifying": 1703,
+        "wins": 810,
+        "losses": 864,
+        "pushes": 29,
+        "decided": 1674,
+        "winPct": 48.4,
+        "units": -127.71,
+        "roiPct": -7.6
+      },
+      "wilson95_excl2020": {
+        "lo": 46,
+        "hi": 50.8
+      },
+      "rawBinomP_excl2020": 0.195,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 453,
+          "winPct": 46.1
+        },
+        "2020": {
+          "n": 308,
+          "winPct": 49.4
+        },
+        "2021": {
+          "n": 409,
+          "winPct": 47.7
+        },
+        "2022": {
+          "n": 415,
+          "winPct": 48.7
+        },
+        "2023": {
+          "n": 397,
+          "winPct": 51.4
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "fpi_vs_market",
+      "id": "fpi_vs_market",
+      "threshold": 7,
+      "avgAbsSignal": 12.26,
+      "avgMarketSpread": 11.62,
+      "all": {
+        "qualifying": 1524,
+        "wins": 718,
+        "losses": 773,
+        "pushes": 33,
+        "decided": 1491,
+        "winPct": 48.2,
+        "units": -120.34,
+        "roiPct": -8.1
+      },
+      "excl2020": {
+        "qualifying": 1275,
+        "wins": 594,
+        "losses": 656,
+        "pushes": 25,
+        "decided": 1250,
+        "winPct": 47.5,
+        "units": -116.05,
+        "roiPct": -9.3
+      },
+      "wilson95_excl2020": {
+        "lo": 44.8,
+        "hi": 50.3
+      },
+      "rawBinomP_excl2020": 0.084,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 352,
+          "winPct": 44.3
+        },
+        "2020": {
+          "n": 241,
+          "winPct": 51.5
+        },
+        "2021": {
+          "n": 296,
+          "winPct": 44.9
+        },
+        "2022": {
+          "n": 324,
+          "winPct": 49.4
+        },
+        "2023": {
+          "n": 278,
+          "winPct": 52.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "fpi_vs_market",
+      "id": "fpi_vs_market",
+      "threshold": 10,
+      "avgAbsSignal": 14.81,
+      "avgMarketSpread": 11.85,
+      "all": {
+        "qualifying": 920,
+        "wins": 425,
+        "losses": 471,
+        "pushes": 24,
+        "decided": 896,
+        "winPct": 47.4,
+        "units": -84.68,
+        "roiPct": -9.5
+      },
+      "excl2020": {
+        "qualifying": 770,
+        "wins": 354,
+        "losses": 396,
+        "pushes": 20,
+        "decided": 750,
+        "winPct": 47.2,
+        "units": -74.21,
+        "roiPct": -9.9
+      },
+      "wilson95_excl2020": {
+        "lo": 43.7,
+        "hi": 50.8
+      },
+      "rawBinomP_excl2020": 0.134,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 231,
+          "winPct": 43.7
+        },
+        "2020": {
+          "n": 146,
+          "winPct": 48.6
+        },
+        "2021": {
+          "n": 170,
+          "winPct": 43.5
+        },
+        "2022": {
+          "n": 196,
+          "winPct": 51
+        },
+        "2023": {
+          "n": 153,
+          "winPct": 51.6
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "form_vs_market",
+      "id": "form_vs_market",
+      "threshold": 3,
+      "avgAbsSignal": 11.16,
+      "avgMarketSpread": 11.07,
+      "all": {
+        "qualifying": 2420,
+        "wins": 1162,
+        "losses": 1210,
+        "pushes": 48,
+        "decided": 2372,
+        "winPct": 49,
+        "units": -153.74,
+        "roiPct": -6.5
+      },
+      "excl2020": {
+        "qualifying": 2077,
+        "wins": 985,
+        "losses": 1051,
+        "pushes": 41,
+        "decided": 2036,
+        "winPct": 48.4,
+        "units": -155.63,
+        "roiPct": -7.6
+      },
+      "wilson95_excl2020": {
+        "lo": 46.2,
+        "hi": 50.6
+      },
+      "rawBinomP_excl2020": 0.15,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 516,
+          "winPct": 50.4
+        },
+        "2020": {
+          "n": 336,
+          "winPct": 52.7
+        },
+        "2021": {
+          "n": 513,
+          "winPct": 47
+        },
+        "2022": {
+          "n": 484,
+          "winPct": 49
+        },
+        "2023": {
+          "n": 523,
+          "winPct": 47.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "form_vs_market",
+      "id": "form_vs_market",
+      "threshold": 5,
+      "avgAbsSignal": 13.33,
+      "avgMarketSpread": 11.58,
+      "all": {
+        "qualifying": 1866,
+        "wins": 878,
+        "losses": 947,
+        "pushes": 41,
+        "decided": 1825,
+        "winPct": 48.1,
+        "units": -148.9,
+        "roiPct": -8.2
+      },
+      "excl2020": {
+        "qualifying": 1585,
+        "wins": 732,
+        "losses": 819,
+        "pushes": 34,
+        "decided": 1551,
+        "winPct": 47.2,
+        "units": -153.61,
+        "roiPct": -9.9
+      },
+      "wilson95_excl2020": {
+        "lo": 44.7,
+        "hi": 49.7
+      },
+      "rawBinomP_excl2020": 0.029,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 387,
+          "winPct": 49.9
+        },
+        "2020": {
+          "n": 274,
+          "winPct": 53.3
+        },
+        "2021": {
+          "n": 385,
+          "winPct": 44.2
+        },
+        "2022": {
+          "n": 370,
+          "winPct": 47.8
+        },
+        "2023": {
+          "n": 409,
+          "winPct": 46.9
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": true,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "form_vs_market",
+      "id": "form_vs_market",
+      "threshold": 7,
+      "avgAbsSignal": 15.93,
+      "avgMarketSpread": 11.86,
+      "all": {
+        "qualifying": 1380,
+        "wins": 656,
+        "losses": 689,
+        "pushes": 35,
+        "decided": 1345,
+        "winPct": 48.8,
+        "units": -92.7,
+        "roiPct": -6.9
+      },
+      "excl2020": {
+        "qualifying": 1157,
+        "wins": 538,
+        "losses": 591,
+        "pushes": 28,
+        "decided": 1129,
+        "winPct": 47.7,
+        "units": -101.96,
+        "roiPct": -9
+      },
+      "wilson95_excl2020": {
+        "lo": 44.8,
+        "hi": 50.6
+      },
+      "rawBinomP_excl2020": 0.122,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 292,
+          "winPct": 49.3
+        },
+        "2020": {
+          "n": 216,
+          "winPct": 54.6
+        },
+        "2021": {
+          "n": 278,
+          "winPct": 44.6
+        },
+        "2022": {
+          "n": 260,
+          "winPct": 50.4
+        },
+        "2023": {
+          "n": 299,
+          "winPct": 46.5
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "form_vs_market",
+      "id": "form_vs_market",
+      "threshold": 10,
+      "avgAbsSignal": 19.88,
+      "avgMarketSpread": 12.3,
+      "all": {
+        "qualifying": 907,
+        "wins": 428,
+        "losses": 453,
+        "pushes": 26,
+        "decided": 881,
+        "winPct": 48.6,
+        "units": -63.95,
+        "roiPct": -7.3
+      },
+      "excl2020": {
+        "qualifying": 756,
+        "wins": 355,
+        "losses": 379,
+        "pushes": 22,
+        "decided": 734,
+        "winPct": 48.4,
+        "units": -56.31,
+        "roiPct": -7.7
+      },
+      "wilson95_excl2020": {
+        "lo": 44.8,
+        "hi": 52
+      },
+      "rawBinomP_excl2020": 0.396,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 0,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 198,
+          "winPct": 49
+        },
+        "2020": {
+          "n": 147,
+          "winPct": 49.7
+        },
+        "2021": {
+          "n": 187,
+          "winPct": 47.1
+        },
+        "2022": {
+          "n": 167,
+          "winPct": 48.5
+        },
+        "2023": {
+          "n": 182,
+          "winPct": 48.9
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "consensus_disagreement",
+      "id": "consensus_disagreement",
+      "threshold": 2,
+      "avgAbsSignal": 2.96,
+      "avgMarketSpread": 11.15,
+      "all": {
+        "qualifying": 3085,
+        "wins": 1492,
+        "losses": 1542,
+        "pushes": 51,
+        "decided": 3034,
+        "winPct": 49.2,
+        "units": -185.77,
+        "roiPct": -6.1
+      },
+      "excl2020": {
+        "qualifying": 2615,
+        "wins": 1259,
+        "losses": 1314,
+        "pushes": 42,
+        "decided": 2573,
+        "winPct": 48.9,
+        "units": -169.57,
+        "roiPct": -6.6
+      },
+      "wilson95_excl2020": {
+        "lo": 47,
+        "hi": 50.9
+      },
+      "rawBinomP_excl2020": 0.287,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 641,
+          "winPct": 49.1
+        },
+        "2020": {
+          "n": 461,
+          "winPct": 50.5
+        },
+        "2021": {
+          "n": 636,
+          "winPct": 47.3
+        },
+        "2022": {
+          "n": 649,
+          "winPct": 49
+        },
+        "2023": {
+          "n": 647,
+          "winPct": 50.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "consensus_disagreement",
+      "id": "consensus_disagreement",
+      "threshold": 3,
+      "avgAbsSignal": 3.32,
+      "avgMarketSpread": 11.16,
+      "all": {
+        "qualifying": 2245,
+        "wins": 1086,
+        "losses": 1121,
+        "pushes": 38,
+        "decided": 2207,
+        "winPct": 49.2,
+        "units": -133.83,
+        "roiPct": -6.1
+      },
+      "excl2020": {
+        "qualifying": 1891,
+        "wins": 909,
+        "losses": 951,
+        "pushes": 31,
+        "decided": 1860,
+        "winPct": 48.9,
+        "units": -124.72,
+        "roiPct": -6.7
+      },
+      "wilson95_excl2020": {
+        "lo": 46.6,
+        "hi": 51.1
+      },
+      "rawBinomP_excl2020": 0.342,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 472,
+          "winPct": 47.5
+        },
+        "2020": {
+          "n": 347,
+          "winPct": 51
+        },
+        "2021": {
+          "n": 441,
+          "winPct": 48.8
+        },
+        "2022": {
+          "n": 498,
+          "winPct": 49.4
+        },
+        "2023": {
+          "n": 449,
+          "winPct": 49.9
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "consensus_disagreement",
+      "id": "consensus_disagreement",
+      "threshold": 4,
+      "avgAbsSignal": 4,
+      "avgMarketSpread": 10.71,
+      "all": {
+        "qualifying": 713,
+        "wins": 334,
+        "losses": 365,
+        "pushes": 14,
+        "decided": 699,
+        "winPct": 47.8,
+        "units": -61.39,
+        "roiPct": -8.8
+      },
+      "excl2020": {
+        "qualifying": 600,
+        "wins": 272,
+        "losses": 316,
+        "pushes": 12,
+        "decided": 588,
+        "winPct": 46.3,
+        "units": -68.75,
+        "roiPct": -11.7
+      },
+      "wilson95_excl2020": {
+        "lo": 42.3,
+        "hi": 50.3
+      },
+      "rawBinomP_excl2020": 0.076,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 168,
+          "winPct": 45.8
+        },
+        "2020": {
+          "n": 111,
+          "winPct": 55.9
+        },
+        "2021": {
+          "n": 114,
+          "winPct": 43
+        },
+        "2022": {
+          "n": 165,
+          "winPct": 52.1
+        },
+        "2023": {
+          "n": 141,
+          "winPct": 42.6
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::elasticnet]",
+      "id": "model_edge[A_independent::elasticnet]",
+      "threshold": 1,
+      "avgAbsSignal": 4.71,
+      "avgMarketSpread": 11.5,
+      "all": {
+        "qualifying": 3024,
+        "wins": 1493,
+        "losses": 1476,
+        "pushes": 55,
+        "decided": 2969,
+        "winPct": 50.3,
+        "units": -118.86,
+        "roiPct": -4
+      },
+      "excl2020": {
+        "qualifying": 2559,
+        "wins": 1259,
+        "losses": 1252,
+        "pushes": 48,
+        "decided": 2511,
+        "winPct": 50.1,
+        "units": -107.57,
+        "roiPct": -4.3
+      },
+      "wilson95_excl2020": {
+        "lo": 48.2,
+        "hi": 52.1
+      },
+      "rawBinomP_excl2020": 0.905,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 621,
+          "winPct": 49.8
+        },
+        "2020": {
+          "n": 458,
+          "winPct": 51.1
+        },
+        "2021": {
+          "n": 637,
+          "winPct": 49.8
+        },
+        "2022": {
+          "n": 632,
+          "winPct": 48.9
+        },
+        "2023": {
+          "n": 621,
+          "winPct": 52.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::elasticnet]",
+      "id": "model_edge[A_independent::elasticnet]",
+      "threshold": 2,
+      "avgAbsSignal": 5.47,
+      "avgMarketSpread": 11.85,
+      "all": {
+        "qualifying": 2441,
+        "wins": 1202,
+        "losses": 1194,
+        "pushes": 45,
+        "decided": 2396,
+        "winPct": 50.2,
+        "units": -101.38,
+        "roiPct": -4.2
+      },
+      "excl2020": {
+        "qualifying": 2061,
+        "wins": 1005,
+        "losses": 1017,
+        "pushes": 39,
+        "decided": 2022,
+        "winPct": 49.7,
+        "units": -103.45,
+        "roiPct": -5.1
+      },
+      "wilson95_excl2020": {
+        "lo": 47.5,
+        "hi": 51.9
+      },
+      "rawBinomP_excl2020": 0.807,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 502,
+          "winPct": 50.4
+        },
+        "2020": {
+          "n": 374,
+          "winPct": 52.7
+        },
+        "2021": {
+          "n": 507,
+          "winPct": 47.7
+        },
+        "2022": {
+          "n": 533,
+          "winPct": 49.2
+        },
+        "2023": {
+          "n": 480,
+          "winPct": 51.7
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::elasticnet]",
+      "id": "model_edge[A_independent::elasticnet]",
+      "threshold": 3,
+      "avgAbsSignal": 6.24,
+      "avgMarketSpread": 12.36,
+      "all": {
+        "qualifying": 1943,
+        "wins": 956,
+        "losses": 949,
+        "pushes": 38,
+        "decided": 1905,
+        "winPct": 50.2,
+        "units": -80,
+        "roiPct": -4.2
+      },
+      "excl2020": {
+        "qualifying": 1622,
+        "wins": 788,
+        "losses": 802,
+        "pushes": 32,
+        "decided": 1590,
+        "winPct": 49.6,
+        "units": -85.71,
+        "roiPct": -5.4
+      },
+      "wilson95_excl2020": {
+        "lo": 47.1,
+        "hi": 52
+      },
+      "rawBinomP_excl2020": 0.744,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 386,
+          "winPct": 51.6
+        },
+        "2020": {
+          "n": 315,
+          "winPct": 53.3
+        },
+        "2021": {
+          "n": 405,
+          "winPct": 46.9
+        },
+        "2022": {
+          "n": 419,
+          "winPct": 47.7
+        },
+        "2023": {
+          "n": 380,
+          "winPct": 52.4
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::elasticnet]",
+      "id": "model_edge[A_independent::elasticnet]",
+      "threshold": 4,
+      "avgAbsSignal": 7.08,
+      "avgMarketSpread": 12.93,
+      "all": {
+        "qualifying": 1489,
+        "wins": 741,
+        "losses": 720,
+        "pushes": 28,
+        "decided": 1461,
+        "winPct": 50.7,
+        "units": -46.43,
+        "roiPct": -3.2
+      },
+      "excl2020": {
+        "qualifying": 1250,
+        "wins": 614,
+        "losses": 613,
+        "pushes": 23,
+        "decided": 1227,
+        "winPct": 50,
+        "units": -54.87,
+        "roiPct": -4.5
+      },
+      "wilson95_excl2020": {
+        "lo": 47.2,
+        "hi": 52.8
+      },
+      "rawBinomP_excl2020": 1,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 303,
+          "winPct": 51.8
+        },
+        "2020": {
+          "n": 234,
+          "winPct": 54.3
+        },
+        "2021": {
+          "n": 315,
+          "winPct": 47
+        },
+        "2022": {
+          "n": 324,
+          "winPct": 48.5
+        },
+        "2023": {
+          "n": 285,
+          "winPct": 53.3
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::elasticnet]",
+      "id": "model_edge[A_independent::elasticnet]",
+      "threshold": 5,
+      "avgAbsSignal": 7.89,
+      "avgMarketSpread": 13.53,
+      "all": {
+        "qualifying": 1135,
+        "wins": 562,
+        "losses": 551,
+        "pushes": 22,
+        "decided": 1113,
+        "winPct": 50.5,
+        "units": -40.14,
+        "roiPct": -3.6
+      },
+      "excl2020": {
+        "qualifying": 948,
+        "wins": 463,
+        "losses": 467,
+        "pushes": 18,
+        "decided": 930,
+        "winPct": 49.8,
+        "units": -46.13,
+        "roiPct": -5
+      },
+      "wilson95_excl2020": {
+        "lo": 46.6,
+        "hi": 53
+      },
+      "rawBinomP_excl2020": 0.922,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 227,
+          "winPct": 52
+        },
+        "2020": {
+          "n": 183,
+          "winPct": 54.1
+        },
+        "2021": {
+          "n": 244,
+          "winPct": 46.7
+        },
+        "2022": {
+          "n": 245,
+          "winPct": 48.6
+        },
+        "2023": {
+          "n": 214,
+          "winPct": 52.3
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::elasticnet]",
+      "id": "model_edge[A_independent::elasticnet]",
+      "threshold": 7,
+      "avgAbsSignal": 9.8,
+      "avgMarketSpread": 14.95,
+      "all": {
+        "qualifying": 578,
+        "wins": 269,
+        "losses": 298,
+        "pushes": 11,
+        "decided": 567,
+        "winPct": 47.4,
+        "units": -53.48,
+        "roiPct": -9.4
+      },
+      "excl2020": {
+        "qualifying": 482,
+        "wins": 216,
+        "losses": 256,
+        "pushes": 10,
+        "decided": 472,
+        "winPct": 45.8,
+        "units": -59.66,
+        "roiPct": -12.6
+      },
+      "wilson95_excl2020": {
+        "lo": 41.3,
+        "hi": 50.3
+      },
+      "rawBinomP_excl2020": 0.073,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 95,
+          "winPct": 43.2
+        },
+        "2020": {
+          "n": 95,
+          "winPct": 55.8
+        },
+        "2021": {
+          "n": 132,
+          "winPct": 42.4
+        },
+        "2022": {
+          "n": 134,
+          "winPct": 47
+        },
+        "2023": {
+          "n": 111,
+          "winPct": 50.5
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::gbt]",
+      "id": "model_edge[A_independent::gbt]",
+      "threshold": 1,
+      "avgAbsSignal": 4.85,
+      "avgMarketSpread": 11.42,
+      "all": {
+        "qualifying": 3103,
+        "wins": 1565,
+        "losses": 1486,
+        "pushes": 52,
+        "decided": 3051,
+        "winPct": 51.3,
+        "units": -63.41,
+        "roiPct": -2.1
+      },
+      "excl2020": {
+        "qualifying": 2625,
+        "wins": 1317,
+        "losses": 1263,
+        "pushes": 45,
+        "decided": 2580,
+        "winPct": 51,
+        "units": -65.85,
+        "roiPct": -2.6
+      },
+      "wilson95_excl2020": {
+        "lo": 49.1,
+        "hi": 53
+      },
+      "rawBinomP_excl2020": 0.297,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 643,
+          "winPct": 50.7
+        },
+        "2020": {
+          "n": 471,
+          "winPct": 52.7
+        },
+        "2021": {
+          "n": 654,
+          "winPct": 49.2
+        },
+        "2022": {
+          "n": 645,
+          "winPct": 49.8
+        },
+        "2023": {
+          "n": 638,
+          "winPct": 54.5
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::gbt]",
+      "id": "model_edge[A_independent::gbt]",
+      "threshold": 2,
+      "avgAbsSignal": 5.6,
+      "avgMarketSpread": 11.59,
+      "all": {
+        "qualifying": 2532,
+        "wins": 1268,
+        "losses": 1215,
+        "pushes": 49,
+        "decided": 2483,
+        "winPct": 51.1,
+        "units": -62.39,
+        "roiPct": -2.5
+      },
+      "excl2020": {
+        "qualifying": 2149,
+        "wins": 1066,
+        "losses": 1040,
+        "pushes": 43,
+        "decided": 2106,
+        "winPct": 50.6,
+        "units": -71.01,
+        "roiPct": -3.4
+      },
+      "wilson95_excl2020": {
+        "lo": 48.5,
+        "hi": 52.7
+      },
+      "rawBinomP_excl2020": 0.586,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 528,
+          "winPct": 50
+        },
+        "2020": {
+          "n": 377,
+          "winPct": 53.6
+        },
+        "2021": {
+          "n": 545,
+          "winPct": 48.3
+        },
+        "2022": {
+          "n": 517,
+          "winPct": 49.3
+        },
+        "2023": {
+          "n": 516,
+          "winPct": 55
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::gbt]",
+      "id": "model_edge[A_independent::gbt]",
+      "threshold": 3,
+      "avgAbsSignal": 6.4,
+      "avgMarketSpread": 11.71,
+      "all": {
+        "qualifying": 2019,
+        "wins": 1007,
+        "losses": 976,
+        "pushes": 36,
+        "decided": 1983,
+        "winPct": 50.8,
+        "units": -60.64,
+        "roiPct": -3.1
+      },
+      "excl2020": {
+        "qualifying": 1698,
+        "wins": 836,
+        "losses": 831,
+        "pushes": 31,
+        "decided": 1667,
+        "winPct": 50.1,
+        "units": -71.08,
+        "roiPct": -4.3
+      },
+      "wilson95_excl2020": {
+        "lo": 47.8,
+        "hi": 52.5
+      },
+      "rawBinomP_excl2020": 0.922,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 416,
+          "winPct": 50
+        },
+        "2020": {
+          "n": 316,
+          "winPct": 54.1
+        },
+        "2021": {
+          "n": 412,
+          "winPct": 46.4
+        },
+        "2022": {
+          "n": 421,
+          "winPct": 50.1
+        },
+        "2023": {
+          "n": 418,
+          "winPct": 54.1
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::gbt]",
+      "id": "model_edge[A_independent::gbt]",
+      "threshold": 4,
+      "avgAbsSignal": 7.2,
+      "avgMarketSpread": 12.12,
+      "all": {
+        "qualifying": 1581,
+        "wins": 799,
+        "losses": 757,
+        "pushes": 25,
+        "decided": 1556,
+        "winPct": 51.3,
+        "units": -30.71,
+        "roiPct": -2
+      },
+      "excl2020": {
+        "qualifying": 1329,
+        "wins": 659,
+        "losses": 647,
+        "pushes": 23,
+        "decided": 1306,
+        "winPct": 50.5,
+        "units": -47.97,
+        "roiPct": -3.7
+      },
+      "wilson95_excl2020": {
+        "lo": 47.8,
+        "hi": 53.2
+      },
+      "rawBinomP_excl2020": 0.761,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 321,
+          "winPct": 52
+        },
+        "2020": {
+          "n": 250,
+          "winPct": 56
+        },
+        "2021": {
+          "n": 329,
+          "winPct": 47.7
+        },
+        "2022": {
+          "n": 327,
+          "winPct": 48.3
+        },
+        "2023": {
+          "n": 329,
+          "winPct": 53.8
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::gbt]",
+      "id": "model_edge[A_independent::gbt]",
+      "threshold": 5,
+      "avgAbsSignal": 8.07,
+      "avgMarketSpread": 12.6,
+      "all": {
+        "qualifying": 1196,
+        "wins": 608,
+        "losses": 568,
+        "pushes": 20,
+        "decided": 1176,
+        "winPct": 51.7,
+        "units": -15.33,
+        "roiPct": -1.3
+      },
+      "excl2020": {
+        "qualifying": 999,
+        "wins": 496,
+        "losses": 484,
+        "pushes": 19,
+        "decided": 980,
+        "winPct": 50.6,
+        "units": -33.14,
+        "roiPct": -3.4
+      },
+      "wilson95_excl2020": {
+        "lo": 47.5,
+        "hi": 53.7
+      },
+      "rawBinomP_excl2020": 0.725,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 4,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 240,
+          "winPct": 51.7
+        },
+        "2020": {
+          "n": 196,
+          "winPct": 57.1
+        },
+        "2021": {
+          "n": 249,
+          "winPct": 50.6
+        },
+        "2022": {
+          "n": 242,
+          "winPct": 49.2
+        },
+        "2023": {
+          "n": 249,
+          "winPct": 51
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::gbt]",
+      "id": "model_edge[A_independent::gbt]",
+      "threshold": 7,
+      "avgAbsSignal": 9.87,
+      "avgMarketSpread": 13.65,
+      "all": {
+        "qualifying": 650,
+        "wins": 321,
+        "losses": 316,
+        "pushes": 13,
+        "decided": 637,
+        "winPct": 50.4,
+        "units": -24.21,
+        "roiPct": -3.8
+      },
+      "excl2020": {
+        "qualifying": 545,
+        "wins": 258,
+        "losses": 275,
+        "pushes": 12,
+        "decided": 533,
+        "winPct": 48.4,
+        "units": -40.48,
+        "roiPct": -7.6
+      },
+      "wilson95_excl2020": {
+        "lo": 44.2,
+        "hi": 52.6
+      },
+      "rawBinomP_excl2020": 0.488,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 128,
+          "winPct": 50
+        },
+        "2020": {
+          "n": 104,
+          "winPct": 60.6
+        },
+        "2021": {
+          "n": 129,
+          "winPct": 45.7
+        },
+        "2022": {
+          "n": 139,
+          "winPct": 49.6
+        },
+        "2023": {
+          "n": 137,
+          "winPct": 48.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::ridge]",
+      "id": "model_edge[A_independent::ridge]",
+      "threshold": 1,
+      "avgAbsSignal": 4.76,
+      "avgMarketSpread": 11.33,
+      "all": {
+        "qualifying": 3039,
+        "wins": 1530,
+        "losses": 1460,
+        "pushes": 49,
+        "decided": 2990,
+        "winPct": 51.2,
+        "units": -69.23,
+        "roiPct": -2.3
+      },
+      "excl2020": {
+        "qualifying": 2587,
+        "wins": 1300,
+        "losses": 1244,
+        "pushes": 43,
+        "decided": 2544,
+        "winPct": 51.1,
+        "units": -62.3,
+        "roiPct": -2.4
+      },
+      "wilson95_excl2020": {
+        "lo": 49.2,
+        "hi": 53
+      },
+      "rawBinomP_excl2020": 0.276,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 4,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 605,
+          "winPct": 52.1
+        },
+        "2020": {
+          "n": 446,
+          "winPct": 51.6
+        },
+        "2021": {
+          "n": 652,
+          "winPct": 51.7
+        },
+        "2022": {
+          "n": 646,
+          "winPct": 48.5
+        },
+        "2023": {
+          "n": 641,
+          "winPct": 52.3
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::ridge]",
+      "id": "model_edge[A_independent::ridge]",
+      "threshold": 2,
+      "avgAbsSignal": 5.49,
+      "avgMarketSpread": 11.48,
+      "all": {
+        "qualifying": 2481,
+        "wins": 1250,
+        "losses": 1188,
+        "pushes": 43,
+        "decided": 2438,
+        "winPct": 51.3,
+        "units": -51.75,
+        "roiPct": -2.1
+      },
+      "excl2020": {
+        "qualifying": 2090,
+        "wins": 1049,
+        "losses": 1004,
+        "pushes": 37,
+        "decided": 2053,
+        "winPct": 51.1,
+        "units": -50.46,
+        "roiPct": -2.5
+      },
+      "wilson95_excl2020": {
+        "lo": 48.9,
+        "hi": 53.3
+      },
+      "rawBinomP_excl2020": 0.332,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 4,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 471,
+          "winPct": 51.6
+        },
+        "2020": {
+          "n": 385,
+          "winPct": 52.2
+        },
+        "2021": {
+          "n": 535,
+          "winPct": 51
+        },
+        "2022": {
+          "n": 537,
+          "winPct": 49.3
+        },
+        "2023": {
+          "n": 510,
+          "winPct": 52.5
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::ridge]",
+      "id": "model_edge[A_independent::ridge]",
+      "threshold": 3,
+      "avgAbsSignal": 6.3,
+      "avgMarketSpread": 11.65,
+      "all": {
+        "qualifying": 1953,
+        "wins": 984,
+        "losses": 932,
+        "pushes": 37,
+        "decided": 1916,
+        "winPct": 51.4,
+        "units": -37.54,
+        "roiPct": -2
+      },
+      "excl2020": {
+        "qualifying": 1637,
+        "wins": 822,
+        "losses": 784,
+        "pushes": 31,
+        "decided": 1606,
+        "winPct": 51.2,
+        "units": -36.8,
+        "roiPct": -2.3
+      },
+      "wilson95_excl2020": {
+        "lo": 48.7,
+        "hi": 53.6
+      },
+      "rawBinomP_excl2020": 0.356,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 5,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 376,
+          "winPct": 51.1
+        },
+        "2020": {
+          "n": 310,
+          "winPct": 52.3
+        },
+        "2021": {
+          "n": 419,
+          "winPct": 51.6
+        },
+        "2022": {
+          "n": 423,
+          "winPct": 50.6
+        },
+        "2023": {
+          "n": 388,
+          "winPct": 51.5
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::ridge]",
+      "id": "model_edge[A_independent::ridge]",
+      "threshold": 4,
+      "avgAbsSignal": 7.08,
+      "avgMarketSpread": 11.99,
+      "all": {
+        "qualifying": 1530,
+        "wins": 761,
+        "losses": 738,
+        "pushes": 31,
+        "decided": 1499,
+        "winPct": 50.8,
+        "units": -46.25,
+        "roiPct": -3.1
+      },
+      "excl2020": {
+        "qualifying": 1274,
+        "wins": 626,
+        "losses": 622,
+        "pushes": 26,
+        "decided": 1248,
+        "winPct": 50.2,
+        "units": -52.97,
+        "roiPct": -4.2
+      },
+      "wilson95_excl2020": {
+        "lo": 47.4,
+        "hi": 52.9
+      },
+      "rawBinomP_excl2020": 0.932,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 285,
+          "winPct": 49.8
+        },
+        "2020": {
+          "n": 251,
+          "winPct": 53.8
+        },
+        "2021": {
+          "n": 333,
+          "winPct": 48.6
+        },
+        "2022": {
+          "n": 337,
+          "winPct": 50.1
+        },
+        "2023": {
+          "n": 293,
+          "winPct": 52.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::ridge]",
+      "id": "model_edge[A_independent::ridge]",
+      "threshold": 5,
+      "avgAbsSignal": 7.91,
+      "avgMarketSpread": 12.26,
+      "all": {
+        "qualifying": 1162,
+        "wins": 572,
+        "losses": 565,
+        "pushes": 25,
+        "decided": 1137,
+        "winPct": 50.3,
+        "units": -45.05,
+        "roiPct": -4
+      },
+      "excl2020": {
+        "qualifying": 960,
+        "wins": 466,
+        "losses": 474,
+        "pushes": 20,
+        "decided": 940,
+        "winPct": 49.6,
+        "units": -50.41,
+        "roiPct": -5.4
+      },
+      "wilson95_excl2020": {
+        "lo": 46.4,
+        "hi": 52.8
+      },
+      "rawBinomP_excl2020": 0.819,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2019": {
+          "n": 206,
+          "winPct": 49
+        },
+        "2020": {
+          "n": 197,
+          "winPct": 53.8
+        },
+        "2021": {
+          "n": 251,
+          "winPct": 47
+        },
+        "2022": {
+          "n": 256,
+          "winPct": 49.6
+        },
+        "2023": {
+          "n": 227,
+          "winPct": 52.9
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[A_independent::ridge]",
+      "id": "model_edge[A_independent::ridge]",
+      "threshold": 7,
+      "avgAbsSignal": 9.76,
+      "avgMarketSpread": 13.54,
+      "all": {
+        "qualifying": 598,
+        "wins": 299,
+        "losses": 285,
+        "pushes": 14,
+        "decided": 584,
+        "winPct": 51.2,
+        "units": -13.21,
+        "roiPct": -2.3
+      },
+      "excl2020": {
+        "qualifying": 482,
+        "wins": 232,
+        "losses": 238,
+        "pushes": 12,
+        "decided": 470,
+        "winPct": 49.4,
+        "units": -27.11,
+        "roiPct": -5.8
+      },
+      "wilson95_excl2020": {
+        "lo": 44.9,
+        "hi": 53.9
+      },
+      "rawBinomP_excl2020": 0.818,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 3,
+      "bySeason": {
+        "2019": {
+          "n": 93,
+          "winPct": 52.7
+        },
+        "2020": {
+          "n": 114,
+          "winPct": 58.8
+        },
+        "2021": {
+          "n": 124,
+          "winPct": 46.8
+        },
+        "2022": {
+          "n": 133,
+          "winPct": 46.6
+        },
+        "2023": {
+          "n": 120,
+          "winPct": 52.5
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[B_residual::elasticnet]",
+      "id": "model_edge[B_residual::elasticnet]",
+      "threshold": 1,
+      "avgAbsSignal": 1.65,
+      "avgMarketSpread": 13.21,
+      "all": {
+        "qualifying": 716,
+        "wins": 373,
+        "losses": 329,
+        "pushes": 14,
+        "decided": 702,
+        "winPct": 53.1,
+        "units": 10.06,
+        "roiPct": 1.4
+      },
+      "excl2020": {
+        "qualifying": 513,
+        "wins": 271,
+        "losses": 230,
+        "pushes": 12,
+        "decided": 501,
+        "winPct": 54.1,
+        "units": 16.34,
+        "roiPct": 3.3
+      },
+      "wilson95_excl2020": {
+        "lo": 49.7,
+        "hi": 58.4
+      },
+      "rawBinomP_excl2020": 0.074,
+      "seasonsTracked": 4,
+      "seasonsAbove50": 4,
+      "seasonsAboveBreakeven": 3,
+      "bySeason": {
+        "2019": {
+          "n": 257,
+          "winPct": 55.6
+        },
+        "2020": {
+          "n": 201,
+          "winPct": 50.7
+        },
+        "2021": {
+          "n": 225,
+          "winPct": 52.4
+        },
+        "2022": {
+          "n": 19,
+          "winPct": 52.6
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[B_residual::elasticnet]",
+      "id": "model_edge[B_residual::elasticnet]",
+      "threshold": 2,
+      "avgAbsSignal": 2.76,
+      "avgMarketSpread": 17.34,
+      "all": {
+        "qualifying": 133,
+        "wins": 75,
+        "losses": 54,
+        "pushes": 4,
+        "decided": 129,
+        "winPct": 58.1,
+        "units": 14.17,
+        "roiPct": 11
+      },
+      "excl2020": {
+        "qualifying": 99,
+        "wins": 55,
+        "losses": 40,
+        "pushes": 4,
+        "decided": 95,
+        "winPct": 57.9,
+        "units": 10,
+        "roiPct": 10.5
+      },
+      "wilson95_excl2020": {
+        "lo": 47.8,
+        "hi": 67.3
+      },
+      "rawBinomP_excl2020": 0.151,
+      "seasonsTracked": 3,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 3,
+      "bySeason": {
+        "2019": {
+          "n": 44,
+          "winPct": 56.8
+        },
+        "2020": {
+          "n": 34,
+          "winPct": 58.8
+        },
+        "2021": {
+          "n": 51,
+          "winPct": 58.8
+        }
+      }
+    },
+    {
+      "family": "model_edge[B_residual::elasticnet]",
+      "id": "model_edge[B_residual::elasticnet]",
+      "threshold": 3,
+      "avgAbsSignal": 5.87,
+      "avgMarketSpread": 24.73,
+      "all": {
+        "qualifying": 15,
+        "wins": 9,
+        "losses": 5,
+        "pushes": 1,
+        "decided": 14,
+        "winPct": 64.3,
+        "units": 3.18,
+        "roiPct": 22.7
+      },
+      "excl2020": {
+        "qualifying": 14,
+        "wins": 8,
+        "losses": 5,
+        "pushes": 1,
+        "decided": 13,
+        "winPct": 61.5,
+        "units": 2.27,
+        "roiPct": 17.5
+      },
+      "wilson95_excl2020": {
+        "lo": 35.5,
+        "hi": 82.3
+      },
+      "rawBinomP_excl2020": 0.579,
+      "seasonsTracked": 3,
+      "seasonsAbove50": 3,
+      "seasonsAboveBreakeven": 3,
+      "bySeason": {
+        "2019": {
+          "n": 2,
+          "winPct": 100
+        },
+        "2020": {
+          "n": 1,
+          "winPct": 100
+        },
+        "2021": {
+          "n": 11,
+          "winPct": 54.5
+        }
+      }
+    },
+    {
+      "family": "model_edge[B_residual::elasticnet]",
+      "id": "model_edge[B_residual::elasticnet]",
+      "threshold": 4,
+      "avgAbsSignal": 7.45,
+      "avgMarketSpread": 30.72,
+      "all": {
+        "qualifying": 9,
+        "wins": 6,
+        "losses": 3,
+        "pushes": 0,
+        "decided": 9,
+        "winPct": 66.7,
+        "units": 2.45,
+        "roiPct": 27.2
+      },
+      "excl2020": {
+        "qualifying": 9,
+        "wins": 6,
+        "losses": 3,
+        "pushes": 0,
+        "decided": 9,
+        "winPct": 66.7,
+        "units": 2.45,
+        "roiPct": 27.2
+      },
+      "wilson95_excl2020": {
+        "lo": 35.4,
+        "hi": 87.9
+      },
+      "rawBinomP_excl2020": 0.505,
+      "seasonsTracked": 1,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2021": {
+          "n": 9,
+          "winPct": 66.7
+        }
+      }
+    },
+    {
+      "family": "model_edge[B_residual::elasticnet]",
+      "id": "model_edge[B_residual::elasticnet]",
+      "threshold": 5,
+      "avgAbsSignal": 7.45,
+      "avgMarketSpread": 30.72,
+      "all": {
+        "qualifying": 9,
+        "wins": 6,
+        "losses": 3,
+        "pushes": 0,
+        "decided": 9,
+        "winPct": 66.7,
+        "units": 2.45,
+        "roiPct": 27.2
+      },
+      "excl2020": {
+        "qualifying": 9,
+        "wins": 6,
+        "losses": 3,
+        "pushes": 0,
+        "decided": 9,
+        "winPct": 66.7,
+        "units": 2.45,
+        "roiPct": 27.2
+      },
+      "wilson95_excl2020": {
+        "lo": 35.4,
+        "hi": 87.9
+      },
+      "rawBinomP_excl2020": 0.505,
+      "seasonsTracked": 1,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2021": {
+          "n": 9,
+          "winPct": 66.7
+        }
+      }
+    },
+    {
+      "family": "model_edge[B_residual::elasticnet]",
+      "id": "model_edge[B_residual::elasticnet]",
+      "threshold": 7,
+      "avgAbsSignal": 7.75,
+      "avgMarketSpread": 30.57,
+      "all": {
+        "qualifying": 7,
+        "wins": 4,
+        "losses": 3,
+        "pushes": 0,
+        "decided": 7,
+        "winPct": 57.1,
+        "units": 0.64,
+        "roiPct": 9.1
+      },
+      "excl2020": {
+        "qualifying": 7,
+        "wins": 4,
+        "losses": 3,
+        "pushes": 0,
+        "decided": 7,
+        "winPct": 57.1,
+        "units": 0.64,
+        "roiPct": 9.1
+      },
+      "wilson95_excl2020": {
+        "lo": 25,
+        "hi": 84.2
+      },
+      "rawBinomP_excl2020": 1,
+      "seasonsTracked": 1,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2021": {
+          "n": 7,
+          "winPct": 57.1
+        }
+      }
+    },
+    {
+      "family": "model_edge[B_residual::gbt]",
+      "id": "model_edge[B_residual::gbt]",
+      "threshold": 1,
+      "avgAbsSignal": 1.87,
+      "avgMarketSpread": 11.15,
+      "all": {
+        "qualifying": 1021,
+        "wins": 558,
+        "losses": 441,
+        "pushes": 22,
+        "decided": 999,
+        "winPct": 55.9,
+        "units": 66.22,
+        "roiPct": 6.6
+      },
+      "excl2020": {
+        "qualifying": 901,
+        "wins": 491,
+        "losses": 389,
+        "pushes": 21,
+        "decided": 880,
+        "winPct": 55.8,
+        "units": 57.32,
+        "roiPct": 6.5
+      },
+      "wilson95_excl2020": {
+        "lo": 52.5,
+        "hi": 59
+      },
+      "rawBinomP_excl2020": 0.001,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 5,
+      "seasonsAboveBreakeven": 4,
+      "bySeason": {
+        "2019": {
+          "n": 228,
+          "winPct": 52.2
+        },
+        "2020": {
+          "n": 119,
+          "winPct": 56.3
+        },
+        "2021": {
+          "n": 168,
+          "winPct": 56
+        },
+        "2022": {
+          "n": 173,
+          "winPct": 56.1
+        },
+        "2023": {
+          "n": 311,
+          "winPct": 58.2
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": true,
+      "bhFdrSignificant": true
+    },
+    {
+      "family": "model_edge[B_residual::gbt]",
+      "id": "model_edge[B_residual::gbt]",
+      "threshold": 2,
+      "avgAbsSignal": 2.8,
+      "avgMarketSpread": 11.38,
+      "all": {
+        "qualifying": 319,
+        "wins": 175,
+        "losses": 132,
+        "pushes": 12,
+        "decided": 307,
+        "winPct": 57,
+        "units": 27.08,
+        "roiPct": 8.8
+      },
+      "excl2020": {
+        "qualifying": 294,
+        "wins": 161,
+        "losses": 122,
+        "pushes": 11,
+        "decided": 283,
+        "winPct": 56.9,
+        "units": 24.35,
+        "roiPct": 8.6
+      },
+      "wilson95_excl2020": {
+        "lo": 51.1,
+        "hi": 62.5
+      },
+      "rawBinomP_excl2020": 0.024,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 5,
+      "seasonsAboveBreakeven": 5,
+      "bySeason": {
+        "2019": {
+          "n": 67,
+          "winPct": 56.7
+        },
+        "2020": {
+          "n": 24,
+          "winPct": 58.3
+        },
+        "2021": {
+          "n": 53,
+          "winPct": 58.5
+        },
+        "2022": {
+          "n": 34,
+          "winPct": 70.6
+        },
+        "2023": {
+          "n": 129,
+          "winPct": 52.7
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": true,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[B_residual::gbt]",
+      "id": "model_edge[B_residual::gbt]",
+      "threshold": 3,
+      "avgAbsSignal": 3.84,
+      "avgMarketSpread": 10.47,
+      "all": {
+        "qualifying": 88,
+        "wins": 43,
+        "losses": 44,
+        "pushes": 1,
+        "decided": 87,
+        "winPct": 49.4,
+        "units": -4.91,
+        "roiPct": -5.6
+      },
+      "excl2020": {
+        "qualifying": 85,
+        "wins": 40,
+        "losses": 44,
+        "pushes": 1,
+        "decided": 84,
+        "winPct": 47.6,
+        "units": -7.64,
+        "roiPct": -9.1
+      },
+      "wilson95_excl2020": {
+        "lo": 37.3,
+        "hi": 58.2
+      },
+      "rawBinomP_excl2020": 0.743,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 4,
+      "seasonsAboveBreakeven": 4,
+      "bySeason": {
+        "2019": {
+          "n": 23,
+          "winPct": 56.5
+        },
+        "2020": {
+          "n": 3,
+          "winPct": 100
+        },
+        "2021": {
+          "n": 9,
+          "winPct": 66.7
+        },
+        "2022": {
+          "n": 4,
+          "winPct": 75
+        },
+        "2023": {
+          "n": 48,
+          "winPct": 37.5
+        }
+      }
+    },
+    {
+      "family": "model_edge[B_residual::gbt]",
+      "id": "model_edge[B_residual::gbt]",
+      "threshold": 4,
+      "avgAbsSignal": 4.85,
+      "avgMarketSpread": 9.66,
+      "all": {
+        "qualifying": 29,
+        "wins": 12,
+        "losses": 17,
+        "pushes": 0,
+        "decided": 29,
+        "winPct": 41.4,
+        "units": -6.09,
+        "roiPct": -21
+      },
+      "excl2020": {
+        "qualifying": 28,
+        "wins": 11,
+        "losses": 17,
+        "pushes": 0,
+        "decided": 28,
+        "winPct": 39.3,
+        "units": -7,
+        "roiPct": -25
+      },
+      "wilson95_excl2020": {
+        "lo": 23.6,
+        "hi": 57.6
+      },
+      "rawBinomP_excl2020": 0.345,
+      "seasonsTracked": 3,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2019": {
+          "n": 6,
+          "winPct": 50
+        },
+        "2020": {
+          "n": 1,
+          "winPct": 100
+        },
+        "2023": {
+          "n": 22,
+          "winPct": 36.4
+        }
+      }
+    },
+    {
+      "family": "model_edge[B_residual::gbt]",
+      "id": "model_edge[B_residual::gbt]",
+      "threshold": 5,
+      "avgAbsSignal": 5.61,
+      "avgMarketSpread": 8.05,
+      "all": {
+        "qualifying": 10,
+        "wins": 5,
+        "losses": 5,
+        "pushes": 0,
+        "decided": 10,
+        "winPct": 50,
+        "units": -0.46,
+        "roiPct": -4.6
+      },
+      "excl2020": {
+        "qualifying": 10,
+        "wins": 5,
+        "losses": 5,
+        "pushes": 0,
+        "decided": 10,
+        "winPct": 50,
+        "units": -0.46,
+        "roiPct": -4.6
+      },
+      "wilson95_excl2020": {
+        "lo": 23.7,
+        "hi": 76.3
+      },
+      "rawBinomP_excl2020": 1,
+      "seasonsTracked": 2,
+      "seasonsAbove50": 0,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2019": {
+          "n": 2,
+          "winPct": 50
+        },
+        "2023": {
+          "n": 8,
+          "winPct": 50
+        }
+      }
+    },
+    {
+      "family": "model_edge[B_residual::gbt]",
+      "id": "model_edge[B_residual::gbt]",
+      "threshold": 7,
+      "avgAbsSignal": 7.22,
+      "avgMarketSpread": 7.5,
+      "all": {
+        "qualifying": 1,
+        "wins": 0,
+        "losses": 1,
+        "pushes": 0,
+        "decided": 1,
+        "winPct": 0,
+        "units": -1,
+        "roiPct": -100
+      },
+      "excl2020": {
+        "qualifying": 1,
+        "wins": 0,
+        "losses": 1,
+        "pushes": 0,
+        "decided": 1,
+        "winPct": 0,
+        "units": -1,
+        "roiPct": -100
+      },
+      "wilson95_excl2020": {
+        "lo": 0,
+        "hi": 79.3
+      },
+      "rawBinomP_excl2020": 1,
+      "seasonsTracked": 1,
+      "seasonsAbove50": 0,
+      "seasonsAboveBreakeven": 0,
+      "bySeason": {
+        "2023": {
+          "n": 1,
+          "winPct": 0
+        }
+      }
+    },
+    {
+      "family": "model_edge[B_residual::market_anchored_ridge]",
+      "id": "model_edge[B_residual::market_anchored_ridge]",
+      "threshold": 1,
+      "avgAbsSignal": 2,
+      "avgMarketSpread": 11.92,
+      "all": {
+        "qualifying": 1908,
+        "wins": 1000,
+        "losses": 879,
+        "pushes": 29,
+        "decided": 1879,
+        "winPct": 53.2,
+        "units": 30,
+        "roiPct": 1.6
+      },
+      "excl2020": {
+        "qualifying": 1588,
+        "wins": 838,
+        "losses": 724,
+        "pushes": 26,
+        "decided": 1562,
+        "winPct": 53.6,
+        "units": 37.74,
+        "roiPct": 2.4
+      },
+      "wilson95_excl2020": {
+        "lo": 51.2,
+        "hi": 56.1
+      },
+      "rawBinomP_excl2020": 0.004,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 5,
+      "seasonsAboveBreakeven": 3,
+      "bySeason": {
+        "2019": {
+          "n": 369,
+          "winPct": 56.1
+        },
+        "2020": {
+          "n": 317,
+          "winPct": 51.1
+        },
+        "2021": {
+          "n": 392,
+          "winPct": 53.6
+        },
+        "2022": {
+          "n": 427,
+          "winPct": 50.8
+        },
+        "2023": {
+          "n": 374,
+          "winPct": 54.5
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": true,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[B_residual::market_anchored_ridge]",
+      "id": "model_edge[B_residual::market_anchored_ridge]",
+      "threshold": 2,
+      "avgAbsSignal": 2.87,
+      "avgMarketSpread": 12.52,
+      "all": {
+        "qualifying": 741,
+        "wins": 388,
+        "losses": 339,
+        "pushes": 14,
+        "decided": 727,
+        "winPct": 53.4,
+        "units": 13.69,
+        "roiPct": 1.9
+      },
+      "excl2020": {
+        "qualifying": 592,
+        "wins": 313,
+        "losses": 266,
+        "pushes": 13,
+        "decided": 579,
+        "winPct": 54.1,
+        "units": 18.52,
+        "roiPct": 3.2
+      },
+      "wilson95_excl2020": {
+        "lo": 50,
+        "hi": 58.1
+      },
+      "rawBinomP_excl2020": 0.056,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 5,
+      "seasonsAboveBreakeven": 3,
+      "bySeason": {
+        "2019": {
+          "n": 129,
+          "winPct": 55.8
+        },
+        "2020": {
+          "n": 148,
+          "winPct": 50.7
+        },
+        "2021": {
+          "n": 150,
+          "winPct": 56
+        },
+        "2022": {
+          "n": 175,
+          "winPct": 52.6
+        },
+        "2023": {
+          "n": 125,
+          "winPct": 52
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[B_residual::market_anchored_ridge]",
+      "id": "model_edge[B_residual::market_anchored_ridge]",
+      "threshold": 3,
+      "avgAbsSignal": 3.86,
+      "avgMarketSpread": 13.41,
+      "all": {
+        "qualifying": 233,
+        "wins": 130,
+        "losses": 100,
+        "pushes": 3,
+        "decided": 230,
+        "winPct": 56.5,
+        "units": 18.17,
+        "roiPct": 7.9
+      },
+      "excl2020": {
+        "qualifying": 175,
+        "wins": 97,
+        "losses": 75,
+        "pushes": 3,
+        "decided": 172,
+        "winPct": 56.4,
+        "units": 13.17,
+        "roiPct": 7.7
+      },
+      "wilson95_excl2020": {
+        "lo": 48.9,
+        "hi": 63.6
+      },
+      "rawBinomP_excl2020": 0.109,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 4,
+      "seasonsAboveBreakeven": 4,
+      "bySeason": {
+        "2019": {
+          "n": 28,
+          "winPct": 64.3
+        },
+        "2020": {
+          "n": 58,
+          "winPct": 56.9
+        },
+        "2021": {
+          "n": 63,
+          "winPct": 60.3
+        },
+        "2022": {
+          "n": 60,
+          "winPct": 50
+        },
+        "2023": {
+          "n": 21,
+          "winPct": 52.4
+        }
+      },
+      "bonferroniSignificant": false,
+      "rawSignificant": false,
+      "bhFdrSignificant": false
+    },
+    {
+      "family": "model_edge[B_residual::market_anchored_ridge]",
+      "id": "model_edge[B_residual::market_anchored_ridge]",
+      "threshold": 4,
+      "avgAbsSignal": 5.14,
+      "avgMarketSpread": 16.1,
+      "all": {
+        "qualifying": 63,
+        "wins": 35,
+        "losses": 26,
+        "pushes": 2,
+        "decided": 61,
+        "winPct": 57.4,
+        "units": 5.82,
+        "roiPct": 9.5
+      },
+      "excl2020": {
+        "qualifying": 48,
+        "wins": 26,
+        "losses": 20,
+        "pushes": 2,
+        "decided": 46,
+        "winPct": 56.5,
+        "units": 3.63,
+        "roiPct": 7.9
+      },
+      "wilson95_excl2020": {
+        "lo": 42.2,
+        "hi": 69.8
+      },
+      "rawBinomP_excl2020": 0.461,
+      "seasonsTracked": 5,
+      "seasonsAbove50": 4,
+      "seasonsAboveBreakeven": 4,
+      "bySeason": {
+        "2019": {
+          "n": 3,
+          "winPct": 66.7
+        },
+        "2020": {
+          "n": 15,
+          "winPct": 60
+        },
+        "2021": {
+          "n": 28,
+          "winPct": 53.6
+        },
+        "2022": {
+          "n": 8,
+          "winPct": 75
+        },
+        "2023": {
+          "n": 7,
+          "winPct": 42.9
+        }
+      }
+    },
+    {
+      "family": "model_edge[B_residual::market_anchored_ridge]",
+      "id": "model_edge[B_residual::market_anchored_ridge]",
+      "threshold": 5,
+      "avgAbsSignal": 6.83,
+      "avgMarketSpread": 21.68,
+      "all": {
+        "qualifying": 20,
+        "wins": 12,
+        "losses": 8,
+        "pushes": 0,
+        "decided": 20,
+        "winPct": 60,
+        "units": 2.91,
+        "roiPct": 14.6
+      },
+      "excl2020": {
+        "qualifying": 17,
+        "wins": 9,
+        "losses": 8,
+        "pushes": 0,
+        "decided": 17,
+        "winPct": 52.9,
+        "units": 0.18,
+        "roiPct": 1.1
+      },
+      "wilson95_excl2020": {
+        "lo": 31,
+        "hi": 73.8
+      },
+      "rawBinomP_excl2020": 1,
+      "seasonsTracked": 4,
+      "seasonsAbove50": 2,
+      "seasonsAboveBreakeven": 2,
+      "bySeason": {
+        "2020": {
+          "n": 3,
+          "winPct": 100
+        },
+        "2021": {
+          "n": 12,
+          "winPct": 50
+        },
+        "2022": {
+          "n": 3,
+          "winPct": 33.3
+        },
+        "2023": {
+          "n": 2,
+          "winPct": 100
+        }
+      }
+    },
+    {
+      "family": "model_edge[B_residual::market_anchored_ridge]",
+      "id": "model_edge[B_residual::market_anchored_ridge]",
+      "threshold": 7,
+      "avgAbsSignal": 8.13,
+      "avgMarketSpread": 28.5,
+      "all": {
+        "qualifying": 9,
+        "wins": 5,
+        "losses": 4,
+        "pushes": 0,
+        "decided": 9,
+        "winPct": 55.6,
+        "units": 0.54,
+        "roiPct": 6
+      },
+      "excl2020": {
+        "qualifying": 9,
+        "wins": 5,
+        "losses": 4,
+        "pushes": 0,
+        "decided": 9,
+        "winPct": 55.6,
+        "units": 0.54,
+        "roiPct": 6
+      },
+      "wilson95_excl2020": {
+        "lo": 26.7,
+        "hi": 81.1
+      },
+      "rawBinomP_excl2020": 1,
+      "seasonsTracked": 2,
+      "seasonsAbove50": 1,
+      "seasonsAboveBreakeven": 1,
+      "bySeason": {
+        "2021": {
+          "n": 8,
+          "winPct": 50
+        },
+        "2022": {
+          "n": 1,
+          "winPct": 100
+        }
+      }
+    }
+  ]
+}
