@@ -7,6 +7,7 @@ import { getSessionUser } from "@/lib/access"
 import { db } from "@/lib/db"
 import { subscriptions } from "@/lib/db/schema"
 import { BSE_PRO, proPriceCents, type BillingInterval } from "@/lib/products"
+import { syncSubscriptionFromStripe } from "@/lib/subscription-sync"
 
 /**
  * Start an embedded Checkout session for a BSE Pro subscription.
@@ -85,18 +86,21 @@ export async function startProCheckout(interval: BillingInterval): Promise<strin
 }
 
 /**
- * Fallback reconciliation used on the Checkout return (no webhook secret
- * required in the sandbox). Retrieves the session by id, verifies it belongs to
- * the signed-in user and is paid/active, then marks them Pro. The webhook does
- * the same job in production; whichever fires first wins and the other is a
- * harmless no-op because we key on userId.
+ * Reconciliation used on the Checkout return. Retrieves the session, verifies
+ * it belongs to the signed-in user and is paid/complete, then mirrors the
+ * Stripe subscription into our local row via the SHARED sync used by the
+ * webhook — so the return path and the webhook can never disagree. Whichever
+ * fires first wins; the other is a harmless idempotent no-op (keyed on userId).
+ *
+ * This is a convenience for instant UI feedback. The webhook remains the
+ * authoritative lifecycle handler in production.
  */
 export async function confirmProCheckout(sessionId: string): Promise<{ pro: boolean }> {
   const user = await getSessionUser()
   if (!user) return { pro: false }
 
   const session = await stripe.checkout.sessions.retrieve(sessionId, {
-    expand: ["subscription"],
+    expand: ["subscription", "subscription.items"],
   })
 
   // The session must belong to this user.
@@ -104,41 +108,22 @@ export async function confirmProCheckout(sessionId: string): Promise<{ pro: bool
     return { pro: false }
   }
 
-  const sub =
-    typeof session.subscription === "object" && session.subscription !== null
-      ? session.subscription
-      : null
-  const active =
+  const complete =
     session.status === "complete" &&
     (session.payment_status === "paid" || session.payment_status === "no_payment_required")
+  if (!complete) return { pro: false }
 
-  if (!active) return { pro: false }
+  const sub =
+    typeof session.subscription === "object" && session.subscription !== null ? session.subscription : null
+  if (!sub) return { pro: false }
 
-  const periodEnd =
-    sub && typeof sub.items?.data?.[0]?.current_period_end === "number"
-      ? new Date(sub.items.data[0].current_period_end * 1000)
-      : null
+  // Ensure the subscription carries userId metadata for future webhook events,
+  // then mirror its true state locally through the shared sync.
+  if (!sub.metadata?.userId) {
+    await stripe.subscriptions.update(sub.id, { metadata: { userId: user.id } }).catch(() => {})
+    sub.metadata = { ...(sub.metadata ?? {}), userId: user.id }
+  }
+  await syncSubscriptionFromStripe(sub)
 
-  await db
-    .insert(subscriptions)
-    .values({
-      id: randomUUID(),
-      userId: user.id,
-      status: "active",
-      stripeCustomerId: typeof session.customer === "string" ? session.customer : null,
-      stripeSubscriptionId: sub?.id ?? null,
-      currentPeriodEnd: periodEnd,
-    })
-    .onConflictDoUpdate({
-      target: subscriptions.userId,
-      set: {
-        status: "active",
-        stripeCustomerId: typeof session.customer === "string" ? session.customer : undefined,
-        stripeSubscriptionId: sub?.id ?? undefined,
-        currentPeriodEnd: periodEnd ?? undefined,
-        updatedAt: new Date(),
-      },
-    })
-
-  return { pro: true }
+  return { pro: sub.status === "active" || sub.status === "trialing" }
 }

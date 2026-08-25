@@ -24,6 +24,9 @@ export interface CfbdGameLite {
   kickoff: string
   kickoffTBD: boolean
   neutralSite: boolean
+  /** CFBD venue identity — used only by the weather pipeline, optional here. */
+  venueId?: number | null
+  venueName?: string | null
   home: { name: string; abbr: string }
   away: { name: string; abbr: string }
 }

@@ -1,0 +1,125 @@
+{
+  "protocolVersion": "phase4-eval-v1",
+  "frozenAt": "2026-08-24",
+  "note": "FROZEN before any model comparison. Phase 5 must load this file and must not modify folds, metrics, thresholds, or the label. Scoring is implemented in scripts/hist/eval-protocol.mjs.",
+
+  "dataset": {
+    "table": "hist_training_rows",
+    "featureVersion": "hist-v1",
+    "rows": 6719,
+    "seasons": [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "scope": "completed FBS-vs-FBS games only (both_fbs = true)"
+  },
+
+  "label": {
+    "name": "actual_margin",
+    "definition": "home_points - away_points",
+    "leakageRule": "never an input to its own game's prediction"
+  },
+
+  "market": {
+    "field": "market_spread",
+    "impliedHomeMargin": "market_implied_home_margin = -market_spread",
+    "orientationValidated": {
+      "corrWithActualMargin": 0.661,
+      "straightUpAccuracyPct": 74.2,
+      "n": 6711,
+      "assertionsInAuditScript": ["corr > 0.5", "SU accuracy > 60%"]
+    },
+    "caveat": "market_spread is CFBD's LAST-RECORDED value, NOT a verified closing line. 86% of rows are consensus, only 10.8% DraftKings. Treat as a pre-kickoff line, not a close, and never as identical to BSE's live DraftKings market."
+  },
+
+  "walkForwardFolds": [
+    { "name": "fold1", "trainStart": 2015, "trainEnd": 2018, "test": 2019, "trainRows": 3073, "testRows": 774, "testAnomalous": false },
+    { "name": "fold2", "trainStart": 2015, "trainEnd": 2019, "test": 2020, "trainRows": 3847, "testRows": 534, "testAnomalous": true },
+    { "name": "fold3", "trainStart": 2015, "trainEnd": 2020, "test": 2021, "trainRows": 4381, "trainRowsExcl2020": 3847, "testRows": 770, "testAnomalous": false },
+    { "name": "fold4", "trainStart": 2015, "trainEnd": 2021, "test": 2022, "trainRows": 5151, "trainRowsExcl2020": 4617, "testRows": 776, "testAnomalous": false },
+    { "name": "fold5", "trainStart": 2015, "trainEnd": 2022, "test": 2023, "trainRows": 5927, "trainRowsExcl2020": 5393, "testRows": 792, "testAnomalous": false }
+  ],
+  "walkForwardRules": [
+    "Expanding window only. No random splits.",
+    "All imputation, scaling, and feature selection are fit on the training fold ONLY, then applied to the test fold.",
+    "No feature or hyperparameter may be chosen using the test season being evaluated.",
+    "Report every metric per fold, then aggregated. Report twice: including 2020, and excluding/down-weighting 2020."
+  ],
+
+  "anomalousSeason2020": {
+    "flag": "is_anomalous_season",
+    "rows": 534,
+    "treatment": "Keep in the archive and identifiable. Report all aggregates BOTH including 2020 and excluding 2020. Recommended default: exclude 2020 from training-fold fitting OR down-weight, and always report fold2 (test=2020) separately as a stress test, never as headline performance."
+  },
+
+  "lockedMetrics": {
+    "marginPrediction": ["MAE", "RMSE", "bias"],
+    "marketComparison": ["modelMae", "marketMae", "maeImprovement (marketMae - modelMae)", "predicted_edge = predicted_home_margin - market_implied_home_margin"],
+    "betSelection": {
+      "edgeThresholds": [1, 2, 3, 4, 5, 7],
+      "perThresholdReport": ["qualifying", "wins", "losses", "pushes", "winPct (pushes excluded)", "unitsAt110", "breakdownBySeason"],
+      "breakevenAt110Pct": 52.38,
+      "atsCoverRule": "HOME covers iff actual_margin > market_implied_home_margin; PUSH iff equal",
+      "thresholdSelectionRule": "A threshold must NOT be chosen on the same season it is evaluated on. Fix thresholds a priori (this list) or select on earlier folds only."
+    }
+  },
+
+  "marketBaselineToBeat": {
+    "overall": { "n": 6711, "mae": 12.457, "rmse": 15.811, "bias": 0.274 },
+    "bySeason": {
+      "2015": { "mae": 12.604, "rmse": 16.05 },
+      "2016": { "mae": 13.059, "rmse": 16.855 },
+      "2017": { "mae": 12.14, "rmse": 15.575 },
+      "2018": { "mae": 12.653, "rmse": 16.156 },
+      "2019": { "mae": 12.141, "rmse": 15.447 },
+      "2020": { "mae": 12.894, "rmse": 16.077 },
+      "2021": { "mae": 12.564, "rmse": 15.629 },
+      "2022": { "mae": 12.027, "rmse": 15.287 },
+      "2023": { "mae": 12.184, "rmse": 15.28 }
+    }
+  },
+
+  "modelFamilies": {
+    "A_independent_fair_line": {
+      "target": "actual_margin",
+      "excludesMarketAsInput": true,
+      "purpose": "BSE's independent opinion of the fair line, comparable to the market without anchoring to it."
+    },
+    "B_market_aware_residual": {
+      "target": "market_error = actual_margin - market_implied_home_margin",
+      "usesMarketAsAnchor": true,
+      "purpose": "Detect systematic market mispricing. Prediction = market_implied_home_margin + predicted_residual.",
+      "warning": "Because the historical market is 86% consensus (not DraftKings), residual signal learned here may not transfer cleanly to BSE's live DraftKings line. Validate parity before trusting family B live."
+    },
+    "decisionRule": "Do NOT assume which family wins. Evaluate both under the identical frozen protocol in Phase 5."
+  },
+
+  "candidateModelSet": [
+    { "name": "ridge_linear", "why": "Strong, stable linear baseline; handles the heavy collinearity (prior_sp/prior_fpi r=0.96, form_ppa/scoring r=0.92) via L2 without discarding correlated-but-real signal. Interpretable coefficients." },
+    { "name": "elasticnet_linear", "why": "Adds L1 for light feature pruning among redundant families; a defensible sparse linear alternative to ridge." },
+    { "name": "gradient_boosted_trees", "why": "Captures mild nonlinearity/interactions (e.g. rest x early-season, talent x form) the audit hints at; robust to feature scale and monotone-ish relationships. Use shallow trees + early stopping on a within-train-fold split." },
+    { "name": "market_anchored_ridge (family B)", "why": "Ridge on the residual target; simplest honest test of whether any mispricing signal exists beyond the market." }
+  ],
+  "candidateSetRules": [
+    "This set is FROZEN. No model shopping: do not expand to dozens of algorithms or sweep large hyperparameter grids searching for something profitable.",
+    "Hyperparameters tuned only via nested/earlier-fold validation, never on the evaluated test season.",
+    "A candidate beats the market only if it improves MAE AND clears the -110 breakeven ATS rate out-of-sample with temporal stability."
+  ],
+
+  "missingDataStrategy": {
+    "recommendation": "Median-impute within the training fold + add an explicit missingness indicator per imputed feature; never impute using test-fold statistics.",
+    "seasonOpenerForm": "Recent-form features are null by design for a team's first game of the season (~6.7% of sides). Do not fabricate; impute + flag, and consider a 'first_game_of_season' indicator so the model can down-weight form when it is absent.",
+    "ratingsCoverage": "prior_sp/prior_srs/prior_fpi ~93-98% available (newcomers/reclassifiers lack a prior-season rating). Impute + flag.",
+    "elo": "100% available and pregame-clean; the most reliable single power signal."
+  },
+
+  "featureSelectionGuidance": {
+    "topStableSignals": ["elo_diff (r=0.606, seasonStd=0.028)", "prior_fpi_diff (0.514)", "prior_sp_diff (0.508)", "form_scoring_margin_diff (0.476)", "form_net_ppa_diff / form_ppa_overall_diff (0.456)"],
+    "dropOrDeprioritize": ["form_net_explo_diff (r=0.024)", "rest_diff (r=0.001)", "games_played_diff (r=-0.044)", "returning_percent_diff (r=0.129)"],
+    "collinearityWarnings": [
+      "prior_sp_diff ~ prior_fpi_diff r=0.959 — keep one or regularize.",
+      "form_net_ppa_diff ~ form_ppa_overall_diff r=1.00 — duplicates; keep one.",
+      "form_net_ppa_diff ~ form_scoring_margin_diff r=0.919 — near-duplicate.",
+      "talent_diff ~ recruiting_points_diff r=0.829 — overlapping talent proxy.",
+      "elo_diff ~ market_implied_home_margin r=0.912 — for family A do NOT feed the market; elo already carries most of that information."
+    ],
+    "temporalNote": "Prior-season ratings & talent are strongest EARLY season; recent-form efficiency is strongest LATE season. A season-progress interaction (or games_played weighting of form) is well-motivated by the early/late split."
+  }
+}

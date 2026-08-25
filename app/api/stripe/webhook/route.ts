@@ -1,161 +1,210 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { randomUUID } from "node:crypto"
 import type Stripe from "stripe"
-import { eq } from "drizzle-orm"
 import { stripe } from "@/lib/stripe"
 import { db } from "@/lib/db"
-import { subscriptions } from "@/lib/db/schema"
+import { processedStripeEvents } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
+import {
+  syncSubscriptionFromStripe,
+  markSubscriptionDeleted,
+  recordPaymentHistory,
+} from "@/lib/subscription-sync"
 
 /**
- * Stripe webhook — production reconciliation of BSE Pro status.
+ * Stripe webhook — the authoritative reconciliation of BSE Pro status.
  *
- * If STRIPE_WEBHOOK_SECRET is configured, the signature is verified. In the v0
- * sandbox (no endpoint configured yet) this route is inert and the return-time
- * `confirmProCheckout` action does the reconciliation instead. Both paths key
- * on userId, so whichever runs first wins and the other is a safe no-op.
+ * SECURITY (fail-closed):
+ *   - STRIPE_WEBHOOK_SECRET MUST be set. If it is not, we reject every request
+ *     with 500 and process nothing. We NEVER parse an unverified body — doing
+ *     so would let anyone forge a "payment succeeded" event and grant Pro.
+ *   - Every request must carry a valid Stripe signature or it is rejected 400.
+ *
+ * IDEMPOTENCY:
+ *   - Stripe delivers at-least-once. We record each handled event id in
+ *     processed_stripe_events and skip anything already recorded, so retries
+ *     and duplicates never double-apply a lifecycle change.
+ *
+ * All subscription state is derived by re-reading the Stripe subscription via
+ * syncSubscriptionFromStripe(), so local state always mirrors Stripe.
  */
 export const dynamic = "force-dynamic"
 
-const RELEVANT = new Set<Stripe.Event["type"]>([
+const RELEVANT = new Set<string>([
   "checkout.session.completed",
   "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.deleted",
+  "invoice.paid",
+  "invoice.payment_failed",
 ])
 
-async function setStatus(params: {
-  userId?: string | null
-  customerId?: string | null
-  status: string
-  subscriptionId?: string | null
-  currentPeriodEnd?: Date | null
-}) {
-  const { userId, customerId, status, subscriptionId, currentPeriodEnd } = params
-
-  // Prefer matching by userId; fall back to the Stripe customer id.
-  if (userId) {
-    await db
-      .insert(subscriptions)
-      .values({
-        id: randomUUID(),
-        userId,
-        status,
-        stripeCustomerId: customerId ?? null,
-        stripeSubscriptionId: subscriptionId ?? null,
-        currentPeriodEnd: currentPeriodEnd ?? null,
-      })
-      .onConflictDoUpdate({
-        target: subscriptions.userId,
-        set: {
-          status,
-          stripeCustomerId: customerId ?? undefined,
-          stripeSubscriptionId: subscriptionId ?? undefined,
-          currentPeriodEnd: currentPeriodEnd ?? undefined,
-          updatedAt: new Date(),
-        },
-      })
-    return
-  }
-
-  if (customerId) {
-    await db
-      .update(subscriptions)
-      .set({
-        status,
-        stripeSubscriptionId: subscriptionId ?? undefined,
-        currentPeriodEnd: currentPeriodEnd ?? undefined,
-        updatedAt: new Date(),
-      })
-      .where(eq(subscriptions.stripeCustomerId, customerId))
-  }
-}
-
-function periodEndFromSub(sub: Stripe.Subscription): Date | null {
-  const ts = sub.items?.data?.[0]?.current_period_end
-  return typeof ts === "number" ? new Date(ts * 1000) : null
+/**
+ * Resolve the subscription id from an Invoice. On the installed Stripe API
+ * version the reference lives at `parent.subscription_details.subscription`
+ * (older versions used a top-level `invoice.subscription`). We read both
+ * defensively without assuming either is on the static type.
+ */
+function invoiceSubscriptionId(invoice: Stripe.Invoice): string | null {
+  const parentSub = (invoice as unknown as {
+    parent?: { subscription_details?: { subscription?: string | { id: string } | null } | null } | null
+  }).parent?.subscription_details?.subscription
+  const legacySub = (invoice as unknown as { subscription?: string | { id: string } | null }).subscription
+  const ref = parentSub ?? legacySub ?? null
+  if (!ref) return null
+  return typeof ref === "string" ? ref : ref.id
 }
 
 export async function POST(req: NextRequest) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET
+
+  // Fail closed: no secret => we cannot trust anything. Reject.
+  if (!secret) {
+    console.log("[v0] stripe webhook rejected: STRIPE_WEBHOOK_SECRET not configured")
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 500 })
+  }
+
   const body = await req.text()
+  const sig = req.headers.get("stripe-signature")
+  if (!sig) {
+    return NextResponse.json({ error: "Missing signature" }, { status: 400 })
+  }
 
   let event: Stripe.Event
-  if (secret) {
-    const sig = req.headers.get("stripe-signature")
-    if (!sig) return NextResponse.json({ error: "Missing signature" }, { status: 400 })
-    try {
-      event = stripe.webhooks.constructEvent(body, sig, secret)
-    } catch (err) {
-      return NextResponse.json(
-        { error: `Webhook signature verification failed: ${err instanceof Error ? err.message : "unknown"}` },
-        { status: 400 },
-      )
-    }
-  } else {
-    // No secret configured (sandbox) — parse without verification. Safe because
-    // Pro is also reconciled server-side on the authenticated checkout return.
-    try {
-      event = JSON.parse(body) as Stripe.Event
-    } catch {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
-    }
+  try {
+    event = stripe.webhooks.constructEvent(body, sig, secret)
+  } catch (err) {
+    // Signature invalid/expired/tampered — reject, never process.
+    console.log("[v0] stripe webhook signature verification failed:", err instanceof Error ? err.message : err)
+    return NextResponse.json({ error: "Signature verification failed" }, { status: 400 })
   }
 
   if (!RELEVANT.has(event.type)) {
-    return NextResponse.json({ received: true })
+    return NextResponse.json({ received: true, ignored: true })
+  }
+
+  // Idempotency guard: if we've already processed this event id, no-op.
+  const already = await db
+    .select({ id: processedStripeEvents.id })
+    .from(processedStripeEvents)
+    .where(eq(processedStripeEvents.id, event.id))
+    .limit(1)
+  if (already[0]) {
+    return NextResponse.json({ received: true, duplicate: true })
   }
 
   try {
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object
-        const userId = session.metadata?.userId ?? session.client_reference_id ?? null
-        const subId =
-          typeof session.subscription === "string" ? session.subscription : session.subscription?.id ?? null
-        const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id ?? null
-        let periodEnd: Date | null = null
-        if (subId) {
-          const sub = await stripe.subscriptions.retrieve(subId)
-          periodEnd = periodEndFromSub(sub)
-        }
-        await setStatus({
-          userId,
-          customerId,
-          status: "active",
-          subscriptionId: subId,
-          currentPeriodEnd: periodEnd,
-        })
-        break
-      }
-      case "customer.subscription.created":
-      case "customer.subscription.updated": {
-        const sub = event.data.object
-        const status = sub.status === "trialing" ? "trialing" : sub.status === "active" ? "active" : "inactive"
-        await setStatus({
-          userId: sub.metadata?.userId ?? null,
-          customerId: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
-          status,
-          subscriptionId: sub.id,
-          currentPeriodEnd: periodEndFromSub(sub),
-        })
-        break
-      }
-      case "customer.subscription.deleted": {
-        const sub = event.data.object
-        await setStatus({
-          userId: sub.metadata?.userId ?? null,
-          customerId: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
-          status: "canceled",
-          subscriptionId: sub.id,
-          currentPeriodEnd: periodEndFromSub(sub),
-        })
-        break
-      }
-    }
+    await handleEvent(event)
   } catch (err) {
+    // Do NOT record the event as processed, so Stripe retries it.
     console.log("[v0] stripe webhook handler error:", err instanceof Error ? err.message : err)
     return NextResponse.json({ error: "Handler error" }, { status: 500 })
   }
 
+  // Mark processed only after successful handling.
+  await db
+    .insert(processedStripeEvents)
+    .values({ id: event.id, type: event.type })
+    .onConflictDoNothing()
+
   return NextResponse.json({ received: true })
+}
+
+async function handleEvent(event: Stripe.Event): Promise<void> {
+  switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object as Stripe.Checkout.Session
+      const subId =
+        typeof session.subscription === "string" ? session.subscription : session.subscription?.id ?? null
+      if (!subId) return
+      // Re-read the subscription and mirror its true state. We also stamp the
+      // userId into subscription metadata so future subscription.* events for
+      // this sub resolve to the right local user.
+      const userId = session.metadata?.userId ?? session.client_reference_id ?? null
+      if (userId) {
+        await stripe.subscriptions.update(subId, { metadata: { userId } }).catch(() => {})
+      }
+      const sub = await stripe.subscriptions.retrieve(subId)
+      await syncSubscriptionFromStripe(sub)
+      return
+    }
+
+    case "customer.subscription.created":
+    case "customer.subscription.updated": {
+      // Covers renewals (period advanced), plan changes, cancel-at-period-end
+      // toggles, and past_due/unpaid status transitions.
+      const sub = event.data.object as Stripe.Subscription
+      await syncSubscriptionFromStripe(sub)
+      return
+    }
+
+    case "customer.subscription.deleted": {
+      const sub = event.data.object as Stripe.Subscription
+      await markSubscriptionDeleted(sub)
+      await recordPaymentHistory({
+        userId: sub.metadata?.userId ?? null,
+        stripeCustomerId: typeof sub.customer === "string" ? sub.customer : sub.customer?.id ?? null,
+        stripeEventId: event.id,
+        type: "subscription.canceled",
+        status: "canceled",
+        description: "Subscription canceled",
+        occurredAt: new Date(event.created * 1000),
+      })
+      return
+    }
+
+    case "invoice.paid": {
+      const invoice = event.data.object as Stripe.Invoice
+      // Keep local state fresh on renewal, then log the payment.
+      const subId = invoiceSubscriptionId(invoice)
+      let userId: string | null = null
+      if (subId) {
+        const sub = await stripe.subscriptions.retrieve(subId)
+        const res = await syncSubscriptionFromStripe(sub)
+        userId = res.userId
+      }
+      await recordPaymentHistory({
+        userId,
+        stripeCustomerId: typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id ?? null,
+        stripeInvoiceId: invoice.id,
+        stripeEventId: event.id,
+        type: "invoice.paid",
+        status: "paid",
+        amount: invoice.amount_paid,
+        currency: invoice.currency,
+        description: invoice.billing_reason ?? "Invoice paid",
+        periodStart: invoice.period_start ? new Date(invoice.period_start * 1000) : null,
+        periodEnd: invoice.period_end ? new Date(invoice.period_end * 1000) : null,
+        occurredAt: new Date(event.created * 1000),
+      })
+      return
+    }
+
+    case "invoice.payment_failed": {
+      const invoice = event.data.object as Stripe.Invoice
+      // Mirror Stripe's resulting status (usually past_due) so access reflects
+      // reality; Stripe keeps the sub until its dunning settings expire it,
+      // at which point subscription.updated -> unpaid/canceled arrives.
+      const subId = invoiceSubscriptionId(invoice)
+      let userId: string | null = null
+      if (subId) {
+        const sub = await stripe.subscriptions.retrieve(subId)
+        const res = await syncSubscriptionFromStripe(sub)
+        userId = res.userId
+      }
+      await recordPaymentHistory({
+        userId,
+        stripeCustomerId: typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id ?? null,
+        stripeInvoiceId: invoice.id,
+        stripeEventId: event.id,
+        type: "invoice.payment_failed",
+        status: "failed",
+        amount: invoice.amount_due,
+        currency: invoice.currency,
+        description: "Invoice payment failed",
+        occurredAt: new Date(event.created * 1000),
+      })
+      return
+    }
+  }
 }

@@ -1,0 +1,3456 @@
+{
+  "generatedAt": "2026-08-24T21:25:04.422Z",
+  "breakeven": 52.38,
+  "candidates": {
+    "A_independent::elasticnet": {
+      "family": "A_independent",
+      "model": "elasticnet",
+      "n": 3644,
+      "margin": {
+        "all": {
+          "n": 3644,
+          "mae": 12.918021647664508,
+          "rmse": 16.217409571489238,
+          "bias": 0.4335201298993504
+        }
+      },
+      "marketComparison": {
+        "all": {
+          "modelMae": 12.918021647664508,
+          "marketMae": 12.325878155872667,
+          "maeImprovement": -0.5921434917918411,
+          "modelRmse": 16.217409571489238,
+          "marketRmse": 15.509758887437048,
+          "n": 3644
+        },
+        "excl2020": {
+          "modelMae": 12.836562608988928,
+          "marketMae": 12.228295819935692,
+          "maeImprovement": -0.6082667890532356,
+          "modelRmse": 16.165376425230335,
+          "marketRmse": 15.410252569129845,
+          "n": 3110
+        }
+      },
+      "thresholdsAll": [
+        {
+          "threshold": 1,
+          "qualifying": 3024,
+          "wins": 1493,
+          "losses": 1476,
+          "pushes": 55,
+          "decided": 2969,
+          "winPct": 50.3,
+          "ciLo": 48.5,
+          "ciHi": 52.1,
+          "roi": -4,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 2,
+          "qualifying": 2441,
+          "wins": 1202,
+          "losses": 1194,
+          "pushes": 45,
+          "decided": 2396,
+          "winPct": 50.2,
+          "ciLo": 48.2,
+          "ciHi": 52.2,
+          "roi": -4.2,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 3,
+          "qualifying": 1943,
+          "wins": 956,
+          "losses": 949,
+          "pushes": 38,
+          "decided": 1905,
+          "winPct": 50.2,
+          "ciLo": 47.9,
+          "ciHi": 52.4,
+          "roi": -4.2,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 4,
+          "qualifying": 1489,
+          "wins": 741,
+          "losses": 720,
+          "pushes": 28,
+          "decided": 1461,
+          "winPct": 50.7,
+          "ciLo": 48.2,
+          "ciHi": 53.3,
+          "roi": -3.2,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 5,
+          "qualifying": 1135,
+          "wins": 562,
+          "losses": 551,
+          "pushes": 22,
+          "decided": 1113,
+          "winPct": 50.5,
+          "ciLo": 47.6,
+          "ciHi": 53.4,
+          "roi": -3.6,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 7,
+          "qualifying": 578,
+          "wins": 269,
+          "losses": 298,
+          "pushes": 11,
+          "decided": 567,
+          "winPct": 47.4,
+          "ciLo": 43.4,
+          "ciHi": 51.6,
+          "roi": -9.4,
+          "sample": "OK_SAMPLE"
+        }
+      ],
+      "thresholdsExcl2020": [
+        {
+          "threshold": 1,
+          "qualifying": 2559,
+          "wins": 1259,
+          "losses": 1252,
+          "pushes": 48,
+          "decided": 2511,
+          "winPct": 50.1,
+          "ciLo": 48.2,
+          "ciHi": 52.1,
+          "roi": -4.3,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 0,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 621,
+              "winPct": 49.8,
+              "roi": -5
+            },
+            {
+              "season": 2021,
+              "decided": 637,
+              "winPct": 49.8,
+              "roi": -5
+            },
+            {
+              "season": 2022,
+              "decided": 632,
+              "winPct": 48.9,
+              "roi": -6.7
+            },
+            {
+              "season": 2023,
+              "decided": 621,
+              "winPct": 52.2,
+              "roi": -0.4
+            }
+          ]
+        },
+        {
+          "threshold": 2,
+          "qualifying": 2061,
+          "wins": 1005,
+          "losses": 1017,
+          "pushes": 39,
+          "decided": 2022,
+          "winPct": 49.7,
+          "ciLo": 47.5,
+          "ciHi": 51.9,
+          "roi": -5.1,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 0,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 502,
+              "winPct": 50.4,
+              "roi": -3.8
+            },
+            {
+              "season": 2021,
+              "decided": 507,
+              "winPct": 47.7,
+              "roi": -8.9
+            },
+            {
+              "season": 2022,
+              "decided": 533,
+              "winPct": 49.2,
+              "roi": -6.2
+            },
+            {
+              "season": 2023,
+              "decided": 480,
+              "winPct": 51.7,
+              "roi": -1.4
+            }
+          ]
+        },
+        {
+          "threshold": 3,
+          "qualifying": 1622,
+          "wins": 788,
+          "losses": 802,
+          "pushes": 32,
+          "decided": 1590,
+          "winPct": 49.6,
+          "ciLo": 47.1,
+          "ciHi": 52,
+          "roi": -5.4,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 1,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 386,
+              "winPct": 51.6,
+              "roi": -1.6
+            },
+            {
+              "season": 2021,
+              "decided": 405,
+              "winPct": 46.9,
+              "roi": -10.4
+            },
+            {
+              "season": 2022,
+              "decided": 419,
+              "winPct": 47.7,
+              "roi": -8.9
+            },
+            {
+              "season": 2023,
+              "decided": 380,
+              "winPct": 52.4,
+              "roi": 0
+            }
+          ]
+        },
+        {
+          "threshold": 4,
+          "qualifying": 1250,
+          "wins": 614,
+          "losses": 613,
+          "pushes": 23,
+          "decided": 1227,
+          "winPct": 50,
+          "ciLo": 47.2,
+          "ciHi": 52.8,
+          "roi": -4.5,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 1,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 303,
+              "winPct": 51.8,
+              "roi": -1.1
+            },
+            {
+              "season": 2021,
+              "decided": 315,
+              "winPct": 47,
+              "roi": -10.3
+            },
+            {
+              "season": 2022,
+              "decided": 324,
+              "winPct": 48.5,
+              "roi": -7.5
+            },
+            {
+              "season": 2023,
+              "decided": 285,
+              "winPct": 53.3,
+              "roi": 1.8
+            }
+          ]
+        },
+        {
+          "threshold": 5,
+          "qualifying": 948,
+          "wins": 463,
+          "losses": 467,
+          "pushes": 18,
+          "decided": 930,
+          "winPct": 49.8,
+          "ciLo": 46.6,
+          "ciHi": 53,
+          "roi": -5,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 0,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 227,
+              "winPct": 52,
+              "roi": -0.8
+            },
+            {
+              "season": 2021,
+              "decided": 244,
+              "winPct": 46.7,
+              "roi": -10.8
+            },
+            {
+              "season": 2022,
+              "decided": 245,
+              "winPct": 48.6,
+              "roi": -7.3
+            },
+            {
+              "season": 2023,
+              "decided": 214,
+              "winPct": 52.3,
+              "roi": -0.1
+            }
+          ]
+        },
+        {
+          "threshold": 7,
+          "qualifying": 482,
+          "wins": 216,
+          "losses": 256,
+          "pushes": 10,
+          "decided": 472,
+          "winPct": 45.8,
+          "ciLo": 41.3,
+          "ciHi": 50.3,
+          "roi": -12.6,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 0,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 95,
+              "winPct": 43.2,
+              "roi": -17.6
+            },
+            {
+              "season": 2021,
+              "decided": 132,
+              "winPct": 42.4,
+              "roi": -19
+            },
+            {
+              "season": 2022,
+              "decided": 134,
+              "winPct": 47,
+              "roi": -10.2
+            },
+            {
+              "season": 2023,
+              "decided": 111,
+              "winPct": 50.5,
+              "roi": -3.7
+            }
+          ]
+        }
+      ],
+      "bySeason": {
+        "2019": {
+          "n": 773,
+          "mae": 12.613,
+          "marketMae": 12.141,
+          "maeImprovement": -0.472
+        },
+        "2020": {
+          "n": 534,
+          "mae": 13.392,
+          "marketMae": 12.894,
+          "maeImprovement": -0.498
+        },
+        "2021": {
+          "n": 770,
+          "mae": 13.474,
+          "marketMae": 12.564,
+          "maeImprovement": -0.91
+        },
+        "2022": {
+          "n": 776,
+          "mae": 12.678,
+          "marketMae": 12.027,
+          "maeImprovement": -0.651
+        },
+        "2023": {
+          "n": 791,
+          "mae": 12.589,
+          "marketMae": 12.184,
+          "maeImprovement": -0.405
+        }
+      }
+    },
+    "A_independent::gbt": {
+      "family": "A_independent",
+      "model": "gbt",
+      "n": 3644,
+      "margin": {
+        "all": {
+          "n": 3644,
+          "mae": 12.957973508753117,
+          "rmse": 16.203512812824954,
+          "bias": 0.5801107450865615
+        }
+      },
+      "marketComparison": {
+        "all": {
+          "modelMae": 12.957973508753117,
+          "marketMae": 12.325878155872667,
+          "maeImprovement": -0.6320953528804498,
+          "modelRmse": 16.203512812824954,
+          "marketRmse": 15.509758887437048,
+          "n": 3644
+        },
+        "excl2020": {
+          "modelMae": 12.88538978918411,
+          "marketMae": 12.228295819935692,
+          "maeImprovement": -0.6570939692484181,
+          "modelRmse": 16.159034136185195,
+          "marketRmse": 15.410252569129845,
+          "n": 3110
+        }
+      },
+      "thresholdsAll": [
+        {
+          "threshold": 1,
+          "qualifying": 3103,
+          "wins": 1565,
+          "losses": 1486,
+          "pushes": 52,
+          "decided": 3051,
+          "winPct": 51.3,
+          "ciLo": 49.5,
+          "ciHi": 53.1,
+          "roi": -2.1,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 2,
+          "qualifying": 2532,
+          "wins": 1268,
+          "losses": 1215,
+          "pushes": 49,
+          "decided": 2483,
+          "winPct": 51.1,
+          "ciLo": 49.1,
+          "ciHi": 53,
+          "roi": -2.5,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 3,
+          "qualifying": 2019,
+          "wins": 1007,
+          "losses": 976,
+          "pushes": 36,
+          "decided": 1983,
+          "winPct": 50.8,
+          "ciLo": 48.6,
+          "ciHi": 53,
+          "roi": -3.1,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 4,
+          "qualifying": 1581,
+          "wins": 799,
+          "losses": 757,
+          "pushes": 25,
+          "decided": 1556,
+          "winPct": 51.3,
+          "ciLo": 48.9,
+          "ciHi": 53.8,
+          "roi": -2,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 5,
+          "qualifying": 1196,
+          "wins": 608,
+          "losses": 568,
+          "pushes": 20,
+          "decided": 1176,
+          "winPct": 51.7,
+          "ciLo": 48.8,
+          "ciHi": 54.5,
+          "roi": -1.3,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 7,
+          "qualifying": 650,
+          "wins": 321,
+          "losses": 316,
+          "pushes": 13,
+          "decided": 637,
+          "winPct": 50.4,
+          "ciLo": 46.5,
+          "ciHi": 54.3,
+          "roi": -3.8,
+          "sample": "OK_SAMPLE"
+        }
+      ],
+      "thresholdsExcl2020": [
+        {
+          "threshold": 1,
+          "qualifying": 2625,
+          "wins": 1317,
+          "losses": 1263,
+          "pushes": 45,
+          "decided": 2580,
+          "winPct": 51,
+          "ciLo": 49.1,
+          "ciHi": 53,
+          "roi": -2.6,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 1,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 643,
+              "winPct": 50.7,
+              "roi": -3.2
+            },
+            {
+              "season": 2021,
+              "decided": 654,
+              "winPct": 49.2,
+              "roi": -6
+            },
+            {
+              "season": 2022,
+              "decided": 645,
+              "winPct": 49.8,
+              "roi": -5
+            },
+            {
+              "season": 2023,
+              "decided": 638,
+              "winPct": 54.5,
+              "roi": 4.1
+            }
+          ]
+        },
+        {
+          "threshold": 2,
+          "qualifying": 2149,
+          "wins": 1066,
+          "losses": 1040,
+          "pushes": 43,
+          "decided": 2106,
+          "winPct": 50.6,
+          "ciLo": 48.5,
+          "ciHi": 52.7,
+          "roi": -3.4,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 1,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 528,
+              "winPct": 50,
+              "roi": -4.5
+            },
+            {
+              "season": 2021,
+              "decided": 545,
+              "winPct": 48.3,
+              "roi": -7.9
+            },
+            {
+              "season": 2022,
+              "decided": 517,
+              "winPct": 49.3,
+              "roi": -5.8
+            },
+            {
+              "season": 2023,
+              "decided": 516,
+              "winPct": 55,
+              "roi": 5.1
+            }
+          ]
+        },
+        {
+          "threshold": 3,
+          "qualifying": 1698,
+          "wins": 836,
+          "losses": 831,
+          "pushes": 31,
+          "decided": 1667,
+          "winPct": 50.1,
+          "ciLo": 47.8,
+          "ciHi": 52.5,
+          "roi": -4.3,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 1,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 416,
+              "winPct": 50,
+              "roi": -4.5
+            },
+            {
+              "season": 2021,
+              "decided": 412,
+              "winPct": 46.4,
+              "roi": -11.5
+            },
+            {
+              "season": 2022,
+              "decided": 421,
+              "winPct": 50.1,
+              "roi": -4.3
+            },
+            {
+              "season": 2023,
+              "decided": 418,
+              "winPct": 54.1,
+              "roi": 3.2
+            }
+          ]
+        },
+        {
+          "threshold": 4,
+          "qualifying": 1329,
+          "wins": 659,
+          "losses": 647,
+          "pushes": 23,
+          "decided": 1306,
+          "winPct": 50.5,
+          "ciLo": 47.8,
+          "ciHi": 53.2,
+          "roi": -3.7,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 1,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 321,
+              "winPct": 52,
+              "roi": -0.7
+            },
+            {
+              "season": 2021,
+              "decided": 329,
+              "winPct": 47.7,
+              "roi": -8.9
+            },
+            {
+              "season": 2022,
+              "decided": 327,
+              "winPct": 48.3,
+              "roi": -7.8
+            },
+            {
+              "season": 2023,
+              "decided": 329,
+              "winPct": 53.8,
+              "roi": 2.7
+            }
+          ]
+        },
+        {
+          "threshold": 5,
+          "qualifying": 999,
+          "wins": 496,
+          "losses": 484,
+          "pushes": 19,
+          "decided": 980,
+          "winPct": 50.6,
+          "ciLo": 47.5,
+          "ciHi": 53.7,
+          "roi": -3.4,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 0,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 240,
+              "winPct": 51.7,
+              "roi": -1.4
+            },
+            {
+              "season": 2021,
+              "decided": 249,
+              "winPct": 50.6,
+              "roi": -3.4
+            },
+            {
+              "season": 2022,
+              "decided": 242,
+              "winPct": 49.2,
+              "roi": -6.1
+            },
+            {
+              "season": 2023,
+              "decided": 249,
+              "winPct": 51,
+              "roi": -2.6
+            }
+          ]
+        },
+        {
+          "threshold": 7,
+          "qualifying": 545,
+          "wins": 258,
+          "losses": 275,
+          "pushes": 12,
+          "decided": 533,
+          "winPct": 48.4,
+          "ciLo": 44.2,
+          "ciHi": 52.6,
+          "roi": -7.6,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 0,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 128,
+              "winPct": 50,
+              "roi": -4.5
+            },
+            {
+              "season": 2021,
+              "decided": 129,
+              "winPct": 45.7,
+              "roi": -12.7
+            },
+            {
+              "season": 2022,
+              "decided": 139,
+              "winPct": 49.6,
+              "roi": -5.2
+            },
+            {
+              "season": 2023,
+              "decided": 137,
+              "winPct": 48.2,
+              "roi": -8
+            }
+          ]
+        }
+      ],
+      "bySeason": {
+        "2019": {
+          "n": 773,
+          "mae": 12.767,
+          "marketMae": 12.141,
+          "maeImprovement": -0.626
+        },
+        "2020": {
+          "n": 534,
+          "mae": 13.381,
+          "marketMae": 12.894,
+          "maeImprovement": -0.487
+        },
+        "2021": {
+          "n": 770,
+          "mae": 13.423,
+          "marketMae": 12.564,
+          "maeImprovement": -0.859
+        },
+        "2022": {
+          "n": 776,
+          "mae": 12.729,
+          "marketMae": 12.027,
+          "maeImprovement": -0.702
+        },
+        "2023": {
+          "n": 791,
+          "mae": 12.632,
+          "marketMae": 12.184,
+          "maeImprovement": -0.448
+        }
+      }
+    },
+    "A_independent::ridge": {
+      "family": "A_independent",
+      "model": "ridge",
+      "n": 3644,
+      "margin": {
+        "all": {
+          "n": 3644,
+          "mae": 12.889997689248567,
+          "rmse": 16.201272538966695,
+          "bias": 0.6123056826560944
+        }
+      },
+      "marketComparison": {
+        "all": {
+          "modelMae": 12.889997689248567,
+          "marketMae": 12.325878155872667,
+          "maeImprovement": -0.5641195333758997,
+          "modelRmse": 16.201272538966695,
+          "marketRmse": 15.509758887437048,
+          "n": 3644
+        },
+        "excl2020": {
+          "modelMae": 12.787315461226505,
+          "marketMae": 12.228295819935692,
+          "maeImprovement": -0.5590196412908135,
+          "modelRmse": 16.125091262030764,
+          "marketRmse": 15.410252569129845,
+          "n": 3110
+        }
+      },
+      "thresholdsAll": [
+        {
+          "threshold": 1,
+          "qualifying": 3039,
+          "wins": 1530,
+          "losses": 1460,
+          "pushes": 49,
+          "decided": 2990,
+          "winPct": 51.2,
+          "ciLo": 49.4,
+          "ciHi": 53,
+          "roi": -2.3,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 2,
+          "qualifying": 2481,
+          "wins": 1250,
+          "losses": 1188,
+          "pushes": 43,
+          "decided": 2438,
+          "winPct": 51.3,
+          "ciLo": 49.3,
+          "ciHi": 53.3,
+          "roi": -2.1,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 3,
+          "qualifying": 1953,
+          "wins": 984,
+          "losses": 932,
+          "pushes": 37,
+          "decided": 1916,
+          "winPct": 51.4,
+          "ciLo": 49.1,
+          "ciHi": 53.6,
+          "roi": -2,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 4,
+          "qualifying": 1530,
+          "wins": 761,
+          "losses": 738,
+          "pushes": 31,
+          "decided": 1499,
+          "winPct": 50.8,
+          "ciLo": 48.2,
+          "ciHi": 53.3,
+          "roi": -3.1,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 5,
+          "qualifying": 1162,
+          "wins": 572,
+          "losses": 565,
+          "pushes": 25,
+          "decided": 1137,
+          "winPct": 50.3,
+          "ciLo": 47.4,
+          "ciHi": 53.2,
+          "roi": -4,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 7,
+          "qualifying": 598,
+          "wins": 299,
+          "losses": 285,
+          "pushes": 14,
+          "decided": 584,
+          "winPct": 51.2,
+          "ciLo": 47.1,
+          "ciHi": 55.2,
+          "roi": -2.3,
+          "sample": "OK_SAMPLE"
+        }
+      ],
+      "thresholdsExcl2020": [
+        {
+          "threshold": 1,
+          "qualifying": 2587,
+          "wins": 1300,
+          "losses": 1244,
+          "pushes": 43,
+          "decided": 2544,
+          "winPct": 51.1,
+          "ciLo": 49.2,
+          "ciHi": 53,
+          "roi": -2.4,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 0,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 605,
+              "winPct": 52.1,
+              "roi": -0.6
+            },
+            {
+              "season": 2021,
+              "decided": 652,
+              "winPct": 51.7,
+              "roi": -1.3
+            },
+            {
+              "season": 2022,
+              "decided": 646,
+              "winPct": 48.5,
+              "roi": -7.5
+            },
+            {
+              "season": 2023,
+              "decided": 641,
+              "winPct": 52.3,
+              "roi": -0.2
+            }
+          ]
+        },
+        {
+          "threshold": 2,
+          "qualifying": 2090,
+          "wins": 1049,
+          "losses": 1004,
+          "pushes": 37,
+          "decided": 2053,
+          "winPct": 51.1,
+          "ciLo": 48.9,
+          "ciHi": 53.3,
+          "roi": -2.5,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 1,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 471,
+              "winPct": 51.6,
+              "roi": -1.5
+            },
+            {
+              "season": 2021,
+              "decided": 535,
+              "winPct": 51,
+              "roi": -2.6
+            },
+            {
+              "season": 2022,
+              "decided": 537,
+              "winPct": 49.3,
+              "roi": -5.8
+            },
+            {
+              "season": 2023,
+              "decided": 510,
+              "winPct": 52.5,
+              "roi": 0.3
+            }
+          ]
+        },
+        {
+          "threshold": 3,
+          "qualifying": 1637,
+          "wins": 822,
+          "losses": 784,
+          "pushes": 31,
+          "decided": 1606,
+          "winPct": 51.2,
+          "ciLo": 48.7,
+          "ciHi": 53.6,
+          "roi": -2.3,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 0,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 376,
+              "winPct": 51.1,
+              "roi": -2.5
+            },
+            {
+              "season": 2021,
+              "decided": 419,
+              "winPct": 51.6,
+              "roi": -1.6
+            },
+            {
+              "season": 2022,
+              "decided": 423,
+              "winPct": 50.6,
+              "roi": -3.4
+            },
+            {
+              "season": 2023,
+              "decided": 388,
+              "winPct": 51.5,
+              "roi": -1.6
+            }
+          ]
+        },
+        {
+          "threshold": 4,
+          "qualifying": 1274,
+          "wins": 626,
+          "losses": 622,
+          "pushes": 26,
+          "decided": 1248,
+          "winPct": 50.2,
+          "ciLo": 47.4,
+          "ciHi": 52.9,
+          "roi": -4.2,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 0,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 285,
+              "winPct": 49.8,
+              "roi": -4.9
+            },
+            {
+              "season": 2021,
+              "decided": 333,
+              "winPct": 48.6,
+              "roi": -7.1
+            },
+            {
+              "season": 2022,
+              "decided": 337,
+              "winPct": 50.1,
+              "roi": -4.3
+            },
+            {
+              "season": 2023,
+              "decided": 293,
+              "winPct": 52.2,
+              "roi": -0.3
+            }
+          ]
+        },
+        {
+          "threshold": 5,
+          "qualifying": 960,
+          "wins": 466,
+          "losses": 474,
+          "pushes": 20,
+          "decided": 940,
+          "winPct": 49.6,
+          "ciLo": 46.4,
+          "ciHi": 52.8,
+          "roi": -5.4,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 1,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 206,
+              "winPct": 49,
+              "roi": -6.4
+            },
+            {
+              "season": 2021,
+              "decided": 251,
+              "winPct": 47,
+              "roi": -10.3
+            },
+            {
+              "season": 2022,
+              "decided": 256,
+              "winPct": 49.6,
+              "roi": -5.3
+            },
+            {
+              "season": 2023,
+              "decided": 227,
+              "winPct": 52.9,
+              "roi": 0.9
+            }
+          ]
+        },
+        {
+          "threshold": 7,
+          "qualifying": 482,
+          "wins": 232,
+          "losses": 238,
+          "pushes": 12,
+          "decided": 470,
+          "winPct": 49.4,
+          "ciLo": 44.9,
+          "ciHi": 53.9,
+          "roi": -5.8,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 2,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 93,
+              "winPct": 52.7,
+              "roi": 0.6
+            },
+            {
+              "season": 2021,
+              "decided": 124,
+              "winPct": 46.8,
+              "roi": -10.7
+            },
+            {
+              "season": 2022,
+              "decided": 133,
+              "winPct": 46.6,
+              "roi": -11
+            },
+            {
+              "season": 2023,
+              "decided": 120,
+              "winPct": 52.5,
+              "roi": 0.2
+            }
+          ]
+        }
+      ],
+      "bySeason": {
+        "2019": {
+          "n": 773,
+          "mae": 12.482,
+          "marketMae": 12.141,
+          "maeImprovement": -0.341
+        },
+        "2020": {
+          "n": 534,
+          "mae": 13.488,
+          "marketMae": 12.894,
+          "maeImprovement": -0.594
+        },
+        "2021": {
+          "n": 770,
+          "mae": 13.38,
+          "marketMae": 12.564,
+          "maeImprovement": -0.816
+        },
+        "2022": {
+          "n": 776,
+          "mae": 12.665,
+          "marketMae": 12.027,
+          "maeImprovement": -0.638
+        },
+        "2023": {
+          "n": 791,
+          "mae": 12.629,
+          "marketMae": 12.184,
+          "maeImprovement": -0.445
+        }
+      }
+    },
+    "B_residual::elasticnet": {
+      "family": "B_residual",
+      "model": "elasticnet",
+      "n": 3644,
+      "margin": {
+        "all": {
+          "n": 3644,
+          "mae": 12.315248187458817,
+          "rmse": 15.498215167081767,
+          "bias": 0.05468247905922037
+        }
+      },
+      "marketComparison": {
+        "all": {
+          "modelMae": 12.315248187458817,
+          "marketMae": 12.325878155872667,
+          "maeImprovement": 0.010629968413850222,
+          "modelRmse": 15.498215167081767,
+          "marketRmse": 15.509758887437048,
+          "n": 3644
+        },
+        "excl2020": {
+          "modelMae": 12.21043424827274,
+          "marketMae": 12.228295819935692,
+          "maeImprovement": 0.017861571662951548,
+          "modelRmse": 15.399637058418284,
+          "marketRmse": 15.410252569129845,
+          "n": 3110
+        }
+      },
+      "thresholdsAll": [
+        {
+          "threshold": 1,
+          "qualifying": 716,
+          "wins": 373,
+          "losses": 329,
+          "pushes": 14,
+          "decided": 702,
+          "winPct": 53.1,
+          "ciLo": 49.4,
+          "ciHi": 56.8,
+          "roi": 1.4,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 2,
+          "qualifying": 133,
+          "wins": 75,
+          "losses": 54,
+          "pushes": 4,
+          "decided": 129,
+          "winPct": 58.1,
+          "ciLo": 49.5,
+          "ciHi": 66.3,
+          "roi": 11,
+          "sample": "MODERATE_SAMPLE"
+        },
+        {
+          "threshold": 3,
+          "qualifying": 15,
+          "wins": 9,
+          "losses": 5,
+          "pushes": 1,
+          "decided": 14,
+          "winPct": 64.3,
+          "ciLo": 38.8,
+          "ciHi": 83.7,
+          "roi": 22.7,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 4,
+          "qualifying": 9,
+          "wins": 6,
+          "losses": 3,
+          "pushes": 0,
+          "decided": 9,
+          "winPct": 66.7,
+          "ciLo": 35.4,
+          "ciHi": 87.9,
+          "roi": 27.3,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 5,
+          "qualifying": 9,
+          "wins": 6,
+          "losses": 3,
+          "pushes": 0,
+          "decided": 9,
+          "winPct": 66.7,
+          "ciLo": 35.4,
+          "ciHi": 87.9,
+          "roi": 27.3,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 7,
+          "qualifying": 7,
+          "wins": 4,
+          "losses": 3,
+          "pushes": 0,
+          "decided": 7,
+          "winPct": 57.1,
+          "ciLo": 25,
+          "ciHi": 84.2,
+          "roi": 9.1,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        }
+      ],
+      "thresholdsExcl2020": [
+        {
+          "threshold": 1,
+          "qualifying": 513,
+          "wins": 271,
+          "losses": 230,
+          "pushes": 12,
+          "decided": 501,
+          "winPct": 54.1,
+          "ciLo": 49.7,
+          "ciHi": 58.4,
+          "roi": 3.3,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 3,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 257,
+              "winPct": 55.6,
+              "roi": 6.2
+            },
+            {
+              "season": 2021,
+              "decided": 225,
+              "winPct": 52.4,
+              "roi": 0.1
+            },
+            {
+              "season": 2022,
+              "decided": 19,
+              "winPct": 52.6,
+              "roi": 0.5
+            },
+            {
+              "season": 2023,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            }
+          ]
+        },
+        {
+          "threshold": 2,
+          "qualifying": 99,
+          "wins": 55,
+          "losses": 40,
+          "pushes": 4,
+          "decided": 95,
+          "winPct": 57.9,
+          "ciLo": 47.8,
+          "ciHi": 67.3,
+          "roi": 10.5,
+          "sample": "SMALL_SAMPLE",
+          "seasonsAboveBreakeven": 2,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 44,
+              "winPct": 56.8,
+              "roi": 8.5
+            },
+            {
+              "season": 2021,
+              "decided": 51,
+              "winPct": 58.8,
+              "roi": 12.3
+            },
+            {
+              "season": 2022,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2023,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            }
+          ]
+        },
+        {
+          "threshold": 3,
+          "qualifying": 14,
+          "wins": 8,
+          "losses": 5,
+          "pushes": 1,
+          "decided": 13,
+          "winPct": 61.5,
+          "ciLo": 35.5,
+          "ciHi": 82.3,
+          "roi": 17.5,
+          "sample": "NEGLIGIBLE_SAMPLE",
+          "seasonsAboveBreakeven": 2,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 2,
+              "winPct": 100,
+              "roi": 90.9
+            },
+            {
+              "season": 2021,
+              "decided": 11,
+              "winPct": 54.5,
+              "roi": 4.1
+            },
+            {
+              "season": 2022,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2023,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            }
+          ]
+        },
+        {
+          "threshold": 4,
+          "qualifying": 9,
+          "wins": 6,
+          "losses": 3,
+          "pushes": 0,
+          "decided": 9,
+          "winPct": 66.7,
+          "ciLo": 35.4,
+          "ciHi": 87.9,
+          "roi": 27.3,
+          "sample": "NEGLIGIBLE_SAMPLE",
+          "seasonsAboveBreakeven": 1,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2021,
+              "decided": 9,
+              "winPct": 66.7,
+              "roi": 27.3
+            },
+            {
+              "season": 2022,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2023,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            }
+          ]
+        },
+        {
+          "threshold": 5,
+          "qualifying": 9,
+          "wins": 6,
+          "losses": 3,
+          "pushes": 0,
+          "decided": 9,
+          "winPct": 66.7,
+          "ciLo": 35.4,
+          "ciHi": 87.9,
+          "roi": 27.3,
+          "sample": "NEGLIGIBLE_SAMPLE",
+          "seasonsAboveBreakeven": 1,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2021,
+              "decided": 9,
+              "winPct": 66.7,
+              "roi": 27.3
+            },
+            {
+              "season": 2022,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2023,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            }
+          ]
+        },
+        {
+          "threshold": 7,
+          "qualifying": 7,
+          "wins": 4,
+          "losses": 3,
+          "pushes": 0,
+          "decided": 7,
+          "winPct": 57.1,
+          "ciLo": 25,
+          "ciHi": 84.2,
+          "roi": 9.1,
+          "sample": "NEGLIGIBLE_SAMPLE",
+          "seasonsAboveBreakeven": 1,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2021,
+              "decided": 7,
+              "winPct": 57.1,
+              "roi": 9.1
+            },
+            {
+              "season": 2022,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2023,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            }
+          ]
+        }
+      ],
+      "bySeason": {
+        "2019": {
+          "n": 773,
+          "mae": 12.111,
+          "marketMae": 12.141,
+          "maeImprovement": 0.03
+        },
+        "2020": {
+          "n": 534,
+          "mae": 12.926,
+          "marketMae": 12.894,
+          "maeImprovement": -0.031
+        },
+        "2021": {
+          "n": 770,
+          "mae": 12.532,
+          "marketMae": 12.564,
+          "maeImprovement": 0.032
+        },
+        "2022": {
+          "n": 776,
+          "mae": 12.029,
+          "marketMae": 12.027,
+          "maeImprovement": -0.002
+        },
+        "2023": {
+          "n": 791,
+          "mae": 12.173,
+          "marketMae": 12.184,
+          "maeImprovement": 0.011
+        }
+      }
+    },
+    "B_residual::gbt": {
+      "family": "B_residual",
+      "model": "gbt",
+      "n": 3644,
+      "margin": {
+        "all": {
+          "n": 3644,
+          "mae": 12.3157946126705,
+          "rmse": 15.490595233975144,
+          "bias": 0.06002946115757331
+        }
+      },
+      "marketComparison": {
+        "all": {
+          "modelMae": 12.3157946126705,
+          "marketMae": 12.325878155872667,
+          "maeImprovement": 0.010083543202167533,
+          "modelRmse": 15.490595233975144,
+          "marketRmse": 15.509758887437048,
+          "n": 3644
+        },
+        "excl2020": {
+          "modelMae": 12.221417248668462,
+          "marketMae": 12.228295819935692,
+          "maeImprovement": 0.006878571267229461,
+          "modelRmse": 15.39671106193074,
+          "marketRmse": 15.410252569129845,
+          "n": 3110
+        }
+      },
+      "thresholdsAll": [
+        {
+          "threshold": 1,
+          "qualifying": 1021,
+          "wins": 558,
+          "losses": 441,
+          "pushes": 22,
+          "decided": 999,
+          "winPct": 55.9,
+          "ciLo": 52.8,
+          "ciHi": 58.9,
+          "roi": 6.6,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 2,
+          "qualifying": 319,
+          "wins": 175,
+          "losses": 132,
+          "pushes": 12,
+          "decided": 307,
+          "winPct": 57,
+          "ciLo": 51.4,
+          "ciHi": 62.4,
+          "roi": 8.8,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 3,
+          "qualifying": 88,
+          "wins": 43,
+          "losses": 44,
+          "pushes": 1,
+          "decided": 87,
+          "winPct": 49.4,
+          "ciLo": 39.2,
+          "ciHi": 59.7,
+          "roi": -5.6,
+          "sample": "SMALL_SAMPLE"
+        },
+        {
+          "threshold": 4,
+          "qualifying": 29,
+          "wins": 12,
+          "losses": 17,
+          "pushes": 0,
+          "decided": 29,
+          "winPct": 41.4,
+          "ciLo": 25.5,
+          "ciHi": 59.3,
+          "roi": -21,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 5,
+          "qualifying": 10,
+          "wins": 5,
+          "losses": 5,
+          "pushes": 0,
+          "decided": 10,
+          "winPct": 50,
+          "ciLo": 23.7,
+          "ciHi": 76.3,
+          "roi": -4.6,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 7,
+          "qualifying": 1,
+          "wins": 0,
+          "losses": 1,
+          "pushes": 0,
+          "decided": 1,
+          "winPct": 0,
+          "ciLo": 0,
+          "ciHi": 79.3,
+          "roi": -100,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        }
+      ],
+      "thresholdsExcl2020": [
+        {
+          "threshold": 1,
+          "qualifying": 901,
+          "wins": 491,
+          "losses": 389,
+          "pushes": 21,
+          "decided": 880,
+          "winPct": 55.8,
+          "ciLo": 52.5,
+          "ciHi": 59,
+          "roi": 6.5,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 3,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 228,
+              "winPct": 52.2,
+              "roi": -0.4
+            },
+            {
+              "season": 2021,
+              "decided": 168,
+              "winPct": 56,
+              "roi": 6.8
+            },
+            {
+              "season": 2022,
+              "decided": 173,
+              "winPct": 56.1,
+              "roi": 7
+            },
+            {
+              "season": 2023,
+              "decided": 311,
+              "winPct": 58.2,
+              "roi": 11.1
+            }
+          ]
+        },
+        {
+          "threshold": 2,
+          "qualifying": 294,
+          "wins": 161,
+          "losses": 122,
+          "pushes": 11,
+          "decided": 283,
+          "winPct": 56.9,
+          "ciLo": 51.1,
+          "ciHi": 62.5,
+          "roi": 8.6,
+          "sample": "MODERATE_SAMPLE",
+          "seasonsAboveBreakeven": 4,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 67,
+              "winPct": 56.7,
+              "roi": 8.3
+            },
+            {
+              "season": 2021,
+              "decided": 53,
+              "winPct": 58.5,
+              "roi": 11.7
+            },
+            {
+              "season": 2022,
+              "decided": 34,
+              "winPct": 70.6,
+              "roi": 34.8
+            },
+            {
+              "season": 2023,
+              "decided": 129,
+              "winPct": 52.7,
+              "roi": 0.6
+            }
+          ]
+        },
+        {
+          "threshold": 3,
+          "qualifying": 85,
+          "wins": 40,
+          "losses": 44,
+          "pushes": 1,
+          "decided": 84,
+          "winPct": 47.6,
+          "ciLo": 37.3,
+          "ciHi": 58.2,
+          "roi": -9.1,
+          "sample": "SMALL_SAMPLE",
+          "seasonsAboveBreakeven": 3,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 23,
+              "winPct": 56.5,
+              "roi": 7.9
+            },
+            {
+              "season": 2021,
+              "decided": 9,
+              "winPct": 66.7,
+              "roi": 27.3
+            },
+            {
+              "season": 2022,
+              "decided": 4,
+              "winPct": 75,
+              "roi": 43.2
+            },
+            {
+              "season": 2023,
+              "decided": 48,
+              "winPct": 37.5,
+              "roi": -28.4
+            }
+          ]
+        },
+        {
+          "threshold": 4,
+          "qualifying": 28,
+          "wins": 11,
+          "losses": 17,
+          "pushes": 0,
+          "decided": 28,
+          "winPct": 39.3,
+          "ciLo": 23.6,
+          "ciHi": 57.6,
+          "roi": -25,
+          "sample": "NEGLIGIBLE_SAMPLE",
+          "seasonsAboveBreakeven": 0,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 6,
+              "winPct": 50,
+              "roi": -4.5
+            },
+            {
+              "season": 2021,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2022,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2023,
+              "decided": 22,
+              "winPct": 36.4,
+              "roi": -30.6
+            }
+          ]
+        },
+        {
+          "threshold": 5,
+          "qualifying": 10,
+          "wins": 5,
+          "losses": 5,
+          "pushes": 0,
+          "decided": 10,
+          "winPct": 50,
+          "ciLo": 23.7,
+          "ciHi": 76.3,
+          "roi": -4.6,
+          "sample": "NEGLIGIBLE_SAMPLE",
+          "seasonsAboveBreakeven": 0,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 2,
+              "winPct": 50,
+              "roi": -4.5
+            },
+            {
+              "season": 2021,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2022,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2023,
+              "decided": 8,
+              "winPct": 50,
+              "roi": -4.5
+            }
+          ]
+        },
+        {
+          "threshold": 7,
+          "qualifying": 1,
+          "wins": 0,
+          "losses": 1,
+          "pushes": 0,
+          "decided": 1,
+          "winPct": 0,
+          "ciLo": 0,
+          "ciHi": 79.3,
+          "roi": -100,
+          "sample": "NEGLIGIBLE_SAMPLE",
+          "seasonsAboveBreakeven": 0,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2021,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2022,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2023,
+              "decided": 1,
+              "winPct": 0,
+              "roi": -100
+            }
+          ]
+        }
+      ],
+      "bySeason": {
+        "2019": {
+          "n": 773,
+          "mae": 12.155,
+          "marketMae": 12.141,
+          "maeImprovement": -0.014
+        },
+        "2020": {
+          "n": 534,
+          "mae": 12.865,
+          "marketMae": 12.894,
+          "maeImprovement": 0.029
+        },
+        "2021": {
+          "n": 770,
+          "mae": 12.519,
+          "marketMae": 12.564,
+          "maeImprovement": 0.045
+        },
+        "2022": {
+          "n": 776,
+          "mae": 11.988,
+          "marketMae": 12.027,
+          "maeImprovement": 0.039
+        },
+        "2023": {
+          "n": 791,
+          "mae": 12.225,
+          "marketMae": 12.184,
+          "maeImprovement": -0.041
+        }
+      }
+    },
+    "B_residual::market_anchored_ridge": {
+      "family": "B_residual",
+      "model": "market_anchored_ridge",
+      "n": 3644,
+      "margin": {
+        "all": {
+          "n": 3644,
+          "mae": 12.34299838669938,
+          "rmse": 15.518688359421407,
+          "bias": 0.14541136373308847
+        }
+      },
+      "marketComparison": {
+        "all": {
+          "modelMae": 12.34299838669938,
+          "marketMae": 12.325878155872667,
+          "maeImprovement": -0.017120230826712657,
+          "modelRmse": 15.518688359421407,
+          "marketRmse": 15.509758887437048,
+          "n": 3644
+        },
+        "excl2020": {
+          "modelMae": 12.229687181414125,
+          "marketMae": 12.228295819935692,
+          "maeImprovement": -0.0013913614784328843,
+          "modelRmse": 15.41015665266448,
+          "marketRmse": 15.410252569129845,
+          "n": 3110
+        }
+      },
+      "thresholdsAll": [
+        {
+          "threshold": 1,
+          "qualifying": 1908,
+          "wins": 1000,
+          "losses": 879,
+          "pushes": 29,
+          "decided": 1879,
+          "winPct": 53.2,
+          "ciLo": 51,
+          "ciHi": 55.5,
+          "roi": 1.6,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 2,
+          "qualifying": 741,
+          "wins": 388,
+          "losses": 339,
+          "pushes": 14,
+          "decided": 727,
+          "winPct": 53.4,
+          "ciLo": 49.7,
+          "ciHi": 57,
+          "roi": 1.9,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 3,
+          "qualifying": 233,
+          "wins": 130,
+          "losses": 100,
+          "pushes": 3,
+          "decided": 230,
+          "winPct": 56.5,
+          "ciLo": 50.1,
+          "ciHi": 62.8,
+          "roi": 7.9,
+          "sample": "MODERATE_SAMPLE"
+        },
+        {
+          "threshold": 4,
+          "qualifying": 63,
+          "wins": 35,
+          "losses": 26,
+          "pushes": 2,
+          "decided": 61,
+          "winPct": 57.4,
+          "ciLo": 44.9,
+          "ciHi": 69,
+          "roi": 9.5,
+          "sample": "SMALL_SAMPLE"
+        },
+        {
+          "threshold": 5,
+          "qualifying": 20,
+          "wins": 12,
+          "losses": 8,
+          "pushes": 0,
+          "decided": 20,
+          "winPct": 60,
+          "ciLo": 38.7,
+          "ciHi": 78.1,
+          "roi": 14.5,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 7,
+          "qualifying": 9,
+          "wins": 5,
+          "losses": 4,
+          "pushes": 0,
+          "decided": 9,
+          "winPct": 55.6,
+          "ciLo": 26.7,
+          "ciHi": 81.1,
+          "roi": 6.1,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        }
+      ],
+      "thresholdsExcl2020": [
+        {
+          "threshold": 1,
+          "qualifying": 1588,
+          "wins": 838,
+          "losses": 724,
+          "pushes": 26,
+          "decided": 1562,
+          "winPct": 53.6,
+          "ciLo": 51.2,
+          "ciHi": 56.1,
+          "roi": 2.4,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 3,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 369,
+              "winPct": 56.1,
+              "roi": 7.1
+            },
+            {
+              "season": 2021,
+              "decided": 392,
+              "winPct": 53.6,
+              "roi": 2.3
+            },
+            {
+              "season": 2022,
+              "decided": 427,
+              "winPct": 50.8,
+              "roi": -3
+            },
+            {
+              "season": 2023,
+              "decided": 374,
+              "winPct": 54.5,
+              "roi": 4.1
+            }
+          ]
+        },
+        {
+          "threshold": 2,
+          "qualifying": 592,
+          "wins": 313,
+          "losses": 266,
+          "pushes": 13,
+          "decided": 579,
+          "winPct": 54.1,
+          "ciLo": 50,
+          "ciHi": 58.1,
+          "roi": 3.2,
+          "sample": "OK_SAMPLE",
+          "seasonsAboveBreakeven": 3,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 129,
+              "winPct": 55.8,
+              "roi": 6.5
+            },
+            {
+              "season": 2021,
+              "decided": 150,
+              "winPct": 56,
+              "roi": 6.9
+            },
+            {
+              "season": 2022,
+              "decided": 175,
+              "winPct": 52.6,
+              "roi": 0.4
+            },
+            {
+              "season": 2023,
+              "decided": 125,
+              "winPct": 52,
+              "roi": -0.7
+            }
+          ]
+        },
+        {
+          "threshold": 3,
+          "qualifying": 175,
+          "wins": 97,
+          "losses": 75,
+          "pushes": 3,
+          "decided": 172,
+          "winPct": 56.4,
+          "ciLo": 48.9,
+          "ciHi": 63.6,
+          "roi": 7.7,
+          "sample": "MODERATE_SAMPLE",
+          "seasonsAboveBreakeven": 3,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 28,
+              "winPct": 64.3,
+              "roi": 22.7
+            },
+            {
+              "season": 2021,
+              "decided": 63,
+              "winPct": 60.3,
+              "roi": 15.1
+            },
+            {
+              "season": 2022,
+              "decided": 60,
+              "winPct": 50,
+              "roi": -4.6
+            },
+            {
+              "season": 2023,
+              "decided": 21,
+              "winPct": 52.4,
+              "roi": 0
+            }
+          ]
+        },
+        {
+          "threshold": 4,
+          "qualifying": 48,
+          "wins": 26,
+          "losses": 20,
+          "pushes": 2,
+          "decided": 46,
+          "winPct": 56.5,
+          "ciLo": 42.2,
+          "ciHi": 69.8,
+          "roi": 7.9,
+          "sample": "SMALL_SAMPLE",
+          "seasonsAboveBreakeven": 3,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 3,
+              "winPct": 66.7,
+              "roi": 27.3
+            },
+            {
+              "season": 2021,
+              "decided": 28,
+              "winPct": 53.6,
+              "roi": 2.3
+            },
+            {
+              "season": 2022,
+              "decided": 8,
+              "winPct": 75,
+              "roi": 43.2
+            },
+            {
+              "season": 2023,
+              "decided": 7,
+              "winPct": 42.9,
+              "roi": -18.2
+            }
+          ]
+        },
+        {
+          "threshold": 5,
+          "qualifying": 17,
+          "wins": 9,
+          "losses": 8,
+          "pushes": 0,
+          "decided": 17,
+          "winPct": 52.9,
+          "ciLo": 31,
+          "ciHi": 73.8,
+          "roi": 1.1,
+          "sample": "NEGLIGIBLE_SAMPLE",
+          "seasonsAboveBreakeven": 1,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2021,
+              "decided": 12,
+              "winPct": 50,
+              "roi": -4.5
+            },
+            {
+              "season": 2022,
+              "decided": 3,
+              "winPct": 33.3,
+              "roi": -36.4
+            },
+            {
+              "season": 2023,
+              "decided": 2,
+              "winPct": 100,
+              "roi": 90.9
+            }
+          ]
+        },
+        {
+          "threshold": 7,
+          "qualifying": 9,
+          "wins": 5,
+          "losses": 4,
+          "pushes": 0,
+          "decided": 9,
+          "winPct": 55.6,
+          "ciLo": 26.7,
+          "ciHi": 81.1,
+          "roi": 6.1,
+          "sample": "NEGLIGIBLE_SAMPLE",
+          "seasonsAboveBreakeven": 1,
+          "perSeason": [
+            {
+              "season": 2019,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            },
+            {
+              "season": 2021,
+              "decided": 8,
+              "winPct": 50,
+              "roi": -4.5
+            },
+            {
+              "season": 2022,
+              "decided": 1,
+              "winPct": 100,
+              "roi": 90.9
+            },
+            {
+              "season": 2023,
+              "decided": 0,
+              "winPct": null,
+              "roi": null
+            }
+          ]
+        }
+      ],
+      "bySeason": {
+        "2019": {
+          "n": 773,
+          "mae": 12.116,
+          "marketMae": 12.141,
+          "maeImprovement": 0.025
+        },
+        "2020": {
+          "n": 534,
+          "mae": 13.003,
+          "marketMae": 12.894,
+          "maeImprovement": -0.109
+        },
+        "2021": {
+          "n": 770,
+          "mae": 12.546,
+          "marketMae": 12.564,
+          "maeImprovement": 0.018
+        },
+        "2022": {
+          "n": 776,
+          "mae": 12.089,
+          "marketMae": 12.027,
+          "maeImprovement": -0.062
+        },
+        "2023": {
+          "n": 791,
+          "mae": 12.171,
+          "marketMae": 12.184,
+          "maeImprovement": 0.013
+        }
+      }
+    }
+  },
+  "leaderboard": [
+    {
+      "candidate": "B_residual::elasticnet",
+      "family": "B_residual",
+      "model": "elasticnet",
+      "n": 3644,
+      "maeAll": 12.315,
+      "marketMaeAll": 12.326,
+      "maeImprovementAll": 0.011,
+      "maeImprovementExcl2020": 0.018,
+      "biasAll": 0.055
+    },
+    {
+      "candidate": "B_residual::gbt",
+      "family": "B_residual",
+      "model": "gbt",
+      "n": 3644,
+      "maeAll": 12.316,
+      "marketMaeAll": 12.326,
+      "maeImprovementAll": 0.01,
+      "maeImprovementExcl2020": 0.007,
+      "biasAll": 0.06
+    },
+    {
+      "candidate": "B_residual::market_anchored_ridge",
+      "family": "B_residual",
+      "model": "market_anchored_ridge",
+      "n": 3644,
+      "maeAll": 12.343,
+      "marketMaeAll": 12.326,
+      "maeImprovementAll": -0.017,
+      "maeImprovementExcl2020": -0.001,
+      "biasAll": 0.145
+    },
+    {
+      "candidate": "A_independent::ridge",
+      "family": "A_independent",
+      "model": "ridge",
+      "n": 3644,
+      "maeAll": 12.89,
+      "marketMaeAll": 12.326,
+      "maeImprovementAll": -0.564,
+      "maeImprovementExcl2020": -0.559,
+      "biasAll": 0.612
+    },
+    {
+      "candidate": "A_independent::elasticnet",
+      "family": "A_independent",
+      "model": "elasticnet",
+      "n": 3644,
+      "maeAll": 12.918,
+      "marketMaeAll": 12.326,
+      "maeImprovementAll": -0.592,
+      "maeImprovementExcl2020": -0.608,
+      "biasAll": 0.434
+    },
+    {
+      "candidate": "A_independent::gbt",
+      "family": "A_independent",
+      "model": "gbt",
+      "n": 3644,
+      "maeAll": 12.958,
+      "marketMaeAll": 12.326,
+      "maeImprovementAll": -0.632,
+      "maeImprovementExcl2020": -0.657,
+      "biasAll": 0.58
+    }
+  ],
+  "edgeCalibration": {
+    "A_independent::elasticnet": [
+      {
+        "bucket": "0-1",
+        "n": 551,
+        "decided": 548,
+        "winPct": 49.6,
+        "ci": {
+          "p": 49.6,
+          "lo": 45.5,
+          "hi": 53.8
+        },
+        "meanCapturedMarketError": -0.142,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "1-2",
+        "n": 498,
+        "decided": 489,
+        "winPct": 51.9,
+        "ci": {
+          "p": 51.9,
+          "lo": 47.5,
+          "hi": 56.3
+        },
+        "meanCapturedMarketError": 1.06,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "2-3",
+        "n": 439,
+        "decided": 432,
+        "winPct": 50.2,
+        "ci": {
+          "p": 50.2,
+          "lo": 45.5,
+          "hi": 54.9
+        },
+        "meanCapturedMarketError": -0.007,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "3-5",
+        "n": 674,
+        "decided": 660,
+        "winPct": 49.2,
+        "ci": {
+          "p": 49.2,
+          "lo": 45.4,
+          "hi": 53
+        },
+        "meanCapturedMarketError": -0.003,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "5-7",
+        "n": 466,
+        "decided": 458,
+        "winPct": 53.9,
+        "ci": {
+          "p": 53.9,
+          "lo": 49.4,
+          "hi": 58.4
+        },
+        "meanCapturedMarketError": 1.613,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "7+",
+        "n": 482,
+        "decided": 472,
+        "winPct": 45.8,
+        "ci": {
+          "p": 45.8,
+          "lo": 41.3,
+          "hi": 50.3
+        },
+        "meanCapturedMarketError": -0.555,
+        "sample": "OK_SAMPLE"
+      }
+    ],
+    "A_independent::gbt": [
+      {
+        "bucket": "0-1",
+        "n": 485,
+        "decided": 479,
+        "winPct": 49.9,
+        "ci": {
+          "p": 49.9,
+          "lo": 45.4,
+          "hi": 54.4
+        },
+        "meanCapturedMarketError": 0.28,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "1-2",
+        "n": 476,
+        "decided": 474,
+        "winPct": 53,
+        "ci": {
+          "p": 53,
+          "lo": 48.5,
+          "hi": 57.4
+        },
+        "meanCapturedMarketError": 0.632,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "2-3",
+        "n": 451,
+        "decided": 439,
+        "winPct": 52.4,
+        "ci": {
+          "p": 52.4,
+          "lo": 47.7,
+          "hi": 57
+        },
+        "meanCapturedMarketError": 0.501,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "3-5",
+        "n": 699,
+        "decided": 687,
+        "winPct": 49.5,
+        "ci": {
+          "p": 49.5,
+          "lo": 45.8,
+          "hi": 53.2
+        },
+        "meanCapturedMarketError": 0.702,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "5-7",
+        "n": 454,
+        "decided": 447,
+        "winPct": 53.2,
+        "ci": {
+          "p": 53.2,
+          "lo": 48.6,
+          "hi": 57.8
+        },
+        "meanCapturedMarketError": 0.724,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "7+",
+        "n": 545,
+        "decided": 533,
+        "winPct": 48.4,
+        "ci": {
+          "p": 48.4,
+          "lo": 44.2,
+          "hi": 52.6
+        },
+        "meanCapturedMarketError": 0.536,
+        "sample": "OK_SAMPLE"
+      }
+    ],
+    "A_independent::ridge": [
+      {
+        "bucket": "0-1",
+        "n": 523,
+        "decided": 515,
+        "winPct": 49.5,
+        "ci": {
+          "p": 49.5,
+          "lo": 45.2,
+          "hi": 53.8
+        },
+        "meanCapturedMarketError": -0.498,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "1-2",
+        "n": 497,
+        "decided": 491,
+        "winPct": 51.1,
+        "ci": {
+          "p": 51.1,
+          "lo": 46.7,
+          "hi": 55.5
+        },
+        "meanCapturedMarketError": 0.806,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "2-3",
+        "n": 453,
+        "decided": 447,
+        "winPct": 50.8,
+        "ci": {
+          "p": 50.8,
+          "lo": 46.2,
+          "hi": 55.4
+        },
+        "meanCapturedMarketError": 1.008,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "3-5",
+        "n": 677,
+        "decided": 666,
+        "winPct": 53.5,
+        "ci": {
+          "p": 53.5,
+          "lo": 49.7,
+          "hi": 57.2
+        },
+        "meanCapturedMarketError": 1.177,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "5-7",
+        "n": 478,
+        "decided": 470,
+        "winPct": 49.8,
+        "ci": {
+          "p": 49.8,
+          "lo": 45.3,
+          "hi": 54.3
+        },
+        "meanCapturedMarketError": -0.141,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "7+",
+        "n": 482,
+        "decided": 470,
+        "winPct": 49.4,
+        "ci": {
+          "p": 49.4,
+          "lo": 44.9,
+          "hi": 53.9
+        },
+        "meanCapturedMarketError": 0.427,
+        "sample": "OK_SAMPLE"
+      }
+    ],
+    "B_residual::elasticnet": [
+      {
+        "bucket": "0-1",
+        "n": 2597,
+        "decided": 2558,
+        "winPct": 50.5,
+        "ci": {
+          "p": 50.5,
+          "lo": 48.5,
+          "hi": 52.4
+        },
+        "meanCapturedMarketError": 0.34,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "1-2",
+        "n": 414,
+        "decided": 406,
+        "winPct": 53.2,
+        "ci": {
+          "p": 53.2,
+          "lo": 48.3,
+          "hi": 58
+        },
+        "meanCapturedMarketError": 0.847,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "2-3",
+        "n": 85,
+        "decided": 82,
+        "winPct": 57.3,
+        "ci": {
+          "p": 57.3,
+          "lo": 46.5,
+          "hi": 67.5
+        },
+        "meanCapturedMarketError": 1.659,
+        "sample": "SMALL_SAMPLE"
+      },
+      {
+        "bucket": "3-5",
+        "n": 5,
+        "decided": 4,
+        "winPct": 50,
+        "ci": {
+          "p": 50,
+          "lo": 15,
+          "hi": 85
+        },
+        "meanCapturedMarketError": 0.1,
+        "sample": "NEGLIGIBLE_SAMPLE"
+      },
+      {
+        "bucket": "5-7",
+        "n": 2,
+        "decided": 2,
+        "winPct": 100,
+        "ci": {
+          "p": 100,
+          "lo": 34.2,
+          "hi": 100
+        },
+        "meanCapturedMarketError": 10.25,
+        "sample": "NEGLIGIBLE_SAMPLE"
+      },
+      {
+        "bucket": "7+",
+        "n": 7,
+        "decided": 7,
+        "winPct": 57.1,
+        "ci": {
+          "p": 57.1,
+          "lo": 25,
+          "hi": 84.2
+        },
+        "meanCapturedMarketError": 0,
+        "sample": "NEGLIGIBLE_SAMPLE"
+      }
+    ],
+    "B_residual::gbt": [
+      {
+        "bucket": "0-1",
+        "n": 2209,
+        "decided": 2179,
+        "winPct": 51.4,
+        "ci": {
+          "p": 51.4,
+          "lo": 49.3,
+          "hi": 53.5
+        },
+        "meanCapturedMarketError": 0.275,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "1-2",
+        "n": 607,
+        "decided": 597,
+        "winPct": 55.3,
+        "ci": {
+          "p": 55.3,
+          "lo": 51.3,
+          "hi": 59.2
+        },
+        "meanCapturedMarketError": 1.258,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "2-3",
+        "n": 209,
+        "decided": 199,
+        "winPct": 60.8,
+        "ci": {
+          "p": 60.8,
+          "lo": 53.9,
+          "hi": 67.3
+        },
+        "meanCapturedMarketError": 2.974,
+        "sample": "MODERATE_SAMPLE"
+      },
+      {
+        "bucket": "3-5",
+        "n": 75,
+        "decided": 74,
+        "winPct": 47.3,
+        "ci": {
+          "p": 47.3,
+          "lo": 36.3,
+          "hi": 58.5
+        },
+        "meanCapturedMarketError": -0.7,
+        "sample": "SMALL_SAMPLE"
+      },
+      {
+        "bucket": "5-7",
+        "n": 9,
+        "decided": 9,
+        "winPct": 55.6,
+        "ci": {
+          "p": 55.6,
+          "lo": 26.7,
+          "hi": 81.1
+        },
+        "meanCapturedMarketError": 1.333,
+        "sample": "NEGLIGIBLE_SAMPLE"
+      },
+      {
+        "bucket": "7+",
+        "n": 1,
+        "decided": 1,
+        "winPct": 0,
+        "ci": {
+          "p": 0,
+          "lo": 0,
+          "hi": 79.3
+        },
+        "meanCapturedMarketError": -4.5,
+        "sample": "NEGLIGIBLE_SAMPLE"
+      }
+    ],
+    "B_residual::market_anchored_ridge": [
+      {
+        "bucket": "0-1",
+        "n": 1522,
+        "decided": 1497,
+        "winPct": 50.5,
+        "ci": {
+          "p": 50.5,
+          "lo": 48,
+          "hi": 53
+        },
+        "meanCapturedMarketError": 0.539,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "1-2",
+        "n": 996,
+        "decided": 983,
+        "winPct": 53.4,
+        "ci": {
+          "p": 53.4,
+          "lo": 50.3,
+          "hi": 56.5
+        },
+        "meanCapturedMarketError": 0.723,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "2-3",
+        "n": 417,
+        "decided": 407,
+        "winPct": 53.1,
+        "ci": {
+          "p": 53.1,
+          "lo": 48.2,
+          "hi": 57.9
+        },
+        "meanCapturedMarketError": 1.255,
+        "sample": "OK_SAMPLE"
+      },
+      {
+        "bucket": "3-5",
+        "n": 158,
+        "decided": 155,
+        "winPct": 56.8,
+        "ci": {
+          "p": 56.8,
+          "lo": 48.9,
+          "hi": 64.3
+        },
+        "meanCapturedMarketError": 2.142,
+        "sample": "MODERATE_SAMPLE"
+      },
+      {
+        "bucket": "5-7",
+        "n": 8,
+        "decided": 8,
+        "winPct": 50,
+        "ci": {
+          "p": 50,
+          "lo": 21.5,
+          "hi": 78.5
+        },
+        "meanCapturedMarketError": -4.562,
+        "sample": "NEGLIGIBLE_SAMPLE"
+      },
+      {
+        "bucket": "7+",
+        "n": 9,
+        "decided": 9,
+        "winPct": 55.6,
+        "ci": {
+          "p": 55.6,
+          "lo": 26.7,
+          "hi": 81.1
+        },
+        "meanCapturedMarketError": -0.278,
+        "sample": "NEGLIGIBLE_SAMPLE"
+      }
+    ]
+  },
+  "marketDependence": {
+    "A_independent::elasticnet": {
+      "corrWithMarket": 0.928,
+      "meanAbsDisagreement": 3.992,
+      "medianAbsDisagreement": 3.247,
+      "p90AbsDisagreement": 8.334
+    },
+    "A_independent::gbt": {
+      "corrWithMarket": 0.922,
+      "meanAbsDisagreement": 4.2,
+      "medianAbsDisagreement": 3.44,
+      "p90AbsDisagreement": 8.831
+    },
+    "A_independent::ridge": {
+      "corrWithMarket": 0.927,
+      "meanAbsDisagreement": 4.049,
+      "medianAbsDisagreement": 3.288,
+      "p90AbsDisagreement": 8.319
+    }
+  },
+  "draftkingsDiagnostic": {
+    "A_independent::elasticnet": {
+      "n": 728,
+      "note": "DraftKings-only rows, excl 2020. Diagnostic only — NOT used to select any model or threshold.",
+      "mae": 12.384,
+      "marketMae": 12.062,
+      "maeImprovement": -0.322,
+      "thresholds": [
+        {
+          "threshold": 1,
+          "decided": 564,
+          "winPct": 52.8,
+          "ciLo": 48.7,
+          "ciHi": 56.9,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 2,
+          "decided": 433,
+          "winPct": 52.7,
+          "ciLo": 48,
+          "ciHi": 57.3,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 3,
+          "decided": 336,
+          "winPct": 53.9,
+          "ciLo": 48.5,
+          "ciHi": 59.1,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 4,
+          "decided": 248,
+          "winPct": 54.8,
+          "ciLo": 48.6,
+          "ciHi": 60.9,
+          "sample": "MODERATE_SAMPLE"
+        },
+        {
+          "threshold": 5,
+          "decided": 180,
+          "winPct": 53.9,
+          "ciLo": 46.6,
+          "ciHi": 61,
+          "sample": "MODERATE_SAMPLE"
+        },
+        {
+          "threshold": 7,
+          "decided": 94,
+          "winPct": 52.1,
+          "ciLo": 42.1,
+          "ciHi": 61.9,
+          "sample": "SMALL_SAMPLE"
+        }
+      ]
+    },
+    "A_independent::gbt": {
+      "n": 728,
+      "note": "DraftKings-only rows, excl 2020. Diagnostic only — NOT used to select any model or threshold.",
+      "mae": 12.483,
+      "marketMae": 12.062,
+      "maeImprovement": -0.421,
+      "thresholds": [
+        {
+          "threshold": 1,
+          "decided": 580,
+          "winPct": 54.5,
+          "ciLo": 50.4,
+          "ciHi": 58.5,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 2,
+          "decided": 462,
+          "winPct": 55.2,
+          "ciLo": 50.6,
+          "ciHi": 59.7,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 3,
+          "decided": 374,
+          "winPct": 54.5,
+          "ciLo": 49.5,
+          "ciHi": 59.5,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 4,
+          "decided": 290,
+          "winPct": 54.5,
+          "ciLo": 48.7,
+          "ciHi": 60.1,
+          "sample": "MODERATE_SAMPLE"
+        },
+        {
+          "threshold": 5,
+          "decided": 214,
+          "winPct": 51.9,
+          "ciLo": 45.2,
+          "ciHi": 58.5,
+          "sample": "MODERATE_SAMPLE"
+        },
+        {
+          "threshold": 7,
+          "decided": 110,
+          "winPct": 49.1,
+          "ciLo": 39.9,
+          "ciHi": 58.3,
+          "sample": "MODERATE_SAMPLE"
+        }
+      ]
+    },
+    "A_independent::ridge": {
+      "n": 728,
+      "note": "DraftKings-only rows, excl 2020. Diagnostic only — NOT used to select any model or threshold.",
+      "mae": 12.421,
+      "marketMae": 12.062,
+      "maeImprovement": -0.359,
+      "thresholds": [
+        {
+          "threshold": 1,
+          "decided": 583,
+          "winPct": 52.8,
+          "ciLo": 48.8,
+          "ciHi": 56.9,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 2,
+          "decided": 460,
+          "winPct": 53.5,
+          "ciLo": 48.9,
+          "ciHi": 58,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 3,
+          "decided": 345,
+          "winPct": 52.2,
+          "ciLo": 46.9,
+          "ciHi": 57.4,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 4,
+          "decided": 256,
+          "winPct": 53.5,
+          "ciLo": 47.4,
+          "ciHi": 59.5,
+          "sample": "MODERATE_SAMPLE"
+        },
+        {
+          "threshold": 5,
+          "decided": 197,
+          "winPct": 54.8,
+          "ciLo": 47.8,
+          "ciHi": 61.6,
+          "sample": "MODERATE_SAMPLE"
+        },
+        {
+          "threshold": 7,
+          "decided": 103,
+          "winPct": 55.3,
+          "ciLo": 45.7,
+          "ciHi": 64.6,
+          "sample": "MODERATE_SAMPLE"
+        }
+      ]
+    },
+    "B_residual::elasticnet": {
+      "n": 728,
+      "note": "DraftKings-only rows, excl 2020. Diagnostic only — NOT used to select any model or threshold.",
+      "mae": 12.051,
+      "marketMae": 12.062,
+      "maeImprovement": 0.01,
+      "thresholds": [
+        {
+          "threshold": 1,
+          "decided": 0,
+          "winPct": null,
+          "ciLo": null,
+          "ciHi": null,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 2,
+          "decided": 0,
+          "winPct": null,
+          "ciLo": null,
+          "ciHi": null,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 3,
+          "decided": 0,
+          "winPct": null,
+          "ciLo": null,
+          "ciHi": null,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 4,
+          "decided": 0,
+          "winPct": null,
+          "ciLo": null,
+          "ciHi": null,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 5,
+          "decided": 0,
+          "winPct": null,
+          "ciLo": null,
+          "ciHi": null,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 7,
+          "decided": 0,
+          "winPct": null,
+          "ciLo": null,
+          "ciHi": null,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        }
+      ]
+    },
+    "B_residual::gbt": {
+      "n": 728,
+      "note": "DraftKings-only rows, excl 2020. Diagnostic only — NOT used to select any model or threshold.",
+      "mae": 12.117,
+      "marketMae": 12.062,
+      "maeImprovement": -0.056,
+      "thresholds": [
+        {
+          "threshold": 1,
+          "decided": 278,
+          "winPct": 57.9,
+          "ciLo": 52,
+          "ciHi": 63.6,
+          "sample": "MODERATE_SAMPLE"
+        },
+        {
+          "threshold": 2,
+          "decided": 114,
+          "winPct": 51.8,
+          "ciLo": 42.7,
+          "ciHi": 60.7,
+          "sample": "MODERATE_SAMPLE"
+        },
+        {
+          "threshold": 3,
+          "decided": 43,
+          "winPct": 37.2,
+          "ciLo": 24.4,
+          "ciHi": 52.1,
+          "sample": "SMALL_SAMPLE"
+        },
+        {
+          "threshold": 4,
+          "decided": 22,
+          "winPct": 36.4,
+          "ciLo": 19.7,
+          "ciHi": 57,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 5,
+          "decided": 8,
+          "winPct": 50,
+          "ciLo": 21.5,
+          "ciHi": 78.5,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 7,
+          "decided": 1,
+          "winPct": 0,
+          "ciLo": 0,
+          "ciHi": 79.3,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        }
+      ]
+    },
+    "B_residual::market_anchored_ridge": {
+      "n": 728,
+      "note": "DraftKings-only rows, excl 2020. Diagnostic only — NOT used to select any model or threshold.",
+      "mae": 12.056,
+      "marketMae": 12.062,
+      "maeImprovement": 0.006,
+      "thresholds": [
+        {
+          "threshold": 1,
+          "decided": 343,
+          "winPct": 54.5,
+          "ciLo": 49.2,
+          "ciHi": 59.7,
+          "sample": "OK_SAMPLE"
+        },
+        {
+          "threshold": 2,
+          "decided": 115,
+          "winPct": 53.9,
+          "ciLo": 44.8,
+          "ciHi": 62.7,
+          "sample": "MODERATE_SAMPLE"
+        },
+        {
+          "threshold": 3,
+          "decided": 19,
+          "winPct": 52.6,
+          "ciLo": 31.7,
+          "ciHi": 72.7,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 4,
+          "decided": 7,
+          "winPct": 42.9,
+          "ciLo": 15.8,
+          "ciHi": 75,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 5,
+          "decided": 2,
+          "winPct": 100,
+          "ciLo": 34.2,
+          "ciHi": 100,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        },
+        {
+          "threshold": 7,
+          "decided": 0,
+          "winPct": null,
+          "ciLo": null,
+          "ciHi": null,
+          "sample": "NEGLIGIBLE_SAMPLE"
+        }
+      ]
+    }
+  },
+  "stability": {
+    "A_independent::elasticnet": {
+      "seasonMaeImprovementsExcl2020": [
+        {
+          "season": 2019,
+          "maeImprovement": -0.472
+        },
+        {
+          "season": 2021,
+          "maeImprovement": -0.91
+        },
+        {
+          "season": 2022,
+          "maeImprovement": -0.651
+        },
+        {
+          "season": 2023,
+          "maeImprovement": -0.405
+        }
+      ],
+      "seasonsWithPositiveMaeImprovement": 0,
+      "worstSeason": {
+        "season": 2021,
+        "imp": -0.91
+      },
+      "bestSeason": {
+        "season": 2023,
+        "imp": -0.405
+      },
+      "maeImprovementStdAcrossSeasons": 0.195,
+      "season2020Stress": {
+        "maeImprovement": -0.498
+      },
+      "season2023": {
+        "maeImprovement": -0.405
+      }
+    },
+    "A_independent::gbt": {
+      "seasonMaeImprovementsExcl2020": [
+        {
+          "season": 2019,
+          "maeImprovement": -0.626
+        },
+        {
+          "season": 2021,
+          "maeImprovement": -0.859
+        },
+        {
+          "season": 2022,
+          "maeImprovement": -0.702
+        },
+        {
+          "season": 2023,
+          "maeImprovement": -0.448
+        }
+      ],
+      "seasonsWithPositiveMaeImprovement": 0,
+      "worstSeason": {
+        "season": 2021,
+        "imp": -0.859
+      },
+      "bestSeason": {
+        "season": 2023,
+        "imp": -0.448
+      },
+      "maeImprovementStdAcrossSeasons": 0.148,
+      "season2020Stress": {
+        "maeImprovement": -0.487
+      },
+      "season2023": {
+        "maeImprovement": -0.448
+      }
+    },
+    "A_independent::ridge": {
+      "seasonMaeImprovementsExcl2020": [
+        {
+          "season": 2019,
+          "maeImprovement": -0.341
+        },
+        {
+          "season": 2021,
+          "maeImprovement": -0.816
+        },
+        {
+          "season": 2022,
+          "maeImprovement": -0.638
+        },
+        {
+          "season": 2023,
+          "maeImprovement": -0.445
+        }
+      ],
+      "seasonsWithPositiveMaeImprovement": 0,
+      "worstSeason": {
+        "season": 2021,
+        "imp": -0.816
+      },
+      "bestSeason": {
+        "season": 2019,
+        "imp": -0.341
+      },
+      "maeImprovementStdAcrossSeasons": 0.182,
+      "season2020Stress": {
+        "maeImprovement": -0.594
+      },
+      "season2023": {
+        "maeImprovement": -0.445
+      }
+    },
+    "B_residual::elasticnet": {
+      "seasonMaeImprovementsExcl2020": [
+        {
+          "season": 2019,
+          "maeImprovement": 0.03
+        },
+        {
+          "season": 2021,
+          "maeImprovement": 0.032
+        },
+        {
+          "season": 2022,
+          "maeImprovement": -0.002
+        },
+        {
+          "season": 2023,
+          "maeImprovement": 0.011
+        }
+      ],
+      "seasonsWithPositiveMaeImprovement": 3,
+      "worstSeason": {
+        "season": 2022,
+        "imp": -0.002
+      },
+      "bestSeason": {
+        "season": 2021,
+        "imp": 0.032
+      },
+      "maeImprovementStdAcrossSeasons": 0.014,
+      "season2020Stress": {
+        "maeImprovement": -0.031
+      },
+      "season2023": {
+        "maeImprovement": 0.011
+      }
+    },
+    "B_residual::gbt": {
+      "seasonMaeImprovementsExcl2020": [
+        {
+          "season": 2019,
+          "maeImprovement": -0.014
+        },
+        {
+          "season": 2021,
+          "maeImprovement": 0.045
+        },
+        {
+          "season": 2022,
+          "maeImprovement": 0.039
+        },
+        {
+          "season": 2023,
+          "maeImprovement": -0.041
+        }
+      ],
+      "seasonsWithPositiveMaeImprovement": 2,
+      "worstSeason": {
+        "season": 2023,
+        "imp": -0.041
+      },
+      "bestSeason": {
+        "season": 2021,
+        "imp": 0.045
+      },
+      "maeImprovementStdAcrossSeasons": 0.036,
+      "season2020Stress": {
+        "maeImprovement": 0.029
+      },
+      "season2023": {
+        "maeImprovement": -0.041
+      }
+    },
+    "B_residual::market_anchored_ridge": {
+      "seasonMaeImprovementsExcl2020": [
+        {
+          "season": 2019,
+          "maeImprovement": 0.025
+        },
+        {
+          "season": 2021,
+          "maeImprovement": 0.018
+        },
+        {
+          "season": 2022,
+          "maeImprovement": -0.062
+        },
+        {
+          "season": 2023,
+          "maeImprovement": 0.013
+        }
+      ],
+      "seasonsWithPositiveMaeImprovement": 3,
+      "worstSeason": {
+        "season": 2022,
+        "imp": -0.062
+      },
+      "bestSeason": {
+        "season": 2019,
+        "imp": 0.025
+      },
+      "maeImprovementStdAcrossSeasons": 0.035,
+      "season2020Stress": {
+        "maeImprovement": -0.109
+      },
+      "season2023": {
+        "maeImprovement": 0.013
+      }
+    }
+  },
+  "classification": {
+    "label": "PROMISING_BUT_UNPROVEN",
+    "familywise": {
+      "adequateSampleCellsTested": 23,
+      "bonferroniZ": 3.065,
+      "alphaPerCell": 0.002
+    }
+  }
+}

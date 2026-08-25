@@ -1,0 +1,141 @@
+{
+  "phase": 7,
+  "purpose": "Pre-registered market-failure / selectivity regimes. FROZEN before any ATS result was computed. Discovery only — no picks, no deployment.",
+  "frozenInputs": {
+    "predictions": "hist_phase5_predictions (frozen Phase 5 walk-forward OOS predictions)",
+    "features": "hist_training_rows (leakage-safe as-of pregame features)",
+    "conference": "hist_raw_games.homeConference/awayConference (concentration tests only)"
+  },
+  "signConventions": {
+    "actual_margin": "home_points - away_points",
+    "market_implied_home_margin": "-market_spread (home favored => spread<0 => positive)",
+    "realized_ats": "actual_margin - market_implied_home_margin ; >0 HOME covered, <0 AWAY covered, =0 push",
+    "betSign": "+1 = bet HOME, -1 = bet AWAY",
+    "win": "sign(betSign) == sign(realized_ats) ; push if realized_ats == 0",
+    "disagreement_signal": "modelOrFeatureImpliedHomeMargin - market_implied_home_margin ; >0 => signal thinks HOME undervalued => betSign=+1"
+  },
+  "aprioriConstants": {
+    "eloPointsPerElo": 0.04,
+    "eloDivisorEquivalent": 25,
+    "homeFieldAdvantagePoints": 2.5,
+    "note": "Standard published constants (Elo ~25 pts/point; HFA ~2.5). Fixed a priori, never fit to these data. HFA applied to rating/form-implied margins only when NOT a neutral site; market already embeds HFA."
+  },
+  "breakeven": { "atsWinPctAt110": 52.38, "efficientMarketNull": 50.0 },
+  "regimeFamilies": [
+    {
+      "id": "fade_large_favorites",
+      "type": "contextual_fade",
+      "filter": "abs(market_implied_home_margin) >= T",
+      "betRule": "bet the UNDERDOG (betSign = sign(market_implied_home_margin) * -1)",
+      "thresholds_T": [7, 10, 14, 17, 21],
+      "rationale": "Classic hypothesis: public overvalues heavy favorites."
+    },
+    {
+      "id": "back_large_favorites",
+      "type": "contextual_back",
+      "filter": "abs(market_implied_home_margin) >= T",
+      "betRule": "bet the FAVORITE (betSign = sign(market_implied_home_margin))",
+      "thresholds_T": [7, 10, 14, 17, 21],
+      "rationale": "Direct complement of fade_large_favorites (tests the opposite direction so we never assume which way inefficiency runs)."
+    },
+    {
+      "id": "back_home_underdogs",
+      "type": "contextual_back",
+      "filter": "market_implied_home_margin <= -T (home is a dog by >= T)",
+      "betRule": "bet HOME (betSign = +1)",
+      "thresholds_T": [0.5, 3, 7, 10],
+      "rationale": "Home-dog value hypothesis."
+    },
+    {
+      "id": "back_road_underdogs",
+      "type": "contextual_back",
+      "filter": "market_implied_home_margin >= T (away is a dog by >= T)",
+      "betRule": "bet AWAY (betSign = -1)",
+      "thresholds_T": [0.5, 3, 7, 10],
+      "rationale": "Road-dog value hypothesis."
+    },
+    {
+      "id": "elo_vs_market",
+      "type": "feature_disagreement",
+      "signal": "(elo_diff/25) + hfa - market_implied_home_margin",
+      "betRule": "betSign = sign(signal)",
+      "thresholds_absSignal": [2, 3, 4, 6, 8],
+      "rationale": "Pregame Elo disagrees with the market line."
+    },
+    {
+      "id": "sp_vs_market",
+      "type": "feature_disagreement",
+      "signal": "(home_prior_sp - away_prior_sp) + hfa - market_implied_home_margin",
+      "betRule": "betSign = sign(signal)",
+      "thresholds_absSignal": [3, 5, 7, 10],
+      "rationale": "Prior-season SP+ disagreement (early-season inefficiency candidate)."
+    },
+    {
+      "id": "fpi_vs_market",
+      "type": "feature_disagreement",
+      "signal": "(home_prior_fpi - away_prior_fpi) + hfa - market_implied_home_margin",
+      "betRule": "betSign = sign(signal)",
+      "thresholds_absSignal": [3, 5, 7, 10],
+      "rationale": "Prior-season FPI disagreement."
+    },
+    {
+      "id": "form_vs_market",
+      "type": "feature_disagreement",
+      "signal": "(home_avg_margin - away_avg_margin) + hfa - market_implied_home_margin",
+      "betRule": "betSign = sign(signal)",
+      "thresholds_absSignal": [3, 5, 7, 10],
+      "rationale": "Recent scoring-margin form disagreement."
+    },
+    {
+      "id": "consensus_disagreement",
+      "type": "feature_consensus",
+      "signal": "count of {elo,sp,fpi,form} implied margins that disagree with market in the SAME direction with abs>=1; betSign = that agreed direction",
+      "betRule": "qualify only when >= K families agree; betSign = agreed sign",
+      "thresholds_K": [2, 3, 4],
+      "rationale": "Inefficiency should be most credible where multiple independent leakage-safe families agree against the market."
+    },
+    {
+      "id": "model_edge",
+      "type": "model_disagreement",
+      "signal": "predicted_edge (frozen Phase 5 predicted_home_margin - market_implied_home_margin)",
+      "betRule": "betSign = sign(predicted_edge)",
+      "appliedTo": "ALL 6 persisted (model,family) combos, each counted as its own hypothesis family",
+      "thresholds_absEdge": [1, 2, 3, 4, 5, 7],
+      "rationale": "Frozen Phase 5 models' own disagreement, re-examined selectively."
+    }
+  ],
+  "contextConditioners": {
+    "note": "Applied ONLY to the single best-surviving directional family as a secondary concentration probe, NOT crossed against everything (keeps hypothesis count bounded).",
+    "buckets": ["conference_game=true", "conference_game=false", "neutral_site=true", "early_season(week<=4)", "mid_season(week 5-9)", "late_season(week>=10)"]
+  },
+  "selectivityGrid": {
+    "type": "walk_forward_percentile",
+    "topPctByAbsSignal": [50, 25, 15, 10, 5],
+    "rule": "Percentile cutoff of |signal| computed on PRIOR test seasons only, then applied unchanged to the next test season. Reports how ATS changes as selectivity tightens."
+  },
+  "walkForward": {
+    "testSeasons": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023],
+    "note": "Phase 5 folds produced OOS predictions for these test seasons. Fixed-threshold regimes use NO fitting (defined a priori) so pooled OOS is already leakage-safe; percentile selectivity uses prior-seasons-only cutoffs. 2020 always reported both included and excluded.",
+    "minDecidedForConsideration": 100
+  },
+  "multipleComparison": {
+    "rawTest": "two-sided exact binomial vs efficient-market null p=0.5 on decided bets",
+    "corrections": ["Bonferroni (family-wise)", "Benjamini-Hochberg FDR at q=0.10"],
+    "profitabilityBar": "pooled ATS win% point estimate AND Wilson-95 lower bound must exceed 52.38%"
+  },
+  "robustness": {
+    "concentration": "re-test any promising regime after removing (a) its single best team, (b) its single best conference",
+    "neighborhood": "vary the driving threshold to neighbors; a real effect must not live at a single magic cutoff and should trend, not spike"
+  },
+  "classificationStandard": {
+    "REJECTED": "no stable signal",
+    "INTERESTING": "raw OOS signal but weak/inconsistent",
+    "PROMISING_BUT_UNPROVEN": "survives multiple seasons + robustness but not yet deployment-grade",
+    "STRONG_CANDIDATE": "survives walk-forward + neighbors + team/conference concentration + multiple-comparison correction AND clears profitability bar"
+  },
+  "hardRules": [
+    "No pick generation. No deployment. No modification of Phase 1-6 artifacts.",
+    "No regime may use the target test season's ATS results to define itself or choose a threshold.",
+    "Sign-convention assertions must pass before any regime is scored."
+  ]
+}

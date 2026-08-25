@@ -1,13 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { TrendingUp, ShieldCheck, Crosshair, Zap, Menu } from 'lucide-react'
-import { getTeamRank } from '@/lib/bse'
-
-// A real Week 1 2026 marquee matchup, used as the illustrative Pro sample card.
-function rankedName(name: string) {
-  const rank = getTeamRank(name)
-  return rank != null ? `#${rank} ${name}` : name
-}
+import { TrendingUp, ShieldCheck, Crosshair } from 'lucide-react'
+import { HeroPreviewCard } from '@/components/home/hero-preview-card'
 
 // Describes what the BSE model measures — not fabricated performance claims.
 const stats = [
@@ -112,80 +106,11 @@ export function Hero() {
           </div>
         </div>
 
-        {/* Right: phone card */}
+        {/* Right: phone card — real current-week featured matchup */}
         <div className="relative z-20 flex items-center justify-center lg:col-span-3">
-          <PhoneCard />
+          <HeroPreviewCard />
         </div>
       </div>
     </section>
-  )
-}
-
-function PhoneCard() {
-  return (
-    <div className="w-full max-w-[290px] rounded-[2.2rem] border border-border bg-card p-2 shadow-[0_0_50px_oklch(0_0_0_/_0.6)] ring-1 ring-primary/10">
-      <div className="overflow-hidden rounded-[1.7rem] bg-secondary">
-        {/* phone header */}
-        <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
-          <div className="flex items-center gap-1">
-            <span className="font-display text-lg font-bold text-foreground">BS</span>
-            <span className="font-display text-lg font-bold text-primary">E</span>
-          </div>
-          <span className="font-display text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            BSE Pro
-          </span>
-          <Menu className="h-4 w-4 text-muted-foreground" />
-        </div>
-
-        {/* rating */}
-        <div className="flex flex-col items-center px-4 py-6 text-center">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            BSE Rating
-          </span>
-          <span className="my-1 font-display text-7xl font-bold leading-none text-primary text-glow">
-            87
-          </span>
-          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Big Spread Alert
-          </span>
-          <Zap className="mt-2 h-4 w-4 fill-primary text-primary" />
-        </div>
-
-        {/* matchup — real Week 1 game, illustrative sample numbers */}
-        <div className="border-t border-border/60 px-4 py-4">
-          <div className="flex items-center justify-between">
-            <span className="font-display text-sm font-bold uppercase tracking-wide text-foreground">
-              {rankedName('Louisville')} @ {rankedName('Ole Miss')}
-            </span>
-          </div>
-          <span className="mt-1 block font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Week 1 · BSE Choice
-          </span>
-          <dl className="mt-3 space-y-2 text-sm">
-            <Row label="Market Spread" value="MISS -6.5" />
-            <Row label="BSE Projection" value="-8.5" />
-            <div className="flex items-center justify-between border-t border-border/60 pt-2">
-              <dt className="font-semibold text-primary">Spread Edge</dt>
-              <dd className="font-display text-base font-bold text-primary">+2.0</dd>
-            </div>
-          </dl>
-         <Link
-            href="/board"
-            className="mt-4 block w-full rounded-md border border-border py-2.5 text-center font-display text-xs font-bold uppercase tracking-wider text-foreground transition-colors hover:border-primary hover:text-primary"
->
-    View Full Breakdown
-    </Link>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="font-mono font-semibold text-foreground">{value}</dd>
-    </div>
   )
 }

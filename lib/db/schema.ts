@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, unique } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, boolean, integer, unique, doublePrecision, jsonb, index } from "drizzle-orm/pg-core"
 
 // ---------------------------------------------------------------------------
 // Better Auth tables (camelCase columns match Better Auth defaults — do not
@@ -10,6 +10,9 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("emailVerified").notNull().default(false),
   image: text("image"),
+  // Authorization role. 'admin' unlocks the owner dashboard + admin APIs.
+  // Enforced server-side only; never trust a client-supplied role.
+  role: text("role").notNull().default("user"),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
@@ -95,7 +98,254 @@ export const subscriptions = pgTable("subscriptions", {
   stripeCustomerId: text("stripeCustomerId"),
   stripeSubscriptionId: text("stripeSubscriptionId"),
   priceId: text("priceId"),
+  priceInterval: text("priceInterval"),
+  currentPeriodStart: timestamp("currentPeriodStart", { withTimezone: true }),
   currentPeriodEnd: timestamp("currentPeriodEnd"),
+  // When true, the sub is set to end at currentPeriodEnd (user canceled but
+  // still has paid access until then). canceledAt is when Stripe fully ended it.
+  cancelAtPeriodEnd: boolean("cancelAtPeriodEnd").notNull().default(false),
+  canceledAt: timestamp("canceledAt", { withTimezone: true }),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 })
+
+/**
+ * Webhook idempotency ledger. Every Stripe event ID we finish processing is
+ * recorded here; the webhook refuses to process an ID that already exists, so
+ * Stripe's at-least-once redelivery can never double-apply a lifecycle change.
+ */
+export const processedStripeEvents = pgTable("processed_stripe_events", {
+  id: text("id").primaryKey(), // Stripe event id (evt_...)
+  type: text("type").notNull(),
+  processedAt: timestamp("processedAt", { withTimezone: true }).notNull().defaultNow(),
+})
+
+/**
+ * Append-only payment/subscription audit trail, populated from verified Stripe
+ * webhook events. Powers the admin dashboard's payment history. Never written
+ * from the client.
+ */
+export const paymentHistory = pgTable(
+  "payment_history",
+  {
+    id: text("id").primaryKey(),
+    userId: text("userId"),
+    stripeCustomerId: text("stripeCustomerId"),
+    stripeInvoiceId: text("stripeInvoiceId"),
+    stripeEventId: text("stripeEventId"),
+    // invoice.paid | invoice.payment_failed | subscription.canceled | ...
+    type: text("type").notNull(),
+    status: text("status"),
+    amount: integer("amount"), // minor units (cents)
+    currency: text("currency"),
+    description: text("description"),
+    periodStart: timestamp("periodStart", { withTimezone: true }),
+    periodEnd: timestamp("periodEnd", { withTimezone: true }),
+    occurredAt: timestamp("occurredAt", { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    userIdx: index("payment_history_user_idx").on(t.userId, t.occurredAt),
+  }),
+)
+
+// ---------------------------------------------------------------------------
+// BSE Verified Track Record.
+//
+// SCOPE: only picks an admin EXPLICITLY publishes as an Official BSE Pick live
+// here. The Board may analyze every game of the week; those never enter this
+// table. Each row is FROZEN IMMUTABLY at publication (before kickoff) and later
+// graded from official CFBD final scores. There is intentionally NO `void`
+// status and NO edit path — corrections are append-only (see below) so a
+// published loss can never be hidden or rewritten.
+// ---------------------------------------------------------------------------
+
+/**
+ * One Official BSE Pick, frozen at publication. The UNIQUE (gameId, market)
+ * constraint guarantees exactly one official selection per game/market — you
+ * cannot publish both sides of a spread/moneyline as separate official picks.
+ */
+export const predictions = pgTable(
+  "predictions",
+  {
+    id: text("id").primaryKey(),
+    // CFBD identity (gameId is `cfbd-<id>`), used to batch-grade by week.
+    gameId: text("gameId").notNull(),
+    season: integer("season").notNull(),
+    week: integer("week").notNull(),
+    seasonType: text("seasonType").notNull(),
+    homeTeam: text("homeTeam").notNull(),
+    awayTeam: text("awayTeam").notNull(),
+
+    // Publication + kickoff. Frozen at publish; kickoff only closes the market
+    // to NEW official picks — it does not change an already-frozen row.
+    publishedAt: timestamp("publishedAt", { withTimezone: true }).notNull().defaultNow(),
+    kickoff: timestamp("kickoff", { withTimezone: true }).notNull(),
+
+    // The pick itself.
+    market: text("market").notNull(), // spread | total | moneyline
+    pickSide: text("pickSide").notNull(), // home | away | over | under
+    pickLabel: text("pickLabel").notNull(), // e.g. "Georgia -6.5" / "Over 58.5"
+
+    // Frozen REAL market (required). Grading always uses lineValue.
+    lineValue: doublePrecision("lineValue"), // null only for moneyline
+    priceAmerican: integer("priceAmerican"), // frozen American odds for units
+    book: text("book").notNull().default("draftkings"),
+    marketSnapshotAt: timestamp("marketSnapshotAt", { withTimezone: true }),
+
+    // Frozen model fields — REAL value or NULL. Never fabricated.
+    bseRating: doublePrecision("bseRating"),
+    fairLine: doublePrecision("fairLine"),
+    edgeValue: doublePrecision("edgeValue"),
+    winProb: doublePrecision("winProb"),
+    modelIsPlaceholder: boolean("modelIsPlaceholder").notNull().default(true),
+    // REQUIRED. "manual-pre-model" now; "BSE-v1.0" once the real model ships.
+    // Historical picks are NEVER recomputed with a newer version.
+    modelVersion: text("modelVersion").notNull(),
+
+    // Tamper-evidence. Server-generated only; the client never supplies it.
+    lockHash: text("lockHash").notNull(),
+    publishedBy: text("publishedBy"), // admin userId
+
+    // Result (filled by grading).
+    status: text("status").notNull().default("locked"), // locked | graded
+    homeScore: integer("homeScore"),
+    awayScore: integer("awayScore"),
+    grade: text("grade"), // win | loss | push
+    unitsDelta: doublePrecision("unitsDelta"),
+    gradedAt: timestamp("gradedAt", { withTimezone: true }),
+    gradedSource: text("gradedSource"), // e.g. "cfbd"
+
+    hasCorrection: boolean("hasCorrection").notNull().default(false),
+    createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    gameMarketUnique: unique("predictions_game_market_unique").on(t.gameId, t.market),
+    statusIdx: index("predictions_status_idx").on(t.status),
+    seasonWeekIdx: index("predictions_season_week_idx").on(t.season, t.week, t.seasonType),
+    // Eligibility query for grading: locked picks past kickoff.
+    statusKickoffIdx: index("predictions_status_kickoff_idx").on(t.status, t.kickoff),
+  }),
+)
+
+/**
+ * Append-only correction audit. If a genuine technical/data error must be
+ * corrected, a row is inserted here recording the original value, corrected
+ * value, reason, admin, and time. The ORIGINAL prediction row is never
+ * overwritten — the public page shows both. Corrections can never delete a pick
+ * or hide a loss.
+ */
+export const predictionCorrections = pgTable("prediction_corrections", {
+  id: text("id").primaryKey(),
+  predictionId: text("predictionId").notNull(),
+  field: text("field").notNull(),
+  originalValue: text("originalValue"),
+  correctedValue: text("correctedValue"),
+  reason: text("reason").notNull(),
+  adminUserId: text("adminUserId"),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+})
+
+/**
+ * Internal API-usage log for the grading engine. Every grading run (cron or
+ * manual) appends a row so the admin can confirm CFBD requests are conserved.
+ * Never exposed publicly.
+ */
+export const gradingRuns = pgTable("grading_runs", {
+  id: text("id").primaryKey(),
+  trigger: text("trigger").notNull(), // cron | manual
+  startedAt: timestamp("startedAt", { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp("finishedAt", { withTimezone: true }),
+  eligibleCount: integer("eligibleCount").notNull().default(0),
+  weekGroups: integer("weekGroups").notNull().default(0),
+  cfbdRequests: integer("cfbdRequests").notNull().default(0),
+  gradedCount: integer("gradedCount").notNull().default(0),
+  reason: text("reason"),
+  error: text("error"),
+})
+
+// ---------------------------------------------------------------------------
+// Weather ingestion (INFRASTRUCTURE ONLY — no model math here).
+//
+// SOURCE-OF-TRUTH SPLIT (unchanged):
+//   - CFBD  → schedule, teams, kickoff, venue identity.
+//   - SGO/DraftKings → betting markets (frozen Blob snapshot, never touched here).
+//   - Weather → this pair of tables ONLY. Fully independent of the odds snapshot.
+// ---------------------------------------------------------------------------
+
+/**
+ * Static CFBD venue reference: real stadium coordinates + dome flag + timezone.
+ * Weather is tied to THESE coordinates and the scheduled kickoff — never the
+ * team's home city. `dome = true` means outdoor weather is not a factor and we
+ * skip the forecast fetch entirely.
+ */
+export const venues = pgTable("venues", {
+  id: integer("id").primaryKey(), // CFBD venue_id
+  name: text("name"),
+  city: text("city"),
+  state: text("state"),
+  countryCode: text("country_code"),
+  timezone: text("timezone"),
+  latitude: doublePrecision("latitude"),
+  longitude: doublePrecision("longitude"),
+  elevation: doublePrecision("elevation"),
+  dome: boolean("dome").notNull().default(false),
+  grass: boolean("grass"),
+  capacity: integer("capacity"),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+})
+
+/**
+ * Append-only historical weather forecasts per game. Each refresh inserts a new
+ * row (keyed by cfbdGameId + fetchedAt) so we retain the full forecast history,
+ * the lead time before kickoff, and the exact game-time reading the model will
+ * eventually consume (`isFinalPregame`). `raw` keeps the full provider payload
+ * for auditing/backtesting. NO fair-line or BSE-rating math lives here.
+ */
+export const gameWeather = pgTable(
+  "game_weather",
+  {
+    id: text("id").primaryKey(),
+    season: integer("season").notNull(),
+    week: integer("week").notNull(),
+    cfbdGameId: text("cfbdGameId").notNull(),
+    venueId: integer("venueId"),
+    kickoff: timestamp("kickoff", { withTimezone: true }),
+    kickoffTBD: boolean("kickoffTBD").notNull().default(false),
+    /** Dome/indoor: outdoor weather intentionally not applied. */
+    indoor: boolean("indoor").notNull().default(false),
+    provider: text("provider").notNull(),
+    fetchedAt: timestamp("fetchedAt", { withTimezone: true }).notNull().defaultNow(),
+    /** The exact forecast hour requested (== kickoff hour in venue tz). */
+    forecastValidFor: timestamp("forecastValidFor", { withTimezone: true }),
+    /** Minutes between fetchedAt and kickoff (forecast lead time). */
+    leadTimeMinutes: integer("leadTimeMinutes"),
+    /** Set on the last pre-kickoff reading — the official game-time record. */
+    isFinalPregame: boolean("isFinalPregame").notNull().default(false),
+    /** ok | indoor | pending_kickoff | unavailable */
+    dataStatus: text("dataStatus").notNull().default("ok"),
+    temperatureF: doublePrecision("temperatureF"),
+    apparentTemperatureF: doublePrecision("apparentTemperatureF"),
+    humidityPct: doublePrecision("humidityPct"),
+    windSpeedMph: doublePrecision("windSpeedMph"),
+    windGustMph: doublePrecision("windGustMph"),
+    windDirectionDeg: doublePrecision("windDirectionDeg"),
+    precipitationProbabilityPct: doublePrecision("precipitationProbabilityPct"),
+    precipitationIntensityMm: doublePrecision("precipitationIntensityMm"),
+    precipitationType: text("precipitationType"),
+    rainMm: doublePrecision("rainMm"),
+    snowfallCm: doublePrecision("snowfallCm"),
+    cloudCoverPct: doublePrecision("cloudCoverPct"),
+    weatherCode: integer("weatherCode"),
+    weatherDescription: text("weatherDescription"),
+    severe: boolean("severe").notNull().default(false),
+    raw: jsonb("raw"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (t) => ({
+    gameFetched: unique("game_weather_game_fetched_unique").on(t.cfbdGameId, t.fetchedAt),
+    gameIdx: index("game_weather_game_idx").on(t.cfbdGameId, t.fetchedAt),
+    seasonWeekIdx: index("game_weather_season_week_idx").on(t.season, t.week),
+  }),
+)

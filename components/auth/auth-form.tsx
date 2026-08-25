@@ -106,6 +106,13 @@ function AuthFormInner({ mode }: { mode: "login" | "signup" }) {
           placeholder="••••••••"
           className="h-12 w-full rounded-lg border border-input bg-background px-3.5 text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-primary"
         />
+        {!isSignup && (
+          <div className="mt-1.5 text-right">
+            <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
+              Forgot password?
+            </Link>
+          </div>
+        )}
       </Field>
 
       {error && (

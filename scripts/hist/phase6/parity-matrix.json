@@ -1,0 +1,121 @@
+{
+  "phase": 6,
+  "type": "information-gap audit (no backfill, no model, no picks)",
+  "generatedForSeasons": "2015-2023 (training) + live/forward (serving)",
+  "verificationRequests": { "cfbd": 6, "sgo": 4, "openMeteo": 3, "dbZeroCost": "several", "total_external": 13 },
+  "marketGapQuant2023_vs_DraftKings": {
+    "note": "2023 is the ONLY season CFBD stored DraftKings alongside proxies. Mean |proxy - DK| on spread.",
+    "William Hill (New Jersey)": { "spreadMeanAbsPts": 0.729, "exactMatchPct": 31.9, "within1ptPct": 81.9, "totalMeanAbsPts": 0.84, "n": 442 },
+    "Bovada": { "spreadMeanAbsPts": 1.041, "exactMatchPct": 26.0, "within1ptPct": 71.3, "totalMeanAbsPts": 1.125, "n": 735 },
+    "teamrankings(model,notBook)": { "spreadMeanAbsPts": 1.0, "exactMatchPct": 27.5, "n": 51 },
+    "consensus": { "spreadMeanAbsPts": 1.224, "exactMatchPct": 27.6, "totalMeanAbsPts": 2.017, "n": 29 },
+    "interpretation": "Best real-book proxy is ~0.7-1.0 pt off DraftKings; consensus ~1.2 pt. Around key numbers 3 and 7 this routinely flips ATS covers. The proxy error EXCEEDS any edge Phase 5 could find, so a consensus/proxy-trained edge cannot be trusted to transfer to DraftKings."
+  },
+  "matrix": [
+    {
+      "candidate": "Situational / schedule features (rest diff, consecutive road, travel distance, timezone change, altitude, neutral, conference, prev-game margin, prev-game OT, bye week, short week, SOS-of-prior)",
+      "priority": 5,
+      "parity": "GREEN",
+      "historicalSource": "already in hand: hist_raw_games.startDate + venues(lat/lon/elev/tz)",
+      "liveSource": "identical (schedule+venue known pre-kickoff)",
+      "earliestSeason": 2015,
+      "timestamps": "kickoff timestamp present for 6719/6719 games; venue coords for 852 venues",
+      "coverage": "100%",
+      "cost": "zero API",
+      "leakageRisk": "none (all knowable pre-kickoff)",
+      "informationValue": "LOW",
+      "caveat": "Phase 4 already found rest/games-played ~0 signal; several of these were effectively tested and are near-dead. Free but unlikely to move the needle."
+    },
+    {
+      "candidate": "Real-sportsbook historical lines (William Hill / Bovada / Caesars) as the MARKET feature, restricted to the real-book era",
+      "priority": 1,
+      "parity": "YELLOW",
+      "historicalSource": "already stored in hist_raw_lines",
+      "liveSource": "SGO DraftKings (different book)",
+      "earliestSeason": "Caesars 2018, Bovada 2019, William Hill 2020",
+      "timestamps": "NONE (CFBD lines carry no timestamp) - cannot be labelled a closing line",
+      "coverage": "Bovada 2019-2023 ~735/season; William Hill 2020-2023; sparse before",
+      "cost": "zero API (stored)",
+      "leakageRisk": "low-moderate: no timestamp means we cannot prove pre-kickoff; treat as 'a line', not 'the close'",
+      "informationValue": "MEDIUM",
+      "caveat": "Still 0.7-1.0 pt off DraftKings and only covers ~2019-2023. Improves realism vs consensus but is not a NEW predictive signal."
+    },
+    {
+      "candidate": "Live DraftKings market (open + current + lastUpdatedAt) via SGO",
+      "priority": 1,
+      "parity": "GREEN (serving) / RED (training)",
+      "historicalSource": "NONE - SGO returned 0 events for a 2019 window; live/forward only",
+      "liveSource": "SGO /v2/events (already wired), fields: bookOdds, openBookOdds, byBookmaker.draftkings.lastUpdatedAt",
+      "earliestSeason": "current/upcoming only",
+      "timestamps": "YES (per-book lastUpdatedAt) - true pre-kickoff snapshots possible going forward",
+      "coverage": "live NCAAF only; amateur tier cap 2500 entities/month, 10 req/min",
+      "cost": "entity-capped (2500/month) - fine for weekly live pulls, impossible for bulk history",
+      "leakageRisk": "none live",
+      "informationValue": "HIGH (for the product / forward CLV), ZERO for historical training",
+      "caveat": "This is the asymmetry at the heart of the problem: DraftKings data exists ONLY going forward, never for 2015-2023."
+    },
+    {
+      "candidate": "Weather (temp, wind speed/gust, precip, humidity, severe) at venue+kickoff hour",
+      "priority": 4,
+      "parity": "YELLOW",
+      "historicalSource": "Open-Meteo ARCHIVE (ERA5 actual obs, back to 1940) OR Historical-Forecast API (archived forecasts)",
+      "liveSource": "Open-Meteo forecast API (already wired)",
+      "earliestSeason": "archive: 2015 fine (deep); historical-forecast: returned 2019 & 2023 data but pre-2021 depth NEEDS VERIFICATION (may fall back to reanalysis)",
+      "timestamps": "archive = actual obs at kickoff hour (NOT a pre-kickoff forecast); historical-forecast = time-safe archived forecast",
+      "coverage": "outdoor venues only; dome games weather-irrelevant (dome flag known)",
+      "cost": "keyless, free, generous limits",
+      "leakageRisk": "ARCHIVE = mild forward bias (train on actuals, serve on forecast); HISTORICAL-FORECAST = time-safe",
+      "informationValue": "LOW-MEDIUM (mostly affects totals/unders, weak on spread)",
+      "caveat": "Train/serve parity imperfect if archive used. Prefer historical-forecast where depth is genuine; otherwise accept the actuals-vs-forecast mismatch as a known YELLOW."
+    },
+    {
+      "candidate": "QB experience / returning starters / OL continuity / starter-weighted talent",
+      "priority": 3,
+      "parity": "YELLOW",
+      "historicalSource": "CFBD /roster + /player/usage + /player/returning + /stats/player/season + /recruiting (all 200 OK); starter identity needs /games/players backfill",
+      "liveSource": "same endpoints preseason; NO in-season injury-driven update source",
+      "earliestSeason": "roster/usage/returning 2014-2015+; transfer portal EMPTY for 2019 (starts ~2021 - verify)",
+      "timestamps": "season-level only, NO intra-season timestamps",
+      "coverage": "good preseason; cannot capture mid-season starter changes",
+      "cost": "moderate backfill (per-team/per-season requests)",
+      "leakageRisk": "preseason-static = safe; anything implying 'who actually played' risks leakage and needs care",
+      "informationValue": "LOW-MEDIUM",
+      "caveat": "Captures preseason roster value only. The high-value part (in-season QB out / late scratch) is unobtainable because there is no injury source."
+    },
+    {
+      "candidate": "Injuries / availability / questionable-doubtful-out / suspensions / opt-outs / late scratches / depth-chart changes",
+      "priority": 2,
+      "parity": "RED",
+      "historicalSource": "NONE - CFBD /injuries returns 404; no timestamped injury feed available in this project",
+      "liveSource": "none wired",
+      "earliestSeason": "n/a",
+      "timestamps": "n/a - any retrospective injury list would be untimestamped and hindsight-contaminated",
+      "coverage": "0%",
+      "cost": "would require a paid injury API with historical timestamps (not present)",
+      "leakageRisk": "SEVERE - untimestamped retrospective injuries leak the outcome; explicitly rejected",
+      "informationValue": "POTENTIALLY HIGH but UNOBTAINABLE safely",
+      "caveat": "This is the most valuable missing feature and it cannot be reconstructed leakage-safe. Reject."
+    },
+    {
+      "candidate": "Timestamped historical DraftKings CLOSING line / full line-movement history",
+      "priority": 1,
+      "parity": "RED",
+      "historicalSource": "NONE - CFBD DraftKings = 2023 only and untimestamped; SGO = no history on this tier",
+      "liveSource": "SGO forward-only",
+      "earliestSeason": "n/a for history",
+      "timestamps": "unavailable historically",
+      "coverage": "0% for 2015-2022",
+      "cost": "would require a premium historical odds vendor (e.g. paid line-history feed) - not present",
+      "leakageRisk": "n/a (does not exist)",
+      "informationValue": "HIGHEST - would resolve the train/serve gap",
+      "caveat": "The single most important addition and it is NOT available. Do not fabricate or approximate it as 'closing'."
+    }
+  ],
+  "reject": [
+    "Untimestamped retrospective injury data (severe leakage)",
+    "CFBD 'spread' field labelled as a closing line (no timestamp exists)",
+    "Any consensus/proxy-trained edge asserted as a DraftKings edge (proxy error 0.7-1.2 pt > any edge found)",
+    "SGO as a historical backfill source (returns nothing for past seasons; 2500 entity/month cap)",
+    "numberfire / teamrankings treated as 'market' (they are model predictions, not sportsbooks)"
+  ]
+}
