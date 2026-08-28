@@ -33,8 +33,8 @@ async function main() {
     if (n > 0) {
       throw new Error(`REFUSING to reset schema: bse_shadow_signal already has ${n} real signals.`)
     }
-    // Disable the immutability trigger (if present) before dropping.
-    await run(`alter table bse_shadow_signal disable trigger all`).catch(() => {})
+    // Drop the named immutability trigger (if present) before dropping tables.
+    await run(`drop trigger if exists trg_shadow_signal_immutable on bse_shadow_signal`).catch(() => {})
     await run(`drop table if exists bse_shadow_grade`)
     await run(`drop table if exists bse_shadow_signal`)
     await run(`drop table if exists bse_dk_snapshot`)
