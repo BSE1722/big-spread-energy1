@@ -40,15 +40,23 @@ import { loadFrozenArtifact, scoreFrozen, validateServingRow } from "./score-fro
 // rather than attach a stale line. Override with --max-snapshot-age-hours.
 const DEFAULT_MAX_SNAPSHOT_AGE_HOURS = 48
 
-// The 17 frozen model features + the raw columns needed to build them. These
-// column names match hist_training_rows exactly (see 03-reconstruct.mjs).
+// RAW columns the FROZEN feature transform (features5.mjs DERIVED map) reads to
+// build the 17 model features. The scorer + validity guard recompute every
+// differential from these raw home/away inputs (e.g. elo_diff from
+// home_elo_pregame - away_elo_pregame), so we MUST select the raw inputs, not
+// precomputed diffs — selecting `elo_diff`/`talent_diff` here leaves the raw
+// columns absent, which median-imputes the two strongest features and makes the
+// validity guard reject every game. This list mirrors the SAME reconstruction
+// used for 2015-2023 training (03-reconstruct.mjs) and verified by parity.
 const FEATURE_SELECT = `
   "gameId", season, week, "seasonType", "startDate",
-  "homeTeam", "awayTeam", both_fbs, neutral_site,
-  elo_diff, talent_diff,
+  "homeTeam", "awayTeam", both_fbs, neutral_site, market_spread,
+  home_elo_pregame, away_elo_pregame,
+  home_talent, away_talent,
   home_prior_sp, away_prior_sp, home_prior_srs, away_prior_srs, home_prior_fpi, away_prior_fpi,
   home_recruiting_points, away_recruiting_points,
   home_returning_ppa, away_returning_ppa, home_returning_percent, away_returning_percent,
+  home_avg_off_ppa, home_avg_def_ppa, away_avg_off_ppa, away_avg_def_ppa,
   home_avg_ppa_off_overall, home_avg_ppa_def_overall, away_avg_ppa_off_overall, away_avg_ppa_def_overall,
   home_avg_off_success, home_avg_def_success, away_avg_off_success, away_avg_def_success,
   home_avg_off_explosiveness, home_avg_def_explosiveness, away_avg_off_explosiveness, away_avg_def_explosiveness,
