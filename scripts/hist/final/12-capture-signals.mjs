@@ -137,13 +137,42 @@ async function main() {
 
       evaluated++
       const { edge, fires, side } = scoreFrozen(artifact, r)
+
+      const dkSpreadHome = dk.market.spread.home            // home-relative spread
+      const marketImpliedHome = -dkSpreadHome               // frozen convention
+      const fairHomeMargin = marketImpliedHome + edge       // model's predicted home margin
+
+      // --- CUSTOMER BOARD display row (MUTABLE) — write for EVERY valid game,
+      // not just fired ones, so the Board can render a rating/lean on each
+      // matchup. Prediction fields ONLY (no grades). Upsert so it tracks line
+      // moves on rescore. Separate from the immutable shadow audit below.
+      await q(
+        `insert into bse_board_signal
+          (model_hash, cfbd_game_id, season, week, season_type, home_team, away_team,
+           edge, fair_home_margin, market_spread_home, lean, qualifies, feature_complete, scored_at)
+         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+         on conflict (model_hash, cfbd_game_id) do update set
+           edge = excluded.edge,
+           fair_home_margin = excluded.fair_home_margin,
+           market_spread_home = excluded.market_spread_home,
+           lean = excluded.lean,
+           qualifies = excluded.qualifies,
+           feature_complete = excluded.feature_complete,
+           season = excluded.season, week = excluded.week, season_type = excluded.season_type,
+           home_team = excluded.home_team, away_team = excluded.away_team,
+           scored_at = excluded.scored_at`,
+        [
+          artifact.modelHash, String(r.gameId), r.season, r.week, r.seasonType,
+          r.homeTeam, r.awayTeam,
+          edge, fairHomeMargin, dkSpreadHome, side ?? "none", fires, true, nowIso,
+        ],
+      )
+
       if (!fires) continue
       fired++
 
-      const dkSpreadHome = dk.market.spread.home            // home-relative spread
       const dkPrice = side === "home" ? dk.market.spread.homePrice : dk.market.spread.awayPrice
       const dkSpreadForSide = side === "home" ? dkSpreadHome : -dkSpreadHome
-      const marketImpliedHome = -dkSpreadHome               // frozen convention
 
       // Insert immutable signal. ON CONFLICT DO NOTHING guarantees the first
       // pre-kickoff capture is permanent and never rewritten.
@@ -206,6 +235,7 @@ async function main() {
     console.log(`skipped — no DK line matched             : ${skippedNoLine}`)
     console.log(`skipped — kickoff already passed         : ${skippedStarted}`)
     console.log(`skipped — invalid/malformed features     : ${skippedInvalid}`)
+    console.log(`board display rows upserted (all valid)  : ${evaluated}`)
     console.log(`\nADDED EXTERNAL API CALLS THIS RUN: 0 (features from DB, DK line from existing Blob snapshot)`)
   } finally {
     await pool.end()

@@ -3,6 +3,8 @@ import { getCurrentContext } from "@/lib/bse/season"
 import { getCfbdGameLites } from "@/lib/board-build"
 import { loadSnapshot } from "@/lib/odds-snapshot"
 import { getAccessState, canViewBreakdown } from "@/lib/access"
+import { getBoardSignalForGame } from "@/lib/board-signal/service"
+import { LEAN_THRESHOLD } from "@/lib/bse/model-signal"
 import type { GameWithOdds } from "@/lib/odds-match"
 
 /**
@@ -44,6 +46,11 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const marketTotal =
     matched && m && m.total.points != null && m.total.withinPlausibleRange ? m.total.points : null
 
+  // Frozen-model read for this game (display cache; prediction fields only).
+  const { signal: sig } = await getBoardSignalForGame(game.season, game.week, gameId).catch(() => ({
+    signal: null,
+  }))
+
   const header = {
     id: game.id,
     season: game.season,
@@ -57,8 +64,9 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     marketTotal,
     marketMoneyline: { home: m?.moneyline.home ?? null, away: m?.moneyline.away ?? null },
     oddsStatus: snap?.oddsStatus ?? "unavailable",
-    // BSE rating is public on the Board; null until the model produces one.
-    bseRating: null as number | null,
+    // BSE rating is public on the Board; mirrors it here. Null until the frozen
+    // model has scored this game.
+    bseRating: sig ? sig.rating : (null as number | null),
   }
 
   // Authorization: only assemble the premium payload if allowed.
@@ -76,23 +84,31 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     )
   }
 
-  // Unlocked. Real market intelligence from the snapshot; model fields honestly
-  // null/unavailable until the BSE engine is wired.
+  // Unlocked. Real market intelligence from the snapshot + the frozen model's
+  // spread read. The model produces ONE signal: a spread residual (edge). We
+  // surface the lean, fair spread, edge, and 0-100 signal strength — and
+  // nothing we don't have (no win probability, EV, totals model, weather,
+  // injuries, or news are fabricated). Everything model-derived is flagged
+  // in-validation so it is never presented as proven performance.
+  const modelSignal = sig ? describeSignal(sig, game.home.name, game.away.name, LEAN_THRESHOLD) : null
+  const leanTeam = modelSignal?.leanTeam ?? null
+
   const analysis = {
     lineMovement: snap?.lineHistory ?? null,
     bestLine: null,
-    fairSpread: null as number | null,
-    fairTotal: null as number | null,
-    modelEdgeSpread: null as number | null,
+    fairSpread: sig ? sig.fairHomeSpread : (null as number | null),
+    fairTotal: null as number | null, // totals are intentionally not modeled
+    modelEdgeSpread: sig ? sig.edge : (null as number | null),
     modelEdgeTotal: null as number | null,
-    pick: null as string | null,
+    pick: leanTeam,
+    modelSignal,
     factors: [] as { label: string; value: string | number | null }[],
     weather: null as string | null,
     injuries: [] as { team: string; note: string }[],
     news: [] as { headline: string; source: string | null }[],
     simulation: null as { runs: number; homeWinPct: number | null } | null,
     explanation: null as string | null,
-    modelAvailable: false,
+    modelAvailable: !!sig,
   }
 
   return NextResponse.json(
