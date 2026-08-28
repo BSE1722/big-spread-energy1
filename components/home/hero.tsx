@@ -37,11 +37,11 @@ export function Hero() {
           <p className="mt-6 max-w-md text-pretty text-lg font-semibold leading-relaxed text-foreground sm:text-xl">
             THEIR LINE. OUR LINE. YOUR EDGE.
             Sportsbooks tell you what the line is. 
-            BSE calculates where the line SHOULD be. 
+            BSE estimates where the line could be.
           </p>
 
           <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Every matchup. Every line. One proprietary BSE rating buit to show you where the market looks right - and where it doesn't. <br />
+            Every matchup. Every line. One BSE rating built to show you where the market looks right - and where it might not. <br />
             Ready to bet outside the box? Don't just read the lines. Challenge them! <br />
             <br />
             They set the line. We put it on trial.<br />

@@ -4,7 +4,7 @@ import { getCfbdGameLites } from "@/lib/board-build"
 import { loadSnapshot } from "@/lib/odds-snapshot"
 import { getAccessState, canViewBreakdown } from "@/lib/access"
 import { getBoardSignalForGame } from "@/lib/board-signal/service"
-import { LEAN_THRESHOLD } from "@/lib/bse/model-signal"
+import { LEAN_THRESHOLD, describeSignal } from "@/lib/bse/model-signal"
 import type { GameWithOdds } from "@/lib/odds-match"
 
 /**
@@ -18,10 +18,11 @@ import type { GameWithOdds } from "@/lib/odds-match"
  *                     correct upgrade/sign-up state. No premium values leak.
  *
  * Data honesty: market spread/total/moneyline + line movement come from the
- * frozen snapshot (real values). BSE model fields (fair spread, edge, pick,
- * factors, weather, injuries, news, simulation, best line, explanation) are
- * returned as null/unavailable because the model is not wired yet — never
- * fabricated.
+ * frozen snapshot (real values). The BSE spread read (fair spread, edge, lean,
+ * 0-100 rating) comes from the FROZEN model's display cache and is explicitly
+ * flagged in-validation. Fields the model does not produce (totals, factors,
+ * weather, injuries, news, simulation, best line, win probability) stay
+ * null/unavailable — never fabricated.
  */
 export const dynamic = "force-dynamic"
 
