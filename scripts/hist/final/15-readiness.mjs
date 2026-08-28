@@ -12,6 +12,10 @@
 import { makePool } from "../lib.mjs"
 import { loadFrozenArtifact, scoreFrozen, validateServingRow } from "./score-frozen.mjs"
 import { gradeAts, computeClv } from "./13-grade.mjs"
+// The EXACT production column list the weekly capture job selects. Driving the
+// fixture through this (instead of `select *`) is what makes STEP 1 able to
+// catch a column-omission regression in the serving path.
+import { FEATURE_SELECT } from "./12-capture-signals.mjs"
 
 const TEST_HASH = "READINESS_TEST_SYNTHETIC"
 const pool = makePool()
@@ -38,17 +42,29 @@ async function main() {
     await cleanup()
 
     // === STEP 1: game enters via the real feature pipeline ==================
-    // A real completed FBS game with a full, valid feature row = our fixture.
+    // CRITICAL: select the fixture through the EXACT production FEATURE_SELECT,
+    // NOT `select *`. A `select *` fixture carries every raw column and would
+    // silently mask a serving-path column omission (the elo/talent-diff bug):
+    // the guard would pass here but reject every real game in production.
     const g = (await q(
-      `select * from hist_training_rows
+      `select ${FEATURE_SELECT} from hist_training_rows
         where season=2023 and both_fbs=true and market_spread is not null
         order by "startDate" limit 1`,
     ))[0]
-    check("1. game enters via hist_training_rows pipeline", !!g, `${g?.awayTeam} @ ${g?.homeTeam} (${g?.gameId})`)
+    check("1. game enters via PRODUCTION FEATURE_SELECT pipeline", !!g, `${g?.awayTeam} @ ${g?.homeTeam} (${g?.gameId})`)
+
+    // 1b. The production SELECT must actually deliver the RAW core inputs the
+    // frozen transform reads (home/away elo + talent). If a future edit drops
+    // them from FEATURE_SELECT, this fails loudly instead of median-imputing.
+    const rawCorePresent =
+      g && g.home_elo_pregame != null && g.away_elo_pregame != null &&
+      g.home_talent != null && g.away_talent != null
+    check("1b. FEATURE_SELECT delivers raw core inputs (elo/talent)", !!rawCorePresent,
+      `elo=${g?.home_elo_pregame}/${g?.away_elo_pregame} talent=${g?.home_talent}/${g?.away_talent}`)
 
     // === STEP 2: all 17 frozen features computable pre-kickoff ==============
     const v = validateServingRow(g)
-    check("2. serving validity guard passes for a real game", v.ok, v.reason || "ok")
+    check("2. serving validity guard passes for a real game (via prod SELECT)", v.ok, v.reason || "ok")
     check("2b. 17 model features present in artifact", art.modelFeatures.length === 17, `${art.modelFeatures.length}`)
 
     // === STEP 3: score with the exact frozen artifact =======================

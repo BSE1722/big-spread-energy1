@@ -1,24 +1,19 @@
 /**
  * BSE service layer — public entry point.
  *
- * The UI imports from `@/lib/bse` (or `@/lib/bse/hooks`) and never reaches into
- * mock-data directly. Swapping mock data for a live odds API + the real model
- * happens behind this boundary with no UI changes.
+ * Live surfaces import branding/season/rating helpers from here. The frozen
+ * model's per-game read reaches the UI through `@/lib/board-signal/service`
+ * (backed by the `bse_board_signal` display cache), NOT through this barrel.
+ *
+ * The former mock board/parlay/pool generator modules were removed at launch —
+ * every customer surface now renders real market data + the frozen model or an
+ * honest empty state.
  */
 
 export * from "./types"
 export * from "./season"
 export * from "./teams"
-export * from "./odds"
 export * from "./leagues"
-export * from "./model"
-export * from "./rating"
-export * from "./correlation"
-export * from "./board"
-export * from "./pool"
-export * from "./parlay"
-export * from "./generator"
-export * from "./reevaluate"
 export * from "./tiers"
 export {
   CURRENT_CONTEXT,

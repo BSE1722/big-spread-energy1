@@ -4,33 +4,33 @@ import { Clock, Scale, Layers, TriangleAlert } from "lucide-react"
 import { CurrentWeekSlate } from "@/components/parlay/current-week-slate"
 
 /**
- * Parlay Analyzer — grades a full ticket, not just its odds.
+ * Parlay Analyzer — grades every spread leg on a ticket.
  *
- * The grade (BSE true probability, edge, EV, KEEP/REMOVE/REPLACE, correlation)
- * is derived from the BSE model's per-game output. That output isn't published
- * for the live board yet, so this surface does NOT fabricate probabilities or
- * verdicts. It explains what the analyzer measures and shows the real
- * current-week slate whose legs it will grade once the model runs.
+ * The grade is derived from the BSE model's per-game SPREAD read: the model's
+ * fair spread vs the book's line gives a per-leg edge in points and a lean. The
+ * model does not output a win probability or EV, so this surface never claims
+ * one. Those spread reads aren't published for the live board yet, so it shows
+ * an honest pending state plus the real current-week slate it will grade.
  */
 
 const MEASURES = [
   {
     icon: Scale,
-    label: "Every leg, graded",
+    label: "Every spread leg, graded",
     description:
-      "BSE true probability vs the book's implied price, plus a KEEP / REMOVE / REPLACE call per leg.",
+      "The model's fair spread vs the book's line for each leg — an edge in points and a lean, not a hunch.",
   },
   {
     icon: Layers,
-    label: "Whole-ticket EV",
+    label: "Ticket-wide edge",
     description:
-      "Joint hit probability, fair odds, and expected value across the full ticket — not leg-by-leg guesswork.",
+      "Totals the per-leg spread edge across the ticket so you see which legs carry it and which drag it down.",
   },
   {
     icon: TriangleAlert,
-    label: "Correlation checks",
+    label: "Shared-risk flags",
     description:
-      "Flags legs that share risk, so the real chance of hitting them all isn't overstated.",
+      "Flags legs from the same game or heavily related spots, so overlapping bets aren't treated as independent.",
   },
 ]
 
@@ -45,13 +45,13 @@ export function ParlayAnalyzer() {
           </span>
           <div>
             <p className="font-display text-base font-semibold text-foreground">
-              Grading activates when this week&apos;s BSE projections publish
+              Grading activates when this week&apos;s BSE spread reads publish
             </p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              The analyzer grades each leg against the BSE model&apos;s true
-              probabilities. Those aren&apos;t out for the current board yet, so we
-              won&apos;t show fabricated edges, EV, or a verdict. Below is the real
-              current-week slate whose bets it will grade the moment the model runs.
+              The analyzer grades each spread leg against the BSE model&apos;s fair
+              spread. Those reads aren&apos;t out for the current board yet, so we
+              won&apos;t show fabricated edges or a verdict. Below is the real
+              current-week slate whose legs it will grade the moment the model runs.
             </p>
           </div>
         </div>

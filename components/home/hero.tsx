@@ -3,11 +3,12 @@ import Image from 'next/image'
 import { TrendingUp, ShieldCheck, Crosshair } from 'lucide-react'
 import { HeroPreviewCard } from '@/components/home/hero-preview-card'
 
-// Describes what the BSE model measures — not fabricated performance claims.
+// Describes what the BSE model measures — a spread read only, no fabricated
+// performance or win-probability claims.
 const stats = [
-  { icon: TrendingUp, value: 'EV', label: 'Value-Graded Bets' },
-  { icon: ShieldCheck, value: '0–100', label: 'BSE Confidence Rating' },
-  { icon: Crosshair, value: 'Fair', label: 'Line vs Market Edge' },
+  { icon: TrendingUp, value: 'Edge', label: 'Points vs the Market' },
+  { icon: ShieldCheck, value: '0–100', label: 'BSE Signal Rating' },
+  { icon: Crosshair, value: 'Fair', label: 'Spread vs Market Line' },
 ]
 
 export function Hero() {

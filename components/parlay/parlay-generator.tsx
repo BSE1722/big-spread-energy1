@@ -6,29 +6,30 @@ import { CurrentWeekSlate } from "@/components/parlay/current-week-slate"
 /**
  * Getting Parlaid — BSE's parlay builder.
  *
- * BSE constructs optimized tickets from its own model output (joint
- * probability, expected value, confidence, correlation). Those projections are
- * not published yet for the live board, so this surface does NOT fabricate a
- * ticket. It explains what the tool optimizes for and shows the real
- * current-week slate the generator will draw from. When the model begins
- * emitting ratings/edges on /api/cfbd-board, generation activates here.
+ * BSE assembles tickets from its per-game SPREAD reads — the fair spread vs the
+ * book line gives a per-leg edge in points. The model does not output win
+ * probability or EV, so this surface never claims them. Those reads aren't
+ * published yet for the live board, so it does NOT fabricate a ticket: it
+ * explains what the builder selects for and shows the real current-week slate
+ * it will draw from. When the model begins emitting ratings/edges on
+ * /api/cfbd-board, generation activates here.
  */
 
 const OBJECTIVES = [
   {
     icon: Target,
     label: "Sweet Spot",
-    description: "Balanced risk and reward — BSE's default optimization target.",
+    description: "Balanced build — solid per-leg spread edge without over-reaching on legs.",
   },
   {
     icon: ShieldCheck,
     label: "Safe(r) Build",
-    description: "Higher joint hit probability with tighter correlation control.",
+    description: "Fewer legs, each with a larger spread edge, and shared-risk legs kept apart.",
   },
   {
     icon: Rocket,
     label: "Long Shot",
-    description: "Maximum payout while still clearing BSE's value threshold.",
+    description: "More legs for a bigger payout, while each still clears BSE's edge threshold.",
   },
 ]
 
@@ -58,9 +59,9 @@ export function ParlayGenerator() {
             ))}
           </div>
           <p className="mt-4 font-mono text-[10px] leading-relaxed text-muted-foreground">
-            BSE evaluates combinations and only recommends a ticket that clears
-            its probability, value, confidence, and correlation thresholds — it
-            will decline rather than force a bet.
+            BSE evaluates combinations and only recommends a ticket whose legs
+            each clear its spread-edge threshold and avoid stacking shared risk —
+            it will decline rather than force a bet.
           </p>
         </div>
       </div>
@@ -73,13 +74,13 @@ export function ParlayGenerator() {
           </span>
           <div>
             <p className="font-display text-base font-semibold text-foreground">
-              Ticket generation activates when this week&apos;s BSE projections publish
+              Ticket generation activates when this week&apos;s BSE spread reads publish
             </p>
             <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              Getting Parlaid builds tickets from the BSE model&apos;s ratings and edges.
-              Those aren&apos;t out for the current board yet, so we won&apos;t invent a
-              ticket or fake its odds. Below is the real slate the generator will
-              draw from — the moment the model runs, optimized tickets appear here.
+              Getting Parlaid builds tickets from the BSE model&apos;s ratings and spread
+              edges. Those aren&apos;t out for the current board yet, so we won&apos;t
+              invent a ticket or fake its odds. Below is the real slate the generator
+              will draw from — the moment the model runs, tickets appear here.
             </p>
           </div>
         </div>

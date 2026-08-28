@@ -48,7 +48,10 @@ const DEFAULT_MAX_SNAPSHOT_AGE_HOURS = 48
 // columns absent, which median-imputes the two strongest features and makes the
 // validity guard reject every game. This list mirrors the SAME reconstruction
 // used for 2015-2023 training (03-reconstruct.mjs) and verified by parity.
-const FEATURE_SELECT = `
+// Exported so the readiness harness (15-readiness.mjs) drives its fixture row
+// through the EXACT same production SELECT — a `select *` fixture would hide a
+// column-omission bug like the one this list was fixed for.
+export const FEATURE_SELECT = `
   "gameId", season, week, "seasonType", "startDate",
   "homeTeam", "awayTeam", both_fbs, neutral_site, market_spread,
   home_elo_pregame, away_elo_pregame,
@@ -270,7 +273,13 @@ async function loadDkSnapshotFromBlob() {
   }
 }
 
-main().catch((e) => {
-  console.error("CAPTURE ERROR:", e.message, e.stack)
-  process.exit(1)
-})
+// Only run the capture when invoked directly (node .../12-capture-signals.mjs).
+// When imported (e.g. by 15-readiness.mjs to reuse FEATURE_SELECT), do nothing.
+import { pathToFileURL } from "node:url"
+const isDirectRun = import.meta.url === pathToFileURL(process.argv[1] || "").href
+if (isDirectRun) {
+  main().catch((e) => {
+    console.error("CAPTURE ERROR:", e.message, e.stack)
+    process.exit(1)
+  })
+}

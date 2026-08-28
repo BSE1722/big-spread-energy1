@@ -30,7 +30,7 @@ export function ResultsBand() {
               <span className="block text-primary text-glow">Tracked Honestly.</span>
             </h2>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-muted-foreground">
-              BSE grades every number on data, probability, and expected value —
+              BSE grades every number on data and its model&apos;s spread edge —
               not hype. We don&apos;t chase lottery-ticket parlays with huge
               payouts and tiny odds; we find where a ticket gets mathematically
               worse and stop there. Performance tracking begins Week 1, every
