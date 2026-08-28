@@ -33,7 +33,12 @@
 // ---------------------------------------------------------------------------
 
 import { makePool } from "../lib.mjs"
-import { loadFrozenArtifact, scoreFrozen } from "./score-frozen.mjs"
+import { loadFrozenArtifact, scoreFrozen, validateServingRow } from "./score-frozen.mjs"
+
+// Fail-closed staleness threshold: if the newest DK snapshot is older than this
+// (relative to now), the odds refresh has stalled and we refuse to capture
+// rather than attach a stale line. Override with --max-snapshot-age-hours.
+const DEFAULT_MAX_SNAPSHOT_AGE_HOURS = 48
 
 // The 17 frozen model features + the raw columns needed to build them. These
 // column names match hist_training_rows exactly (see 03-reconstruct.mjs).
@@ -79,6 +84,21 @@ async function main() {
       console.error("No DraftKings snapshot available. Run the admin odds refresh first; no signals captured.")
       process.exit(1)
     }
+    // Fail-closed staleness guard: refuse to attach a stale line.
+    const maxAgeHours = Number(argVal("--max-snapshot-age-hours", DEFAULT_MAX_SNAPSHOT_AGE_HOURS))
+    const snapAgeHours = (Date.now() - new Date(snap.snapshotAt).getTime()) / 3.6e6
+    if (!Number.isFinite(snapAgeHours) || snapAgeHours < 0) {
+      console.error(`DK snapshot timestamp is invalid (${snap.snapshotAt}); refusing to capture.`)
+      process.exit(1)
+    }
+    if (snapAgeHours > maxAgeHours) {
+      console.error(
+        `DK snapshot is stale: ${snapAgeHours.toFixed(1)}h old (> ${maxAgeHours}h). ` +
+          `Refresh odds before capturing; no signals written (fail closed).`,
+      )
+      process.exit(1)
+    }
+    console.log(`DK snapshot age: ${snapAgeHours.toFixed(1)}h (<= ${maxAgeHours}h ok).`)
     const dkByCfbd = new Map()
     for (const g of snap.games) {
       if (g.oddsStatus === "matched" && g.market?.available && g.market.spread?.home != null) {
@@ -94,7 +114,7 @@ async function main() {
     const rows = await q(`select ${FEATURE_SELECT} from hist_training_rows where ${where} order by "startDate"`, params)
     console.log(`feature rows for season ${season}${weekArg ? ` week ${weekArg}` : ""}: ${rows.length}`)
 
-    let evaluated = 0, fired = 0, inserted = 0, skippedNoLine = 0, skippedStarted = 0, skippedDup = 0
+    let evaluated = 0, fired = 0, inserted = 0, skippedNoLine = 0, skippedStarted = 0, skippedDup = 0, skippedInvalid = 0
 
     for (const r of rows) {
       const dk = dkByCfbd.get(String(r.gameId))
@@ -104,6 +124,16 @@ async function main() {
       // we cannot prove the signal predated it — skip.
       const kickoff = r.startDate ? new Date(r.startDate).getTime() : (dk.kickoff ? new Date(dk.kickoff).getTime() : null)
       if (kickoff != null && kickoff <= Date.now()) { skippedStarted++; continue }
+
+      // Fail-closed validity guard: never score/write a signal from a row whose
+      // real inputs are missing or corrupt (would manufacture a prediction from
+      // medians). Does not touch the frozen model — pure serving-side check.
+      const valid = validateServingRow(r)
+      if (!valid.ok) {
+        skippedInvalid++
+        console.warn(`SKIP game ${r.gameId} (${r.awayTeam} @ ${r.homeTeam}): ${valid.reason}`)
+        continue
+      }
 
       evaluated++
       const { edge, fires, side } = scoreFrozen(artifact, r)
@@ -175,6 +205,7 @@ async function main() {
     console.log(`already existed (dedup, unchanged)       : ${skippedDup}`)
     console.log(`skipped — no DK line matched             : ${skippedNoLine}`)
     console.log(`skipped — kickoff already passed         : ${skippedStarted}`)
+    console.log(`skipped — invalid/malformed features     : ${skippedInvalid}`)
     console.log(`\nADDED EXTERNAL API CALLS THIS RUN: 0 (features from DB, DK line from existing Blob snapshot)`)
   } finally {
     await pool.end()

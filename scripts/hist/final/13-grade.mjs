@@ -39,16 +39,26 @@ export function gradeAts(side, homePoints, awayPoints, spreadSide) {
   return { result, coverMargin: Number(cover.toFixed(2)), actualSideMargin }
 }
 
-/** Signed CLV: + means the closing line was better than what we bet into. */
+/**
+ * Signed CLV in points, from OUR side's perspective.
+ * + means WE BEAT THE CLOSE: the number we bet was better than the closing
+ *   number (we laid fewer points, or got more points, than the closing line).
+ * - means the line moved against us after we bet.
+ *
+ * Both inputs are home-relative spreads. Convert to our side's spread:
+ *   sideSpread = side==home ? spreadHome : -spreadHome
+ * For a spread bettor a LARGER side-spread is better (e.g. -7 -> -6 laying
+ * fewer, or +7 -> +8 getting more). We beat the close when OUR side-spread is
+ * larger than the CLOSING side-spread, so CLV = ourSide - closeSide.
+ *
+ * Worked example: bet home -3, close home -6. You bought home 3 pts cheaper than
+ * the market's close => +3 CLV.  sigSide=-3, finSide=-6 => -3 - (-6) = +3. ✓
+ */
 export function computeClv(side, signalSpreadHome, finalSpreadHome) {
   if (finalSpreadHome == null) return null
-  // Both spreads are home-relative. Converting to our side's spread and asking
-  // "did our number get better (more points / shorter lay)?":
-  //   sideSpread = side==home ? spreadHome : -spreadHome
   const sigSide = side === "home" ? signalSpreadHome : -signalSpreadHome
   const finSide = side === "home" ? finalSpreadHome : -finalSpreadHome
-  // A larger side-spread (e.g. +3 -> +3.5, or -7 -> -6.5) is better for us.
-  return Number((finSide - sigSide).toFixed(2))
+  return Number((sigSide - finSide).toFixed(2))
 }
 
 async function main() {

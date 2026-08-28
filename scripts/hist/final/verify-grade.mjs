@@ -29,16 +29,21 @@ check("away +7, lose by 10 => LOSS", gradeAts("away", 31, 21, 7).result, "LOSS")
 check("away +7, win by 5 => WIN", gradeAts("away", 20, 25, 7).result, "WIN")
 
 // ---- CLV ------------------------------------------------------------------
-// Bet HOME at signal spreadHome = -7. Close moves to -6 (home laying fewer pts).
-//   sigSide = -7, finSide = -6, clv = -6 - (-7) = +1 => we beat the close (+CLV)
-check("home -7 -> close -6 => +1 CLV", computeClv("home", -7, -6), 1)
-// Close steamed to -8 (worse for our home bet) => clv = -8 - (-7) = -1
-check("home -7 -> close -8 => -1 CLV", computeClv("home", -7, -8), -1)
-// Bet AWAY at +7 (spreadHome -7). Close moves to home -6 => away +6.
-//   sigSide = +7, finSide = +6, clv = 6 - 7 = -1 (worse for our +7 dog)
-check("away +7 -> close +6 => -1 CLV", computeClv("away", -7, -6), -1)
-// Close moves to home -8 => away +8 => clv = 8 - 7 = +1 (better for our dog)
-check("away +7 -> close +8 => +1 CLV", computeClv("away", -7, -8), 1)
+// Convention: +CLV means WE BEAT THE CLOSE (our number was better than close).
+// Bet HOME at -7. Close steams to home -8 (home more favored). We laid only 7
+// while the close lays 8 => we got the better number => +1 CLV.
+//   sigSide=-7, finSide=-8, clv = -7 - (-8) = +1
+check("home -7 -> close -8 => +1 CLV (we beat close)", computeClv("home", -7, -8), 1)
+// Close drifts to home -6 (home less favored). We laid 7 vs close 6 => we got
+// the worse number => -1 CLV.  sigSide=-7, finSide=-6, clv = -7 - (-6) = -1
+check("home -7 -> close -6 => -1 CLV (line moved against us)", computeClv("home", -7, -6), -1)
+// Bet AWAY at +7 (spreadHome -7). Close moves to home -8 => away +8. We got only
+// +7 while close gives +8 => close is better => -1 CLV.
+//   sigSide=+7, finSide=+8, clv = 7 - 8 = -1
+check("away +7 -> close +8 => -1 CLV (line moved against us)", computeClv("away", -7, -8), -1)
+// Close moves to home -6 => away +6. We got +7 vs close +6 => we got more points
+// => +1 CLV.  sigSide=+7, finSide=+6, clv = 7 - 6 = +1
+check("away +7 -> close +6 => +1 CLV (we beat close)", computeClv("away", -7, -6), 1)
 // No close available => null
 check("no close => null CLV", computeClv("home", -7, null), null)
 

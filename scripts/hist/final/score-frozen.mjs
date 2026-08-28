@@ -68,3 +68,77 @@ export function scoreFrozen(artifact, rawRow) {
   else if (edge <= -thr) side = "away"
   return { edge: Number(edge.toFixed(4)), fires: side != null, side }
 }
+
+// ---------------------------------------------------------------------------
+// SERVING-SIDE VALIDITY GUARD (fail-closed). This does NOT alter scoreFrozen or
+// the frozen artifact — parity is preserved. The model's median-imputation is
+// correct for TRAINING, but at SERVE time we must never write a shadow signal
+// from a row whose real inputs are missing or corrupt (that would be "betting
+// on medians"). The capture job calls this BEFORE scoring and skips on !ok.
+//
+// Two independent checks, both grounded in the frozen training distribution:
+//   MALFORMED  — a source column is PRESENT but not a finite number (NaN, a
+//                string, Infinity). This is data corruption, always an error,
+//                and distinct from a legitimately-absent value. The scorer's
+//                num() guard silently turns these into null->median; here we
+//                catch them and fail closed.
+//   MISSING_CORE — the primary rating/talent signal cannot be computed. In the
+//                6,719-row training set elo_diff and talent_diff are non-null in
+//                100.0% of games, so requiring them rejects ZERO games the model
+//                was trained on while guaranteeing the edge is anchored on real
+//                signal (not imputed medians). Form/rest/SRS nulls are left
+//                alone — those are legitimately sparse (week-1 openers) and the
+//                frozen recipe imputes them exactly as in training.
+// ---------------------------------------------------------------------------
+
+// Numeric source columns that feed the 17 model features (+ market_spread).
+const NUMERIC_SOURCE_COLUMNS = [
+  "market_spread",
+  "home_elo_pregame", "away_elo_pregame",
+  "home_talent", "away_talent",
+  "home_prior_sp", "away_prior_sp", "home_prior_srs", "away_prior_srs", "home_prior_fpi", "away_prior_fpi",
+  "home_recruiting_points", "away_recruiting_points",
+  "home_returning_ppa", "away_returning_ppa", "home_returning_percent", "away_returning_percent",
+  "home_avg_off_ppa", "home_avg_def_ppa", "away_avg_off_ppa", "away_avg_def_ppa",
+  "home_avg_ppa_off_overall", "home_avg_ppa_def_overall", "away_avg_ppa_off_overall", "away_avg_ppa_def_overall",
+  "home_avg_off_success", "home_avg_def_success", "away_avg_off_success", "away_avg_def_success",
+  "home_avg_off_explosiveness", "home_avg_def_explosiveness", "away_avg_off_explosiveness", "away_avg_def_explosiveness",
+  "home_avg_margin", "away_avg_margin",
+  "home_avg_points_for", "away_avg_points_for", "home_avg_points_against", "away_avg_points_against",
+  "home_rest_days", "away_rest_days", "home_games_played_ytd", "away_games_played_ytd",
+]
+
+// Features that MUST be computable for a valid serve (100% present in training).
+const REQUIRED_CORE_FEATURES = ["elo_diff", "talent_diff"]
+
+/** Compute a core diff feature from home/away raw values (null if either absent). */
+function coreDiff(row, homeCol, awayCol) {
+  const h = row[homeCol]
+  const a = row[awayCol]
+  const hn = typeof h === "number" && Number.isFinite(h) ? h : null
+  const an = typeof a === "number" && Number.isFinite(a) ? a : null
+  return hn != null && an != null ? hn - an : null
+}
+
+/**
+ * Validate a raw feature row for SERVING. Pure. Returns
+ *   { ok, malformed: string[], missingCore: string[], reason: string|null }
+ * ok === false means the capture job MUST skip this game (fail closed).
+ */
+export function validateServingRow(rawRow) {
+  const malformed = []
+  for (const col of NUMERIC_SOURCE_COLUMNS) {
+    const v = rawRow[col]
+    if (v === null || v === undefined) continue // legitimately absent — allowed
+    if (typeof v !== "number" || !Number.isFinite(v)) malformed.push(col)
+  }
+  const missingCore = []
+  if (coreDiff(rawRow, "home_elo_pregame", "away_elo_pregame") == null) missingCore.push("elo_diff")
+  if (coreDiff(rawRow, "home_talent", "away_talent") == null) missingCore.push("talent_diff")
+
+  const ok = malformed.length === 0 && missingCore.length === 0
+  let reason = null
+  if (malformed.length) reason = `malformed inputs: ${malformed.join(", ")}`
+  else if (missingCore.length) reason = `missing core signal: ${missingCore.join(", ")}`
+  return { ok, malformed, missingCore, reason }
+}
