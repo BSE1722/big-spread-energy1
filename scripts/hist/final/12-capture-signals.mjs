@@ -110,10 +110,16 @@ async function main() {
       process.exit(1)
     }
     console.log(`DK snapshot age: ${snapAgeHours.toFixed(1)}h (<= ${maxAgeHours}h ok).`)
+    // Normalize CFBD ids to the bare numeric form. The snapshot stores
+    // cfbdId as "cfbd-<id>" (the app's display convention) while
+    // hist_training_rows.gameId is the bare numeric id. Strip the prefix on
+    // BOTH sides so the join is on the same identity. This is a serving-side
+    // key normalization only — it does not touch features, scoring, or output.
+    const normId = (v) => String(v).replace(/^cfbd-/, "")
     const dkByCfbd = new Map()
     for (const g of snap.games) {
       if (g.oddsStatus === "matched" && g.market?.available && g.market.spread?.home != null) {
-        dkByCfbd.set(String(g.cfbdId), g)
+        dkByCfbd.set(normId(g.cfbdId), g)
       }
     }
     console.log(`DK snapshot @ ${snap.snapshotAt} — ${dkByCfbd.size} games with a usable spread.`)
@@ -128,7 +134,7 @@ async function main() {
     let evaluated = 0, fired = 0, inserted = 0, skippedNoLine = 0, skippedStarted = 0, skippedDup = 0, skippedInvalid = 0
 
     for (const r of rows) {
-      const dk = dkByCfbd.get(String(r.gameId))
+      const dk = dkByCfbd.get(normId(r.gameId))
       if (!dk) { skippedNoLine++; continue }
 
       // Leakage guard: only capture BEFORE kickoff. If kickoff already passed,
@@ -148,6 +154,13 @@ async function main() {
 
       evaluated++
       const { edge, fires, side } = scoreFrozen(artifact, r)
+
+      // The CUSTOMER board/breakdown read signals keyed by the app's canonical
+      // id form ("cfbd-<id>"), so persist the display-cache id in that exact
+      // form. (hist_training_rows.gameId is bare numeric; the app prefixes it
+      // everywhere on the read side.) The internal shadow audit below keeps the
+      // bare id it has always used — this changes only the display cache key.
+      const boardGameId = `cfbd-${normId(r.gameId)}`
 
       const dkSpreadHome = dk.market.spread.home            // home-relative spread
       const marketImpliedHome = -dkSpreadHome               // frozen convention
@@ -173,7 +186,7 @@ async function main() {
            home_team = excluded.home_team, away_team = excluded.away_team,
            scored_at = excluded.scored_at`,
         [
-          artifact.modelHash, String(r.gameId), r.season, r.week, r.seasonType,
+          artifact.modelHash, boardGameId, r.season, r.week, r.seasonType,
           r.homeTeam, r.awayTeam,
           edge, fairHomeMargin, dkSpreadHome, side ?? "none", fires, true, nowIso,
         ],
@@ -259,18 +272,35 @@ async function main() {
  * SGO request — it only reads storage the admin refresh already wrote.
  */
 async function loadDkSnapshotFromBlob() {
+  const PATHNAME = "odds/draftkings-snapshot.json"
+  // TRANSPORT ONLY (no signal semantics): read the SAME snapshot JSON the app
+  // reads. `lib/odds-snapshot.ts` reads it through the authenticated
+  // @vercel/blob SDK `get()` stream, which works from any environment; a plain
+  // fetch() on the public blob URL is gated behind a 403 HTML "security
+  // checkpoint" in some sandboxes. So we mirror the app: SDK get() first, then
+  // fall back to list()+fetch(url/downloadUrl). This changes how the snapshot
+  // is fetched, never what is scored or published.
   try {
-    const { list } = await import("@vercel/blob")
-    const { blobs } = await list({ prefix: "odds/draftkings-snapshot.json" })
-    const hit = blobs.find((b) => b.pathname === "odds/draftkings-snapshot.json")
+    const blob = await import("@vercel/blob")
+
+    // 1) Preferred: authenticated SDK stream (identical to the app path).
+    if (typeof blob.get === "function") {
+      try {
+        const result = await blob.get(PATHNAME, { access: "public" })
+        if (result?.stream) {
+          const text = await new Response(result.stream).text()
+          if (text && !text.trimStart().startsWith("<")) return JSON.parse(text)
+        }
+      } catch (e) {
+        console.error("snapshot get() failed, trying URL fallback:", e.message)
+      }
+    }
+
+    // 2) Fallback: locate the blob and fetch its bytes over HTTP.
+    const { blobs } = await blob.list({ prefix: PATHNAME })
+    const hit = blobs.find((b) => b.pathname === PATHNAME)
     if (!hit) return null
-    // TRANSPORT ONLY (no signal semantics): read the SAME snapshot JSON the app
-    // reads. The canonical public `url` is the production path; some sandbox
-    // CDNs gate hotlinked blob URLs behind a 403 HTML wall, so if that does not
-    // return parseable JSON we fall back to the SDK-provided `downloadUrl`
-    // (?download=1), which serves the identical bytes. This changes how the
-    // snapshot is fetched, never what is scored or published.
-    for (const candidate of [hit.url, hit.downloadUrl].filter(Boolean)) {
+    for (const candidate of [hit.downloadUrl, hit.url].filter(Boolean)) {
       try {
         const res = await fetch(candidate)
         if (!res.ok) continue
@@ -281,7 +311,7 @@ async function loadDkSnapshotFromBlob() {
         // try next candidate
       }
     }
-    console.error("snapshot read failed: no candidate URL returned parseable JSON")
+    console.error("snapshot read failed: no transport returned parseable JSON")
     return null
   } catch (e) {
     console.error("snapshot read failed:", e.message)
