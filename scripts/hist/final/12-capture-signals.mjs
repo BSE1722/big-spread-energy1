@@ -264,9 +264,25 @@ async function loadDkSnapshotFromBlob() {
     const { blobs } = await list({ prefix: "odds/draftkings-snapshot.json" })
     const hit = blobs.find((b) => b.pathname === "odds/draftkings-snapshot.json")
     if (!hit) return null
-    const res = await fetch(hit.url)
-    if (!res.ok) return null
-    return await res.json()
+    // TRANSPORT ONLY (no signal semantics): read the SAME snapshot JSON the app
+    // reads. The canonical public `url` is the production path; some sandbox
+    // CDNs gate hotlinked blob URLs behind a 403 HTML wall, so if that does not
+    // return parseable JSON we fall back to the SDK-provided `downloadUrl`
+    // (?download=1), which serves the identical bytes. This changes how the
+    // snapshot is fetched, never what is scored or published.
+    for (const candidate of [hit.url, hit.downloadUrl].filter(Boolean)) {
+      try {
+        const res = await fetch(candidate)
+        if (!res.ok) continue
+        const text = await res.text()
+        if (!text || text.trimStart().startsWith("<")) continue // HTML error page
+        return JSON.parse(text)
+      } catch {
+        // try next candidate
+      }
+    }
+    console.error("snapshot read failed: no candidate URL returned parseable JSON")
+    return null
   } catch (e) {
     console.error("snapshot read failed:", e.message)
     return null
