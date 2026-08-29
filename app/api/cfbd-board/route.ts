@@ -80,6 +80,14 @@ export async function GET(_request: NextRequest) {
           // null = unavailable. oddsStatus falls back to unavailable when the
           // snapshot has no confident match (or no snapshot exists yet).
           marketSpread: matched && m ? m.spread.home : null,
+          // Real DraftKings American prices for BOTH sides of the main spread.
+          // These feed the PRICE-AWARE layer (lib/bse/price-aware) so a bet is
+          // never called good on point edge alone. They are market data only and
+          // are kept entirely separate from the frozen-model fields below.
+          marketSpreadPrice: {
+            home: matched && m ? m.spread.homePrice : null,
+            away: matched && m ? m.spread.awayPrice : null,
+          },
           marketTotal,
           marketMoneyline: {
             home: m?.moneyline.home ?? null,

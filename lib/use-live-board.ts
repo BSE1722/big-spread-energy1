@@ -15,6 +15,8 @@ export interface LiveBoardGame {
 
   // Live DraftKings markets (SportsGameOdds). Home-relative spread; null = unavailable.
   marketSpread: number | null
+  /** Real DraftKings American prices for each side of the main spread (for the price-aware layer). */
+  marketSpreadPrice?: { home: number | null; away: number | null }
   marketTotal: number | null
   marketMoneyline?: { home: number | null; away: number | null }
   oddsStatus?: "matched" | "unavailable"
