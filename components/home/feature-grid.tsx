@@ -14,10 +14,10 @@ export function FeatureGrid() {
               <span className="text-primary">Parlaid</span>
             </h3>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              Stop chasing lottery tickets. Getting Parlaid analyzes
-              probability, value, confidence, price and correlation to build
-              smarter parlays designed to balance a realistic chance of cashing
-              with a payout worth chasing.
+              Stop chasing lottery tickets. Getting Parlaid grades each leg on
+              the model&apos;s spread edge and keeps shared-risk legs apart to
+              build smarter parlays — a realistic build instead of a payout
+              chased on tiny odds.
             </p>
             <Link
               href="/getting-parlaid"

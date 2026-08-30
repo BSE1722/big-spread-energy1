@@ -5,6 +5,8 @@ import { getCurrentContext } from "@/lib/bse/season"
 import { getCfbdGameLites } from "@/lib/board-build"
 import { loadSnapshot } from "@/lib/odds-snapshot"
 import { getAccessState, canViewBreakdown } from "@/lib/access"
+import { getBoardSignalForGame } from "@/lib/board-signal/service"
+import { describeSignal, type SignalDescription } from "@/lib/bse/model-signal"
 import type { GameWithOdds } from "@/lib/odds-match"
 import { BreakdownHeader } from "@/components/breakdown/breakdown-header"
 import { BreakdownLocked } from "@/components/breakdown/breakdown-locked"
@@ -17,9 +19,10 @@ export const dynamic = "force-dynamic"
  * server (getAccessState + canViewBreakdown), so premium analysis is never sent
  * to the client for a viewer who hasn't unlocked it — hiding UI is not the gate.
  *
- * Data honesty: market data comes from the frozen snapshot (real). BSE model
- * outputs are null until the engine is wired and render as "unavailable" — we
- * never fabricate ratings, edges, or picks.
+ * Data honesty: market data comes from the frozen snapshot (real). The BSE
+ * spread read comes from the FROZEN model's display cache and is labeled
+ * in-validation. When a game has no signal yet, model sections render an honest
+ * "pending" state — we never fabricate ratings, edges, or picks.
  */
 export default async function GameBreakdownPage({
   params,
@@ -44,6 +47,13 @@ export default async function GameBreakdownPage({
   const marketTotal =
     matched && m && m.total.points != null && m.total.withinPlausibleRange ? m.total.points : null
 
+  // Frozen-model read (display cache). Absent -> the header shows "— / No
+  // rating" and the unlocked view shows an honest "signal pending" state.
+  const { signal: sig } = await getBoardSignalForGame(game.season, game.week, gameId).catch(() => ({
+    signal: null,
+  }))
+  const signal: SignalDescription | null = sig ? describeSignal(sig, game.home.name, game.away.name) : null
+
   const header = {
     away: { name: game.away.name, abbr: game.away.abbr },
     home: { name: game.home.name, abbr: game.home.abbr },
@@ -53,7 +63,7 @@ export default async function GameBreakdownPage({
     marketSpread: matched && m ? m.spread.home : null,
     marketTotal,
     marketMoneyline: { home: m?.moneyline.home ?? null, away: m?.moneyline.away ?? null },
-    bseRating: null as number | null,
+    bseRating: signal ? signal.rating : (null as number | null),
   }
 
   return (
@@ -69,7 +79,13 @@ export default async function GameBreakdownPage({
         <BreakdownHeader header={header} unlocked={allowed} viaRookie={allowed && access.tier === "rookie"} />
 
         {allowed ? (
-          <BreakdownFull lineHistory={snap?.lineHistory ?? null} />
+          <BreakdownFull
+            lineHistory={snap?.lineHistory ?? null}
+            signal={signal}
+            marketSpreadHome={header.marketSpread}
+            homeTeam={game.home.name}
+            awayTeam={game.away.name}
+          />
         ) : (
           <BreakdownLocked
             tier={access.tier}

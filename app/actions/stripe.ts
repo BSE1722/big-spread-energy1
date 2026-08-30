@@ -1,6 +1,7 @@
 "use server"
 
 import { randomUUID } from "node:crypto"
+import { headers } from "next/headers"
 import { eq } from "drizzle-orm"
 import { stripe } from "@/lib/stripe"
 import { getSessionUser } from "@/lib/access"
@@ -8,6 +9,46 @@ import { db } from "@/lib/db"
 import { subscriptions } from "@/lib/db/schema"
 import { BSE_PRO, proPriceCents, type BillingInterval } from "@/lib/products"
 import { syncSubscriptionFromStripe } from "@/lib/subscription-sync"
+
+/**
+ * Open the Stripe-hosted Billing Portal so a Pro member can self-serve: cancel
+ * (at period end), update their card, and view invoices. We never build our own
+ * cancel/card UI — Stripe owns that surface and keeps it PCI-compliant.
+ *
+ * Security:
+ *  - Must be signed in.
+ *  - We look up the caller's OWN Stripe customer id from our DB (never trust a
+ *    client-supplied id), so a user can only ever manage their own billing.
+ *  - Returns null if the user has no Stripe customer yet (never subscribed), so
+ *    the UI can show an upgrade CTA instead.
+ */
+export async function createBillingPortalSession(): Promise<string | null> {
+  const user = await getSessionUser()
+  if (!user) throw new Error("You must be signed in to manage billing.")
+
+  const row = await db
+    .select({ stripeCustomerId: subscriptions.stripeCustomerId })
+    .from(subscriptions)
+    .where(eq(subscriptions.userId, user.id))
+    .limit(1)
+
+  const customerId = row[0]?.stripeCustomerId
+  if (!customerId) return null // never subscribed → caller shows upgrade CTA
+
+  // Build an absolute return URL from the incoming request origin (works in
+  // both preview and production without hardcoding a domain).
+  const h = await headers()
+  const proto = h.get("x-forwarded-proto") ?? "https"
+  const host = h.get("x-forwarded-host") ?? h.get("host")
+  const returnUrl = host ? `${proto}://${host}/account` : "/account"
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: returnUrl,
+  })
+
+  return session.url
+}
 
 /**
  * Start an embedded Checkout session for a BSE Pro subscription.

@@ -116,6 +116,13 @@ export function AuthNav({
             <Crown className="size-4" /> Go Pro
           </Link>
         )}
+        <Link
+          href="/account"
+          onClick={onNavigate}
+          className={cn(buttonVariants({ variant: "outline" }), "h-11 font-display font-semibold uppercase tracking-wide")}
+        >
+          <User className="size-4" /> Account &amp; Billing
+        </Link>
         <button
           type="button"
           onClick={handleSignOut}
@@ -157,6 +164,10 @@ export function AuthNav({
           <div className="flex flex-col p-1.5">
             <MenuLink href="/board" onClick={() => setOpen(false)}>
               The Board
+            </MenuLink>
+            <MenuLink href="/account" onClick={() => setOpen(false)}>
+              <User className="size-4 text-muted-foreground" />
+              Account &amp; Billing
             </MenuLink>
             {!isPro && (
               <MenuLink href="/pricing" onClick={() => setOpen(false)}>

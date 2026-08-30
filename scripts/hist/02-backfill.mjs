@@ -16,6 +16,20 @@ const FORCE = process.env.FORCE === "1"
 let sampledAdvanced = false
 let sampledPpa = false
 
+// --- SERVE MODE ------------------------------------------------------------
+// `--serve-season <year>` ingests ONLY the preseason-safe inputs a live season
+// needs to SERVE upcoming games (games, lines, talent, recruiting, returning
+// for that year + SP+/SRS/FPI for the PRIOR year as priors). It does NOT touch
+// the frozen 2015-2023 training archive, the model, the recipe, or scoring.
+// Advanced/PPA are intentionally skipped: pre-kickoff openers have no in-season
+// form, so those feed nothing and the frozen recipe imputes them exactly as in
+// training.
+function argVal(flag) {
+  const i = process.argv.indexOf(flag)
+  return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : null
+}
+const SERVE_SEASON = argVal("--serve-season") ? Number(argVal("--serve-season")) : null
+
 /** Multi-row upsert in chunks. columns: string[]; rows: any[][].
  *  Dedupes rows by the conflict-key columns (keeping the LAST occurrence) so a
  *  source that lists the same key twice in one season (e.g. CFBD talent listing
@@ -174,9 +188,31 @@ async function ingestFpi(pool, season) {
 
 // --------------------------------- main ------------------------------------
 
+// Serve-only backfill for a single upcoming season (+ prior-season ratings).
+async function serveBackfill(pool, season) {
+  const prior = season - 1
+  console.log(`SERVE backfill for ${season} (priors from ${prior}). FORCE=${FORCE ? 1 : 0}.`)
+  // Only the regular season matters for live weekly serving.
+  await guard(pool, "games", season, "regular", () => ingestGames(pool, season, "regular"))
+  await guard(pool, "lines", season, "regular", () => ingestLines(pool, season, "regular"))
+  // Preseason-safe annual features for the serve season.
+  await guard(pool, "talent", season, null, () => ingestTalent(pool, season))
+  await guard(pool, "recruiting", season, null, () => ingestRecruiting(pool, season))
+  await guard(pool, "returning", season, null, () => ingestReturning(pool, season))
+  // Prior-season end ratings, used as leakage-safe priors for the serve season.
+  await guard(pool, "sp", prior, null, () => ingestSp(pool, prior))
+  await guard(pool, "srs", prior, null, () => ingestSrs(pool, prior))
+  await guard(pool, "fpi", prior, null, () => ingestFpi(pool, prior))
+  console.log(`\nSERVE backfill complete. CFBD requests this run: ${getRequestCount()}`)
+}
+
 async function main() {
   const pool = makePool()
   try {
+    if (SERVE_SEASON) {
+      await serveBackfill(pool, SERVE_SEASON)
+      return
+    }
     console.log(`Backfill start (FORCE=${FORCE ? 1 : 0}). Train seasons ${TRAIN_SEASONS.join(",")}; rating seasons ${RATING_SEASONS.join(",")}.`)
 
     // Per-season, per-seasonType datasets.

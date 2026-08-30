@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getCurrentContext } from "@/lib/bse/season"
 import { getCfbdGameLites } from "@/lib/board-build"
 import { loadSnapshot } from "@/lib/odds-snapshot"
+import { getBoardSignals } from "@/lib/board-signal/service"
 import type { GameWithOdds } from "@/lib/odds-match"
 
 /**
@@ -33,11 +34,17 @@ export async function GET(_request: NextRequest) {
     // CFBD schedule (source of truth, live) + the frozen odds snapshot (durable
     // storage, NO upstream odds call). Snapshot read failure must never break
     // the schedule, so it is handled independently.
-    const [cfbdGames, snapshot] = await Promise.all([
+    const [cfbdGames, snapshot, signals] = await Promise.all([
       getCfbdGameLites(ctx),
       loadSnapshot().catch((err) => {
         console.error("[v0] snapshot load failed; rendering schedule without odds:", err)
         return null
+      }),
+      // Frozen-model per-game read (display cache). Never throws for missing
+      // data; the board simply shows "— / No rating" when absent.
+      getBoardSignals(ctx.season, ctx.week).catch((err) => {
+        console.error("[v0] board signals load failed; rendering board without ratings:", err)
+        return { meta: null, byGameId: new Map() }
       }),
     ])
 
@@ -50,6 +57,7 @@ export async function GET(_request: NextRequest) {
         const snap = oddsById.get(g.id)
         const matched = snap?.oddsStatus === "matched"
         const m = snap?.market
+        const sig = signals.byGameId.get(g.id)
 
         // A flagged (implausible) total is treated as unavailable for display,
         // but the raw value + flag stay preserved in the audit block below.
@@ -72,6 +80,14 @@ export async function GET(_request: NextRequest) {
           // null = unavailable. oddsStatus falls back to unavailable when the
           // snapshot has no confident match (or no snapshot exists yet).
           marketSpread: matched && m ? m.spread.home : null,
+          // Real DraftKings American prices for BOTH sides of the main spread.
+          // These feed the PRICE-AWARE layer (lib/bse/price-aware) so a bet is
+          // never called good on point edge alone. They are market data only and
+          // are kept entirely separate from the frozen-model fields below.
+          marketSpreadPrice: {
+            home: matched && m ? m.spread.homePrice : null,
+            away: matched && m ? m.spread.awayPrice : null,
+          },
           marketTotal,
           marketMoneyline: {
             home: m?.moneyline.home ?? null,
@@ -90,13 +106,22 @@ export async function GET(_request: NextRequest) {
             lineHistory: snap?.lineHistory ?? null,
           },
 
-          // BSE model output — intentionally null until the engine is wired.
-          fairSpread: null as number | null,
+          // Frozen-model read (spread only — the model produces a spread
+          // residual, not a total). Null when this game has no scored signal;
+          // the UI then shows "— / No rating". Totals remain unmodeled.
+          fairSpread: sig ? sig.fairHomeSpread : null,
           fairTotal: null as number | null,
-          edgeSpread: null as number | null,
+          edgeSpread: sig ? sig.edge : null,
           edgeTotal: null as number | null,
-          bseRating: null as number | null,
-          pick: null as string | null,
+          bseRating: sig ? sig.rating : null,
+          // Directional lean as a team label, only when the signal qualifies
+          // (|edge| >= threshold). Otherwise no pick is asserted.
+          pick:
+            sig && sig.lean !== "none"
+              ? sig.lean === "home"
+                ? g.home.name
+                : g.away.name
+              : null,
         }
       })
       .sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime())
@@ -108,7 +133,7 @@ export async function GET(_request: NextRequest) {
       season: ctx.season,
       week: ctx.week,
       seasonType: ctx.seasonType,
-      projectionsAvailable: false,
+      projectionsAvailable: signals.byGameId.size > 0,
       oddsAvailable: matchedCount > 0,
       count: rows.length,
       oddsMatchedCount: matchedCount,

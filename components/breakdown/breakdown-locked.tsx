@@ -5,11 +5,10 @@ import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const WHAT_BSE_SEES: { icon: typeof Lock; label: string; hint: string }[] = [
-  { icon: TrendingUp, label: "Fair Spread", hint: "The true line according to BSE" },
-  { icon: BarChart3, label: "Model Edge", hint: "Exact edge vs. the market" },
+  { icon: TrendingUp, label: "BSE Fair Spread", hint: "The model's spread estimate for this game" },
+  { icon: BarChart3, label: "Model Edge", hint: "The model's edge vs. the market line" },
   { icon: TrendingUp, label: "Line Movement", hint: "Opening to current movement" },
-  { icon: BarChart3, label: "Factor Breakdown", hint: "Every model factor explained" },
-  { icon: TrendingUp, label: "Best Line", hint: "Best available line across books" },
+  { icon: BarChart3, label: "Signal Strength", hint: "A 0–100 read on the model's lean" },
 ]
 
 /**
@@ -36,7 +35,8 @@ export function BreakdownLocked({
           What BSE sees
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          BSE has calculated deeper intelligence on this matchup. Unlock it to see the full picture.
+          Unlock the full BSE breakdown for this matchup — the model&apos;s spread read plus market
+          intelligence. Model signals are under live 2026 validation.
         </p>
         <ul className="mt-5 flex flex-col divide-y divide-border">
           {WHAT_BSE_SEES.map(({ icon: Icon, label, hint }) => (

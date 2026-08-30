@@ -28,6 +28,20 @@ const END = 2023
 // Preferred market provider order (matches the app's live book first).
 const PROVIDER_PREFERENCE = ["DraftKings", "consensus", "teamrankings", "Caesars", "William Hill", "Bovada"]
 
+// --- SERVE MODE ------------------------------------------------------------
+// `--serve-season <year>` reconstructs ONE upcoming season and, unlike the
+// training path, ALSO emits rows for NOT-YET-COMPLETED both-FBS games so the
+// live capture job can score them pre-kickoff. This is leakage-safe: an unplayed
+// game has no outcome to leak, so home_points/away_points/actual_margin are
+// written null (LABEL only — never a model input). Every FEATURE is built with
+// the identical AS-OF logic below (Week-1 openers have null form, imputed by the
+// frozen recipe exactly as in training). Default behavior (no flag) is unchanged.
+function serveArg() {
+  const i = process.argv.indexOf("--serve-season")
+  return i >= 0 && process.argv[i + 1] ? Number(process.argv[i + 1]) : null
+}
+const SERVE_SEASON = serveArg()
+
 function avg(nums) {
   const v = nums.filter((n) => n != null && Number.isFinite(n))
   if (v.length === 0) return null
@@ -45,7 +59,9 @@ async function main() {
   let totalRows = 0
 
   try {
-    for (let season = START; season <= END; season++) {
+    const loopStart = SERVE_SEASON ?? START
+    const loopEnd = SERVE_SEASON ?? END
+    for (let season = loopStart; season <= loopEnd; season++) {
       // ---- Load everything for this season up-front (raw only) ------------
       const games = await q(
         `select "gameId", season, week, "seasonType", "startDate", completed,
@@ -153,10 +169,16 @@ async function main() {
         }
       }
 
-      // ---- Emit one training row per completed both-FBS game --------------
-      const targets = games.filter(
-        (g) => g.completed && g.homeClassification === "fbs" && g.awayClassification === "fbs" && g.homePoints != null && g.awayPoints != null,
-      )
+      // ---- Emit one row per both-FBS game ---------------------------------
+      // Training path: completed games only (labels required). Serve path: ALSO
+      // include not-yet-completed both-FBS games (labels null) so the capture
+      // job can score them pre-kickoff.
+      const targets = games.filter((g) => {
+        const bothFbs = g.homeClassification === "fbs" && g.awayClassification === "fbs"
+        if (!bothFbs) return false
+        if (SERVE_SEASON) return true // upcoming OR completed
+        return g.completed && g.homePoints != null && g.awayPoints != null
+      })
 
       const cols = [
         "gameId","season","week","seasonType","startDate","is_anomalous_season","neutral_site","conference_game","both_fbs","homeTeam","awayTeam",
@@ -184,7 +206,10 @@ async function main() {
           eloDiff, hTal != null && aTal != null ? round(hTal - aTal, 2) : null,
           line?.provider ?? null, line?.spread ?? null, line?.spreadOpen ?? null, line?.overUnder ?? null, line?.overUnderOpen ?? null, line?.homeMoneyline ?? null, line?.awayMoneyline ?? null,
           line ? `CFBD ${line.provider}; spread=last-recorded (NOT verified close), *_open=opening` : "no line available",
-          g.homePoints, g.awayPoints, g.homePoints - g.awayPoints, FEATURE_VERSION,
+          // LABELS. Null for unplayed serve-mode games (never coerce null-null->0).
+          g.homePoints ?? null, g.awayPoints ?? null,
+          g.homePoints != null && g.awayPoints != null ? g.homePoints - g.awayPoints : null,
+          FEATURE_VERSION,
         ])
       }
 

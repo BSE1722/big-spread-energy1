@@ -3,11 +3,12 @@ import Image from 'next/image'
 import { TrendingUp, ShieldCheck, Crosshair } from 'lucide-react'
 import { HeroPreviewCard } from '@/components/home/hero-preview-card'
 
-// Describes what the BSE model measures — not fabricated performance claims.
+// Describes what the BSE model measures — a spread read only, no fabricated
+// performance or win-probability claims.
 const stats = [
-  { icon: TrendingUp, value: 'EV', label: 'Value-Graded Bets' },
-  { icon: ShieldCheck, value: '0–100', label: 'BSE Confidence Rating' },
-  { icon: Crosshair, value: 'Fair', label: 'Line vs Market Edge' },
+  { icon: TrendingUp, value: 'Edge', label: 'Points vs the Market' },
+  { icon: ShieldCheck, value: '0–100', label: 'BSE Signal Rating' },
+  { icon: Crosshair, value: 'Fair', label: 'Spread vs Market Line' },
 ]
 
 export function Hero() {
@@ -37,11 +38,11 @@ export function Hero() {
           <p className="mt-6 max-w-md text-pretty text-lg font-semibold leading-relaxed text-foreground sm:text-xl">
             THEIR LINE. OUR LINE. YOUR EDGE.
             Sportsbooks tell you what the line is. 
-            BSE calculates where the line SHOULD be. 
+            BSE estimates where the line could be.
           </p>
 
           <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Every matchup. Every line. One proprietary BSE rating buit to show you where the market looks right - and where it doesn't. <br />
+            Every matchup. Every line. One BSE rating built to show you where the market looks right - and where it might not. <br />
             Ready to bet outside the box? Don't just read the lines. Challenge them! <br />
             <br />
             They set the line. We put it on trial.<br />

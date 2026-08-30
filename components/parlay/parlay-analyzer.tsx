@@ -1,65 +1,49 @@
 "use client"
 
-import { Clock, Scale, Layers, TriangleAlert } from "lucide-react"
-import { CurrentWeekSlate } from "@/components/parlay/current-week-slate"
+import { Scale, Coins, Layers } from "lucide-react"
+import { InteractiveAnalyzer } from "@/components/parlay/interactive-analyzer"
 
 /**
- * Parlay Analyzer — grades a full ticket, not just its odds.
+ * Parlay Analyzer — grades every spread leg on a ticket, PRICE-AWARE.
  *
- * The grade (BSE true probability, edge, EV, KEEP/REMOVE/REPLACE, correlation)
- * is derived from the BSE model's per-game output. That output isn't published
- * for the live board yet, so this surface does NOT fabricate probabilities or
- * verdicts. It explains what the analyzer measures and shows the real
- * current-week slate whose legs it will grade once the model runs.
+ * Each leg is graded two ways from real data: the frozen model's fair spread
+ * (line value, in points) and the DraftKings American price (bet cost). A leg
+ * is never called good on point edge alone — an expensive price is surfaced.
+ * No win probability or EV is shown (no validated point-to-cover calibration
+ * exists), and alternate lines are graded from the real number the user enters,
+ * never a fabricated ladder. See lib/bse/price-aware.
  */
 
 const MEASURES = [
   {
     icon: Scale,
-    label: "Every leg, graded",
+    label: "Line value, in points",
     description:
-      "BSE true probability vs the book's implied price, plus a KEEP / REMOVE / REPLACE call per leg.",
+      "Each spread vs the BSE fair line — how many points better (or worse) than fair the number you're taking is.",
+  },
+  {
+    icon: Coins,
+    label: "Price, not just points",
+    description:
+      "The DraftKings American price becomes a breakeven %, so a good number at a punitive price is flagged, not rubber-stamped.",
   },
   {
     icon: Layers,
-    label: "Whole-ticket EV",
+    label: "Honest ticket read",
     description:
-      "Joint hit probability, fair odds, and expected value across the full ticket — not leg-by-leg guesswork.",
-  },
-  {
-    icon: TriangleAlert,
-    label: "Correlation checks",
-    description:
-      "Flags legs that share risk, so the real chance of hitting them all isn't overstated.",
+      "Totals line value and counts strong vs expensive vs no-edge legs. No parlay win % or EV — none is calibrated, so none is claimed.",
   },
 ]
 
 export function ParlayAnalyzer() {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-      {/* Honest pending state + the real slate whose legs will be graded */}
-      <div className="space-y-6">
-        <div className="flex items-start gap-3 rounded-xl border border-primary/25 bg-primary/5 p-5">
-          <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Clock className="size-5" />
-          </span>
-          <div>
-            <p className="font-display text-base font-semibold text-foreground">
-              Grading activates when this week&apos;s BSE projections publish
-            </p>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              The analyzer grades each leg against the BSE model&apos;s true
-              probabilities. Those aren&apos;t out for the current board yet, so we
-              won&apos;t show fabricated edges, EV, or a verdict. Below is the real
-              current-week slate whose bets it will grade the moment the model runs.
-            </p>
-          </div>
-        </div>
-
-        <CurrentWeekSlate />
+      {/* Interactive, price-aware ticket builder (real grades, no fabrication) */}
+      <div>
+        <InteractiveAnalyzer />
       </div>
 
-      {/* What the analyzer measures (informational — no fabricated verdict) */}
+      {/* What the analyzer measures */}
       <div className="lg:sticky lg:top-20 lg:self-start">
         <div className="rounded-xl border border-border bg-card">
           <div className="border-b border-border px-4 py-3">
