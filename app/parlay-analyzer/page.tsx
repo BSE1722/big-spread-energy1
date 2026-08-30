@@ -5,7 +5,7 @@ import { ParlayAnalyzer } from "@/components/parlay/parlay-analyzer"
 export const metadata: Metadata = {
   title: "Parlay Analyzer — Grade Any Parlay | Big Spread Energy",
   description:
-    "Build a parlay and grade every spread leg against the BSE model's fair spread — a per-leg edge in points and a lean — before you place it.",
+    "Build a parlay and grade every spread leg two ways — line value in points against the BSE fair spread, and the DraftKings price — before you place it.",
 }
 
 export default function ParlayAnalyzerPage() {
@@ -14,7 +14,7 @@ export default function ParlayAnalyzerPage() {
       <PageHeader
         eyebrow="BSE Analyzer"
         title="Parlay Analyzer"
-        description="BSE grades every spread leg — each gets a fair spread, an edge in points, and a lean — then totals the edge across the ticket and flags legs that share risk."
+        description="BSE grades every spread leg two ways — how the number compares to its fair line in points, and whether the DraftKings price is worth paying — then reads the whole ticket honestly. No win probability or EV is claimed."
       />
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <ParlayAnalyzer />
