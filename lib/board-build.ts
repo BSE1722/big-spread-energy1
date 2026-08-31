@@ -10,6 +10,7 @@
 import { getCfbdGames } from "@/lib/cfbd"
 import { getSgoNormalizedEvents } from "@/lib/sgo"
 import { matchOddsToCfbd, type CfbdGameLite, type MatchResult } from "@/lib/odds-match"
+import { pool } from "@/lib/db"
 
 export interface SeasonContextLite {
   season: number
@@ -57,6 +58,71 @@ export function abbr(team: string): string {
 const lastGoodSchedule = new Map<string, CfbdGameLite[]>()
 const scheduleKey = (ctx: SeasonContextLite) => `${ctx.season}-${ctx.week}-${ctx.seasonType}`
 
+/**
+ * DURABLE schedule fallback: read the week's FBS schedule from our own database
+ * (hist_raw_games, ingested during backfill) instead of calling CFBD. This keeps
+ * the live board working through a CFBD outage or an exhausted monthly quota,
+ * and — unlike the in-memory cache — survives cold serverless starts. It is a
+ * fallback only; a healthy CFBD fetch is still the primary source of truth.
+ */
+async function loadScheduleFromDb(ctx: SeasonContextLite): Promise<CfbdGameLite[]> {
+  const { rows } = await pool.query(
+    `select "gameId", season, week, "startDate", "startTimeTBD", "neutralSite",
+            "venueId", "homeTeam", "awayTeam", raw
+       from hist_raw_games
+      where season = $1 and week = $2 and "seasonType" = $3
+        and ("homeClassification" is null or "homeClassification" = 'fbs')
+        and ("awayClassification" is null or "awayClassification" = 'fbs')
+      order by "startDate"`,
+    [ctx.season, ctx.week, ctx.seasonType],
+  )
+
+  return rows.map((r: Record<string, unknown>) => {
+    let venueName: string | null = null
+    try {
+      const parsed = typeof r.raw === "string" ? JSON.parse(r.raw) : r.raw
+      venueName = (parsed as { venue?: string | null } | null)?.venue ?? null
+    } catch {
+      venueName = null
+    }
+    const homeTeam = String(r.homeTeam)
+    const awayTeam = String(r.awayTeam)
+    return {
+      id: `cfbd-${r.gameId}`,
+      season: Number(r.season),
+      week: Number(r.week),
+      kickoff: r.startDate ? new Date(r.startDate as string).toISOString() : "",
+      kickoffTBD: Boolean(r.startTimeTBD),
+      neutralSite: Boolean(r.neutralSite),
+      venueId: r.venueId == null ? null : Number(r.venueId),
+      venueName,
+      away: { name: awayTeam, abbr: abbr(awayTeam) },
+      home: { name: homeTeam, abbr: abbr(homeTeam) },
+    }
+  })
+}
+
+/** Serve the best available fallback schedule: in-memory cache, then database. */
+async function fallbackSchedule(ctx: SeasonContextLite, key: string, err: unknown): Promise<CfbdGameLite[]> {
+  const cached = lastGoodSchedule.get(key)
+  if (cached && cached.length > 0) {
+    console.error(`[v0] CFBD schedule failed for ${key}; serving in-memory last-known-good (${cached.length}):`, err)
+    return cached
+  }
+  try {
+    const fromDb = await loadScheduleFromDb(ctx)
+    if (fromDb.length > 0) {
+      console.error(`[v0] CFBD schedule failed for ${key}; serving DB schedule (${fromDb.length} games):`, err)
+      lastGoodSchedule.set(key, fromDb)
+      return fromDb
+    }
+  } catch (dbErr) {
+    console.error(`[v0] DB schedule fallback also failed for ${key}:`, dbErr)
+  }
+  // Nothing to serve — let the caller degrade honestly.
+  throw err
+}
+
 /** Fetch the CFBD schedule (source of truth) and shape it for the matcher. */
 export async function getCfbdGameLites(ctx: SeasonContextLite): Promise<CfbdGameLite[]> {
   const key = scheduleKey(ctx)
@@ -70,17 +136,8 @@ export async function getCfbdGameLites(ctx: SeasonContextLite): Promise<CfbdGame
       division: "fbs",
     })) as CfbdGame[]
   } catch (err) {
-    // Serve last-known-good schedule on any CFBD failure (e.g. 429 rate limit).
-    const cached = lastGoodSchedule.get(key)
-    if (cached) {
-      console.error(
-        `[v0] CFBD schedule fetch failed for ${key}; serving last-known-good (${cached.length} games):`,
-        err,
-      )
-      return cached
-    }
-    // No cached fallback available — let the caller decide how to degrade.
-    throw err
+    // CFBD unavailable (e.g. 429 rate limit / monthly quota) → durable fallback.
+    return fallbackSchedule(ctx, key, err)
   }
 
   const games = Array.isArray(raw) ? raw : []
@@ -104,9 +161,19 @@ export async function getCfbdGameLites(ctx: SeasonContextLite): Promise<CfbdGame
     home: { name: g.homeTeam, abbr: abbr(g.homeTeam) },
   }))
 
+  // A successful-but-empty CFBD response (can happen under quota edge cases)
+  // should not blank the board — fall back to a stored schedule if we have one.
+  if (lites.length === 0) {
+    try {
+      return await fallbackSchedule(ctx, key, new Error("CFBD returned an empty schedule"))
+    } catch {
+      return lites // truly nothing anywhere; return empty and let caller degrade
+    }
+  }
+
   // Only overwrite the fallback with a non-empty result so a transient empty
   // response can't wipe a good cached schedule.
-  if (lites.length > 0) lastGoodSchedule.set(key, lites)
+  lastGoodSchedule.set(key, lites)
 
   return lites
 }
