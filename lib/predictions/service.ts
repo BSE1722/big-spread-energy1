@@ -8,6 +8,7 @@ import { loadSnapshot } from "@/lib/odds-snapshot"
 import { getCfbdGames } from "@/lib/cfbd"
 import { computeLockHash, type LockableFields } from "@/lib/predictions/lock"
 import { gradePick, type Grade, type Market, type PickSide } from "@/lib/predictions/grade"
+import { canonicalWeekForGame, rawWeekForCanonical } from "@/lib/bse/week-identity"
 
 /* --------------------------------------------------------------------------
  * Constants — grading conservation knobs (see plan).
@@ -136,6 +137,13 @@ export async function publishPick(input: PublishInput): Promise<PublishResult> {
   const kickoffIso = new Date(kickoffMs).toISOString()
   const seasonType = snapshot.seasonType ?? "regular"
 
+  // The snapshot carries the RAW provider week (CFBD lumps Week 0 + Week 1 into
+  // raw week 1). Store the CANONICAL BSE week so the public track record labels
+  // the pick with the real-world week; grading translates it back to raw for the
+  // CFBD score lookup. Since the pick's week is frozen, the lock hash commits to
+  // this canonical value too.
+  const canonicalWeek = canonicalWeekForGame(game.season, game.week, kickoffIso)
+
   // Model fields: REAL value or null. Never fabricated. Placeholder model means
   // we intentionally store nulls + modelIsPlaceholder=true + manual version.
   const bseRating = null
@@ -148,7 +156,7 @@ export async function publishPick(input: PublishInput): Promise<PublishResult> {
   const lockable: LockableFields = {
     gameId,
     season: game.season,
-    week: game.week,
+    week: canonicalWeek,
     seasonType,
     homeTeam: game.home.name,
     awayTeam: game.away.name,
@@ -175,7 +183,7 @@ export async function publishPick(input: PublishInput): Promise<PublishResult> {
         id: randomUUID(),
         gameId,
         season: game.season,
-        week: game.week,
+        week: canonicalWeek,
         seasonType,
         homeTeam: game.home.name,
         awayTeam: game.away.name,
@@ -430,9 +438,13 @@ export async function gradePending(trigger: "cron" | "manual"): Promise<GradeRun
     let games: CfbdFinal[] = []
     try {
       cfbdRequests += 1
+      // Picks store the CANONICAL BSE week; CFBD only understands the raw
+      // provider week (Weeks 0 and 1 both live under raw week 1). Translate
+      // before the score lookup. Raw week 1 returns both slates, but the local
+      // match below is by game id, so each pick still grades against its game.
       const raw = (await getCfbdGames({
         year: sample.season,
-        week: sample.week,
+        week: rawWeekForCanonical(sample.week),
         seasonType: sample.seasonType as "regular" | "postseason",
       })) as CfbdFinal[]
       games = Array.isArray(raw) ? raw : []

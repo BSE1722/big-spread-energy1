@@ -11,6 +11,7 @@ import { getCfbdGames } from "@/lib/cfbd"
 import { getSgoNormalizedEvents } from "@/lib/sgo"
 import { matchOddsToCfbd, type CfbdGameLite, type MatchResult } from "@/lib/odds-match"
 import { pool } from "@/lib/db"
+import { rawWeekForCanonical, filterToCanonicalWeek } from "@/lib/bse/week-identity"
 
 export interface SeasonContextLite {
   season: number
@@ -66,6 +67,9 @@ const scheduleKey = (ctx: SeasonContextLite) => `${ctx.season}-${ctx.week}-${ctx
  * fallback only; a healthy CFBD fetch is still the primary source of truth.
  */
 async function loadScheduleFromDb(ctx: SeasonContextLite): Promise<CfbdGameLite[]> {
+  // ctx.week is the CANONICAL BSE week. The stored schedule uses the RAW provider
+  // week (CFBD lumps Week 0 + Week 1 into raw week 1), so query by raw week...
+  const rawWeek = rawWeekForCanonical(ctx.week)
   const { rows } = await pool.query(
     `select "gameId", season, week, "startDate", "startTimeTBD", "neutralSite",
             "venueId", "homeTeam", "awayTeam", raw
@@ -74,10 +78,10 @@ async function loadScheduleFromDb(ctx: SeasonContextLite): Promise<CfbdGameLite[
         and ("homeClassification" is null or "homeClassification" = 'fbs')
         and ("awayClassification" is null or "awayClassification" = 'fbs')
       order by "startDate"`,
-    [ctx.season, ctx.week, ctx.seasonType],
+    [ctx.season, rawWeek, ctx.seasonType],
   )
 
-  return rows.map((r: Record<string, unknown>) => {
+  const lites = rows.map((r: Record<string, unknown>) => {
     let venueName: string | null = null
     try {
       const parsed = typeof r.raw === "string" ? JSON.parse(r.raw) : r.raw
@@ -90,7 +94,7 @@ async function loadScheduleFromDb(ctx: SeasonContextLite): Promise<CfbdGameLite[
     return {
       id: `cfbd-${r.gameId}`,
       season: Number(r.season),
-      week: Number(r.week),
+      week: Number(r.week), // RAW provider week — preserved as stored.
       kickoff: r.startDate ? new Date(r.startDate as string).toISOString() : "",
       kickoffTBD: Boolean(r.startTimeTBD),
       neutralSite: Boolean(r.neutralSite),
@@ -100,6 +104,9 @@ async function loadScheduleFromDb(ctx: SeasonContextLite): Promise<CfbdGameLite[
       home: { name: homeTeam, abbr: abbr(homeTeam) },
     }
   })
+
+  // ...then narrow raw week 1 down to the exact canonical slate by kickoff date.
+  return filterToCanonicalWeek(lites, ctx.week)
 }
 
 /** Serve the best available fallback schedule: in-memory cache, then database. */
@@ -127,11 +134,15 @@ async function fallbackSchedule(ctx: SeasonContextLite, key: string, err: unknow
 export async function getCfbdGameLites(ctx: SeasonContextLite): Promise<CfbdGameLite[]> {
   const key = scheduleKey(ctx)
 
+  // ctx.week is CANONICAL; CFBD only understands the RAW provider week (Week 0
+  // and Week 1 both live under raw week 1), so ask CFBD for the raw week.
+  const rawWeek = rawWeekForCanonical(ctx.week)
+
   let raw: CfbdGame[]
   try {
     raw = (await getCfbdGames({
       year: ctx.season,
-      week: ctx.week,
+      week: rawWeek,
       seasonType: ctx.seasonType,
       division: "fbs",
     })) as CfbdGame[]
@@ -148,10 +159,10 @@ export async function getCfbdGameLites(ctx: SeasonContextLite): Promise<CfbdGame
       (g.awayClassification == null || g.awayClassification === "fbs"),
   )
 
-  const lites = fbs.map((g) => ({
+  const allLites = fbs.map((g) => ({
     id: `cfbd-${g.id}`,
     season: g.season,
-    week: g.week,
+    week: g.week, // RAW provider week — preserved as returned by CFBD.
     kickoff: g.startDate,
     kickoffTBD: g.startTimeTBD,
     neutralSite: g.neutralSite,
@@ -160,6 +171,10 @@ export async function getCfbdGameLites(ctx: SeasonContextLite): Promise<CfbdGame
     away: { name: g.awayTeam, abbr: abbr(g.awayTeam) },
     home: { name: g.homeTeam, abbr: abbr(g.homeTeam) },
   }))
+
+  // Narrow raw week 1 down to the exact canonical slate (Week 0 vs Week 1) by
+  // kickoff date. For raw weeks >= 2 this is a pass-through.
+  const lites = filterToCanonicalWeek(allLites, ctx.week)
 
   // A successful-but-empty CFBD response (can happen under quota edge cases)
   // should not blank the board — fall back to a stored schedule if we have one.

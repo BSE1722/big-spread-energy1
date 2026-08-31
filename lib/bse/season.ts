@@ -13,6 +13,12 @@
  * To pin the site to a specific week manually (e.g. for testing or a hard
  * launch), set `WEEK_OVERRIDE` below. Leave it `null` for automatic advancement.
  * Changing one value here updates the entire site.
+ *
+ * WEEK NUMBERS HERE ARE CANONICAL BSE WEEKS, not raw provider weeks. College
+ * football opens with a "Week 0" that our data provider (CFBD) mislabels as
+ * week 1; the raw↔canonical mapping lives in `lib/bse/week-identity.ts`. This
+ * module only decides which canonical week is "current"; anything that queries
+ * CFBD or the ingested tables must translate through that module.
  * ============================================================================
  */
 
@@ -68,7 +74,9 @@ const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000
 
 function clampWeek(week: number): number {
   if (Number.isNaN(week)) return 1
-  return Math.min(TOTAL_REGULAR_WEEKS, Math.max(1, Math.round(week)))
+  // Floor is 0 so an admin can pin WEEK_OVERRIDE = 0 to review the Week 0 opener.
+  // Automatic advancement never produces 0 (it floors at Week 1 below).
+  return Math.min(TOTAL_REGULAR_WEEKS, Math.max(0, Math.round(week)))
 }
 
 /**

@@ -125,11 +125,19 @@ async function main() {
     console.log(`DK snapshot @ ${snap.snapshotAt} — ${dkByCfbd.size} games with a usable spread.`)
 
     // --- Load frozen features for the target season/week --------------------
+    // NOTE: --week here is the RAW PROVIDER week as stored in hist_training_rows,
+    // NOT the canonical BSE week. CFBD lumps the Week 0 opener and Week 1 into raw
+    // week 1, so `--week 1` loads BOTH slates. That is intentional and safe: rows
+    // are written keyed by cfbd_game_id, and the future-kickoff leakage guard
+    // below skips the already-played opener automatically, so a mid-week-1 capture
+    // for the upcoming slate only fires on games that have not started. The app's
+    // read path (board + grading) maps canonical<->raw and matches by game id, so
+    // signals are always displayed under the correct canonical week.
     const params = [season]
     let where = `season = $1 and both_fbs = true`
     if (weekArg) { params.push(Number(weekArg)); where += ` and week = $2` }
     const rows = await q(`select ${FEATURE_SELECT} from hist_training_rows where ${where} order by "startDate"`, params)
-    console.log(`feature rows for season ${season}${weekArg ? ` week ${weekArg}` : ""}: ${rows.length}`)
+    console.log(`feature rows for season ${season}${weekArg ? ` raw week ${weekArg}` : ""}: ${rows.length}`)
 
     let evaluated = 0, fired = 0, inserted = 0, skippedNoLine = 0, skippedStarted = 0, skippedDup = 0, skippedInvalid = 0
 

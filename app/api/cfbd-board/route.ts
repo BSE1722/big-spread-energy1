@@ -4,6 +4,7 @@ import { getCfbdGameLites } from "@/lib/board-build"
 import { loadSnapshot } from "@/lib/odds-snapshot"
 import { getBoardSignals } from "@/lib/board-signal/service"
 import type { GameWithOdds } from "@/lib/odds-match"
+import { rawWeekForCanonical, canonicalWeekForGame } from "@/lib/bse/week-identity"
 
 /**
  * Live board feed for The Board + homepage Top Edges.
@@ -47,9 +48,11 @@ export async function GET(_request: NextRequest) {
         console.error("[v0] snapshot load failed; rendering schedule without odds:", err)
         return null
       }),
-      // Frozen-model per-game read (display cache). Never throws for missing
-      // data; the board simply shows "— / No rating" when absent.
-      getBoardSignals(ctx.season, ctx.week).catch((err) => {
+      // Frozen-model per-game read (display cache). Signals are stored under the
+      // RAW provider week, so translate the canonical week before querying. The
+      // per-game id match against the (already canonical-filtered) schedule spine
+      // guarantees a Week 0 signal can never surface on the Week 1 board.
+      getBoardSignals(ctx.season, rawWeekForCanonical(ctx.week)).catch((err) => {
         console.error("[v0] board signals load failed; rendering board without ratings:", err)
         return { meta: null, byGameId: new Map() }
       }),
@@ -95,7 +98,9 @@ export async function GET(_request: NextRequest) {
         return {
           id: g.id,
           season: g.season,
-          week: g.week,
+          // Canonical BSE week for display (raw week 1 resolves to Week 0/1 by
+          // kickoff). Storage keeps the raw week; the board always shows canonical.
+          week: canonicalWeekForGame(g.season, g.week, g.kickoff),
           kickoff: g.kickoff,
           kickoffTBD: g.kickoffTBD,
           neutralSite: g.neutralSite,
