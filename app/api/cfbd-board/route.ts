@@ -34,8 +34,15 @@ export async function GET(_request: NextRequest) {
     // CFBD schedule (source of truth, live) + the frozen odds snapshot (durable
     // storage, NO upstream odds call). Snapshot read failure must never break
     // the schedule, so it is handled independently.
+    let scheduleError: unknown = null
     const [cfbdGames, snapshot, signals] = await Promise.all([
-      getCfbdGameLites(ctx),
+      // getCfbdGameLites already serves a last-known-good schedule on CFBD
+      // failure; this catch only triggers on a cold instance with no cached
+      // fallback, so we degrade honestly instead of blanking the board.
+      getCfbdGameLites(ctx).catch((err) => {
+        scheduleError = err
+        return [] as Awaited<ReturnType<typeof getCfbdGameLites>>
+      }),
       loadSnapshot().catch((err) => {
         console.error("[v0] snapshot load failed; rendering schedule without odds:", err)
         return null
@@ -47,6 +54,25 @@ export async function GET(_request: NextRequest) {
         return { meta: null, byGameId: new Map() }
       }),
     ])
+
+    // No schedule and no cached fallback → the board has no spine to render.
+    // Surface a clear, retryable message (rate limits are transient) rather than
+    // a raw upstream status string with a hard 500.
+    if (scheduleError && cfbdGames.length === 0) {
+      const msg = scheduleError instanceof Error ? scheduleError.message : String(scheduleError)
+      const rateLimited = /\b429\b|too many requests/i.test(msg)
+      console.error("[v0] board schedule unavailable (no cached fallback):", scheduleError)
+      return NextResponse.json(
+        {
+          ok: false,
+          retryable: true,
+          error: rateLimited
+            ? "The live schedule provider (CFBD) is rate-limiting requests right now. This is temporary — the board will refresh automatically in a moment."
+            : "The live schedule is temporarily unavailable. The board will refresh automatically in a moment.",
+        },
+        { status: 503 },
+      )
+    }
 
     // Frozen odds indexed by CFBD game id.
     const oddsById = new Map<string, GameWithOdds>()

@@ -47,14 +47,41 @@ export function abbr(team: string): string {
     .toUpperCase()
 }
 
+/**
+ * Last-known-good schedule per (season, week, seasonType), held in module memory
+ * for the life of a warm server instance. The weekly CFBD schedule barely changes,
+ * so when a live fetch fails — most importantly a CFBD 429 rate-limit — we serve
+ * the previously fetched schedule instead of throwing and blanking the whole board.
+ * A cold instance with no cached entry still surfaces the error to the caller.
+ */
+const lastGoodSchedule = new Map<string, CfbdGameLite[]>()
+const scheduleKey = (ctx: SeasonContextLite) => `${ctx.season}-${ctx.week}-${ctx.seasonType}`
+
 /** Fetch the CFBD schedule (source of truth) and shape it for the matcher. */
 export async function getCfbdGameLites(ctx: SeasonContextLite): Promise<CfbdGameLite[]> {
-  const raw = (await getCfbdGames({
-    year: ctx.season,
-    week: ctx.week,
-    seasonType: ctx.seasonType,
-    division: "fbs",
-  })) as CfbdGame[]
+  const key = scheduleKey(ctx)
+
+  let raw: CfbdGame[]
+  try {
+    raw = (await getCfbdGames({
+      year: ctx.season,
+      week: ctx.week,
+      seasonType: ctx.seasonType,
+      division: "fbs",
+    })) as CfbdGame[]
+  } catch (err) {
+    // Serve last-known-good schedule on any CFBD failure (e.g. 429 rate limit).
+    const cached = lastGoodSchedule.get(key)
+    if (cached) {
+      console.error(
+        `[v0] CFBD schedule fetch failed for ${key}; serving last-known-good (${cached.length} games):`,
+        err,
+      )
+      return cached
+    }
+    // No cached fallback available — let the caller decide how to degrade.
+    throw err
+  }
 
   const games = Array.isArray(raw) ? raw : []
 
@@ -64,7 +91,7 @@ export async function getCfbdGameLites(ctx: SeasonContextLite): Promise<CfbdGame
       (g.awayClassification == null || g.awayClassification === "fbs"),
   )
 
-  return fbs.map((g) => ({
+  const lites = fbs.map((g) => ({
     id: `cfbd-${g.id}`,
     season: g.season,
     week: g.week,
@@ -76,6 +103,12 @@ export async function getCfbdGameLites(ctx: SeasonContextLite): Promise<CfbdGame
     away: { name: g.awayTeam, abbr: abbr(g.awayTeam) },
     home: { name: g.homeTeam, abbr: abbr(g.homeTeam) },
   }))
+
+  // Only overwrite the fallback with a non-empty result so a transient empty
+  // response can't wipe a good cached schedule.
+  if (lites.length > 0) lastGoodSchedule.set(key, lites)
+
+  return lites
 }
 
 /** Pad (ms) applied on each side of the week's kickoff range for the SGO window. */

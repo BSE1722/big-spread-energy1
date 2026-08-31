@@ -49,6 +49,8 @@ interface LiveBoardResponse {
   count: number
   games: LiveBoardGame[]
   error?: string
+  /** Set by the API when a failure is transient (e.g. upstream rate limit) and worth auto-retrying. */
+  retryable?: boolean
 }
 
 export interface LiveBoardState {
@@ -77,12 +79,29 @@ export function useLiveBoard(): LiveBoardState {
 
   useEffect(() => {
     let cancelled = false
-    async function load() {
+    let retryTimer: ReturnType<typeof setTimeout> | undefined
+    // Bounded auto-retry so a transient upstream hiccup (e.g. CFBD 429) heals
+    // on its own instead of stranding the visitor on an error message.
+    const MAX_RETRIES = 4
+    const RETRY_DELAYS_MS = [3000, 6000, 12000, 20000]
+
+    async function load(attempt: number) {
       try {
         const res = await fetch("/api/cfbd-board")
         const data: LiveBoardResponse = await res.json()
         if (cancelled) return
         if (!res.ok || !data.ok) {
+          const retryable = data.retryable === true || res.status === 503 || res.status === 429
+          if (retryable && attempt < MAX_RETRIES) {
+            // Keep any last-known games on screen; show the transient message.
+            setState((s) => ({
+              ...s,
+              loading: true,
+              error: data.error || `Board request failed: ${res.status}`,
+            }))
+            retryTimer = setTimeout(() => load(attempt + 1), RETRY_DELAYS_MS[attempt])
+            return
+          }
           throw new Error(data.error || `Board request failed: ${res.status}`)
         }
         setState({
@@ -102,9 +121,10 @@ export function useLiveBoard(): LiveBoardState {
         }))
       }
     }
-    load()
+    load(0)
     return () => {
       cancelled = true
+      if (retryTimer) clearTimeout(retryTimer)
     }
   }, [])
 
