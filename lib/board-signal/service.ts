@@ -30,6 +30,11 @@ export interface BoardSignalResult {
  * Load the frozen-model signal for every scored game in a season/week.
  * Returns an empty map (never throws for missing data) so the Board degrades
  * gracefully to "— / No rating" when the weekly scoring job hasn't run.
+ *
+ * `week` is the RAW PROVIDER week (as stored in bse_board_signal), NOT the
+ * canonical BSE week. Callers holding a canonical week must translate via
+ * `rawWeekForCanonical` first. The returned map is keyed by game id, so the
+ * caller's canonical-filtered schedule spine still selects the right slate.
  */
 export async function getBoardSignals(season: number, week: number): Promise<BoardSignalResult> {
   const candidate = await getFrozenCandidate().catch(() => null)

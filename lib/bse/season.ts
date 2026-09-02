@@ -13,6 +13,12 @@
  * To pin the site to a specific week manually (e.g. for testing or a hard
  * launch), set `WEEK_OVERRIDE` below. Leave it `null` for automatic advancement.
  * Changing one value here updates the entire site.
+ *
+ * WEEK NUMBERS HERE ARE CANONICAL BSE WEEKS, not raw provider weeks. College
+ * football opens with a "Week 0" that our data provider (CFBD) mislabels as
+ * week 1; the raw↔canonical mapping lives in `lib/bse/week-identity.ts`. This
+ * module only decides which canonical week is "current"; anything that queries
+ * CFBD or the ingested tables must translate through that module.
  * ============================================================================
  */
 
@@ -34,11 +40,21 @@ export interface SeasonContext {
 const SEASON_YEAR = 2026
 
 /**
- * Kickoff (UTC) of Week 1 of the season. Weeks are measured in 7-day buckets
- * forward from this date. 2026 FBS Week 1 opens the week of Aug 29, 2026;
- * we anchor to the Monday of that week so games Thu–Sat land in Week 1.
+ * College football's calendar is NOT a uniform 7-day grid. Week 1 is an
+ * extended opening window (Labor Day weekend — 2026 FBS Week 1 games run
+ * Aug 29 → Mon Sep 7), after which the season settles into a clean 7-day
+ * cadence (Week 2: Sep 11–13, Week 3: Sep 17–20, …).
+ *
+ * So we model it in two parts:
+ *   - Everything up to WEEK_TWO_START_UTC is Week 1 (with a pre-season floor).
+ *   - From WEEK_TWO_START_UTC onward, weeks advance one per 7 days starting at
+ *     Week 2. WEEK_TWO_START is the day AFTER Week 1's final game (Sep 7), so
+ *     the board flips to the upcoming Week 2 slate once Week 1 has completed.
+ *
+ * A single uniform anchor cannot represent this (Week 1's own games span 9+
+ * days), which is why the active week must be derived this way.
  */
-const WEEK_ONE_START_UTC = "2026-08-24T00:00:00.000Z"
+const WEEK_TWO_START_UTC = "2026-09-08T00:00:00.000Z"
 
 /** Regular season length (FBS plays through ~Week 15 + conf. championships). */
 const TOTAL_REGULAR_WEEKS = 15
@@ -58,24 +74,28 @@ const MS_PER_WEEK = 7 * 24 * 60 * 60 * 1000
 
 function clampWeek(week: number): number {
   if (Number.isNaN(week)) return 1
-  return Math.min(TOTAL_REGULAR_WEEKS, Math.max(1, Math.round(week)))
+  // Floor is 0 so an admin can pin WEEK_OVERRIDE = 0 to review the Week 0 opener.
+  // Automatic advancement never produces 0 (it floors at Week 1 below).
+  return Math.min(TOTAL_REGULAR_WEEKS, Math.max(0, Math.round(week)))
 }
 
 /**
- * Compute the active week for a given moment. Before/at the season start this
- * floors to Week 1; afterward it advances one week per 7 days, clamped to the
- * end of the regular season.
+ * Compute the active week for a given moment. Week 1 covers the extended
+ * opening window (everything before WEEK_TWO_START, with a pre-season floor);
+ * from WEEK_TWO_START onward the week advances one per 7 days beginning at
+ * Week 2, clamped to the end of the regular season.
  */
 export function computeCurrentWeek(now: Date = new Date()): number {
   if (WEEK_OVERRIDE != null) return clampWeek(WEEK_OVERRIDE)
 
-  const start = new Date(WEEK_ONE_START_UTC).getTime()
-  const elapsed = now.getTime() - start
+  const weekTwoStart = new Date(WEEK_TWO_START_UTC).getTime()
+  const elapsed = now.getTime() - weekTwoStart
 
-  // Before the season opens → hold at the Week 1 floor.
+  // Before Week 2 opens → the opening window is Week 1.
   if (elapsed < 0) return 1
 
-  const week = Math.floor(elapsed / MS_PER_WEEK) + 1
+  // Week 2 and beyond advance on a uniform 7-day cadence.
+  const week = Math.floor(elapsed / MS_PER_WEEK) + 2
   return clampWeek(week)
 }
 
@@ -102,7 +122,7 @@ export function weekLabel(ctx: SeasonContext = getCurrentContext()): string {
 
 export const SEASON_CONFIG = {
   SEASON_YEAR,
-  WEEK_ONE_START_UTC,
+  WEEK_TWO_START_UTC,
   TOTAL_REGULAR_WEEKS,
   WEEK_OVERRIDE,
 } as const

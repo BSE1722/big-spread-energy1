@@ -4,6 +4,7 @@ import { getCfbdGameLites } from "@/lib/board-build"
 import { loadSnapshot } from "@/lib/odds-snapshot"
 import { getBoardSignals } from "@/lib/board-signal/service"
 import type { GameWithOdds } from "@/lib/odds-match"
+import { rawWeekForCanonical, canonicalWeekForGame } from "@/lib/bse/week-identity"
 
 /**
  * Live board feed for The Board + homepage Top Edges.
@@ -34,19 +35,47 @@ export async function GET(_request: NextRequest) {
     // CFBD schedule (source of truth, live) + the frozen odds snapshot (durable
     // storage, NO upstream odds call). Snapshot read failure must never break
     // the schedule, so it is handled independently.
+    let scheduleError: unknown = null
     const [cfbdGames, snapshot, signals] = await Promise.all([
-      getCfbdGameLites(ctx),
+      // getCfbdGameLites already serves a last-known-good schedule on CFBD
+      // failure; this catch only triggers on a cold instance with no cached
+      // fallback, so we degrade honestly instead of blanking the board.
+      getCfbdGameLites(ctx).catch((err) => {
+        scheduleError = err
+        return [] as Awaited<ReturnType<typeof getCfbdGameLites>>
+      }),
       loadSnapshot().catch((err) => {
         console.error("[v0] snapshot load failed; rendering schedule without odds:", err)
         return null
       }),
-      // Frozen-model per-game read (display cache). Never throws for missing
-      // data; the board simply shows "— / No rating" when absent.
-      getBoardSignals(ctx.season, ctx.week).catch((err) => {
+      // Frozen-model per-game read (display cache). Signals are stored under the
+      // RAW provider week, so translate the canonical week before querying. The
+      // per-game id match against the (already canonical-filtered) schedule spine
+      // guarantees a Week 0 signal can never surface on the Week 1 board.
+      getBoardSignals(ctx.season, rawWeekForCanonical(ctx.week)).catch((err) => {
         console.error("[v0] board signals load failed; rendering board without ratings:", err)
         return { meta: null, byGameId: new Map() }
       }),
     ])
+
+    // No schedule and no cached fallback → the board has no spine to render.
+    // Surface a clear, retryable message (rate limits are transient) rather than
+    // a raw upstream status string with a hard 500.
+    if (scheduleError && cfbdGames.length === 0) {
+      const msg = scheduleError instanceof Error ? scheduleError.message : String(scheduleError)
+      const rateLimited = /\b429\b|too many requests/i.test(msg)
+      console.error("[v0] board schedule unavailable (no cached fallback):", scheduleError)
+      return NextResponse.json(
+        {
+          ok: false,
+          retryable: true,
+          error: rateLimited
+            ? "The live schedule provider (CFBD) is rate-limiting requests right now. This is temporary — the board will refresh automatically in a moment."
+            : "The live schedule is temporarily unavailable. The board will refresh automatically in a moment.",
+        },
+        { status: 503 },
+      )
+    }
 
     // Frozen odds indexed by CFBD game id.
     const oddsById = new Map<string, GameWithOdds>()
@@ -69,7 +98,9 @@ export async function GET(_request: NextRequest) {
         return {
           id: g.id,
           season: g.season,
-          week: g.week,
+          // Canonical BSE week for display (raw week 1 resolves to Week 0/1 by
+          // kickoff). Storage keeps the raw week; the board always shows canonical.
+          week: canonicalWeekForGame(g.season, g.week, g.kickoff),
           kickoff: g.kickoff,
           kickoffTBD: g.kickoffTBD,
           neutralSite: g.neutralSite,

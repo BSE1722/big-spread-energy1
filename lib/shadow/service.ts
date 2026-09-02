@@ -1,5 +1,6 @@
 import "server-only"
 import { pool } from "@/lib/db"
+import { canonicalWeekForGame } from "@/lib/bse/week-identity"
 
 /**
  * READ-ONLY data access for the SHADOW VALIDATION dashboard.
@@ -134,17 +135,23 @@ export async function getOverallStats(modelHash: string): Promise<ShadowStats> {
   return statsFrom(rows, signalCount)
 }
 
-/** Per-week breakdown. */
+/** Per-week breakdown, grouped by CANONICAL BSE week (raw week 1 of a split
+ *  season separates into Week 0 / Week 1 by kickoff; historical seasons and
+ *  weeks >= 2 pass through unchanged). Stored rows are never modified. */
 export async function getWeeklyStats(modelHash: string): Promise<WeekRow[]> {
   const { rows: sigCounts } = await pool.query(
-    `select season, week, count(*)::int c from bse_shadow_signal where model_hash=$1 group by season, week`,
+    `select season, week, kickoff_at from bse_shadow_signal where model_hash=$1`,
     [modelHash],
   )
   const countByKey = new Map<string, number>()
-  for (const r of sigCounts) countByKey.set(`${r.season}-${r.week}`, r.c)
+  for (const r of sigCounts) {
+    const cw = canonicalWeekForGame(r.season, r.week, r.kickoff_at)
+    const k = `${r.season}-${cw}`
+    countByKey.set(k, (countByKey.get(k) ?? 0) + 1)
+  }
 
   const { rows } = await pool.query(
-    `select s.season, s.week, gr.ats_result, gr.clv_points
+    `select s.season, s.week, s.kickoff_at, gr.ats_result, gr.clv_points
        from bse_shadow_signal s
        join bse_shadow_grade gr on gr.signal_id = s.id
       where s.model_hash = $1`,
@@ -152,7 +159,8 @@ export async function getWeeklyStats(modelHash: string): Promise<WeekRow[]> {
   )
   const byKey = new Map<string, { ats_result: string | null; clv_points: number | null }[]>()
   for (const r of rows) {
-    const k = `${r.season}-${r.week}`
+    const cw = canonicalWeekForGame(r.season, r.week, r.kickoff_at)
+    const k = `${r.season}-${cw}`
     if (!byKey.has(k)) byKey.set(k, [])
     byKey.get(k)!.push(r)
   }
@@ -182,7 +190,8 @@ export async function listSignals(modelHash: string, limit = 200): Promise<Signa
   return rows.map((r) => ({
     id: Number(r.id),
     season: r.season,
-    week: r.week,
+    // Canonical BSE week for display; stored raw week is untouched.
+    week: canonicalWeekForGame(r.season, r.week, r.kickoff_at),
     homeTeam: r.home_team,
     awayTeam: r.away_team,
     side: r.side,
