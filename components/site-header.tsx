@@ -12,9 +12,7 @@ const nav = [
   { href: "/", label: "Home" },
   { href: "/board", label: "The Board" },
   { href: "/performance", label: "Track Record" },
-  { href: "/board#ratings", label: "BSE Ratings" },
   { href: "/getting-parlaid", label: "Getting Parlaid" },
-  { href: "/parlay-analyzer", label: "Tools" },
   { href: "/pricing", label: "Pricing" },
 ]
 

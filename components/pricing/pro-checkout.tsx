@@ -59,28 +59,31 @@ export function ProCheckout({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] overflow-y-auto bg-black/70 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label="Upgrade to BSE Pro"
     >
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-auto rounded-2xl border border-border bg-card p-1 shadow-2xl">
-        <div className="flex items-center justify-between px-4 pt-3">
-          <h2 className="font-display text-lg font-bold uppercase tracking-tight text-foreground">
-            {done ? "Welcome to BSE Pro" : "Upgrade to BSE Pro"}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
-          >
-            <X className="size-5" />
-          </button>
-        </div>
+      {/* The overlay itself scrolls, so the tall embedded Stripe form is fully
+          reachable instead of being clipped inside a fixed-height box. */}
+      <div className="flex min-h-full items-start justify-center p-4 sm:items-center">
+        <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card shadow-2xl">
+          <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-border bg-card px-4 py-3">
+            <h2 className="font-display text-lg font-bold uppercase tracking-tight text-foreground">
+              {done ? "Welcome to BSE Pro" : "Upgrade to BSE Pro"}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="flex size-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-5" />
+            </button>
+          </div>
 
-        <div className="p-3">
-          {done ? (
+          <div className="p-3">
+            {done ? (
             <div className="flex flex-col items-center gap-4 px-4 py-10 text-center">
               <p className="text-pretty text-muted-foreground">
                 You&apos;re Pro. Every game on the Board is now fully unlocked.
@@ -101,14 +104,20 @@ export function ProCheckout({
               </Button>
             </div>
           ) : clientSecret ? (
-            <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret, onComplete }}>
-              <EmbeddedCheckout />
-            </EmbeddedCheckoutProvider>
+            // Stripe's embedded checkout is light-themed; seat it on its own
+            // white rounded panel so it reads as intentional and never clips
+            // against the dark modal corners.
+            <div className="overflow-hidden rounded-xl bg-white">
+              <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret, onComplete }}>
+                <EmbeddedCheckout />
+              </EmbeddedCheckoutProvider>
+            </div>
           ) : (
             <div className="flex items-center justify-center py-16">
               <div className="size-8 animate-spin rounded-full border-2 border-border border-t-primary" />
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

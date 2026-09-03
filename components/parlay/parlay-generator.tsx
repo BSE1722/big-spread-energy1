@@ -1,10 +1,29 @@
 "use client"
 
 import { useMemo } from "react"
-import { Dice5, Clock, Target, ShieldCheck, Rocket, type LucideIcon } from "lucide-react"
+import Link from "next/link"
+import {
+  Dice5,
+  Clock,
+  Target,
+  ShieldCheck,
+  Rocket,
+  MoveHorizontal,
+  ArrowRight,
+  ArrowLeft,
+  Search,
+  type LucideIcon,
+} from "lucide-react"
 import { CurrentWeekSlate } from "@/components/parlay/current-week-slate"
 import { useLiveBoard, formatKickoff, formatKickoffDate } from "@/lib/use-live-board"
-import { generateAllTickets, type ProfileResult, type GameRead, type RiskProfileId } from "@/lib/parlay/generate"
+import {
+  generateAllTickets,
+  lineShoppingHint,
+  type ProfileResult,
+  type GameRead,
+  type RiskProfileId,
+  type LineShoppingState,
+} from "@/lib/parlay/generate"
 import { CLASSIFICATION_COPY, LINE_SOURCE_COPY, type BetClassification } from "@/lib/bse/price-aware"
 
 /**
@@ -87,6 +106,8 @@ export function ParlayGenerator() {
 
       {/* Tickets when reads are published; honest pending state otherwise. */}
       <div className="space-y-6">
+        <MoveTheLineCallout />
+
         {loading ? (
           <div className="space-y-3" aria-hidden="true">
             {[0, 1, 2].map((i) => (
@@ -104,6 +125,26 @@ export function ParlayGenerator() {
         )}
 
         <CurrentWeekSlate />
+      </div>
+    </div>
+  )
+}
+
+function MoveTheLineCallout() {
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+      <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <MoveHorizontal className="size-5" />
+      </span>
+      <div className="min-w-0">
+        <p className="font-display text-sm font-semibold uppercase tracking-wide text-foreground">
+          Move the line
+        </p>
+        <p className="mt-1 text-sm leading-relaxed text-muted-foreground text-pretty">
+          BSE compares the sportsbook spread to our fair line. If changing the
+          spread creates a better tradeoff, we&apos;ll tell you which direction to
+          look.
+        </p>
       </div>
     </div>
   )
@@ -172,6 +213,55 @@ const BADGE_STYLE: Record<BetClassification, string> = {
   INSUFFICIENT_DATA: "border-border bg-secondary/50 text-muted-foreground",
 }
 
+const SHOPPING_COPY: Record<LineShoppingState, string> = {
+  STAY_AT_MAIN: "Stay at main",
+  BUY_POINTS: "Buy points",
+  SELL_POINTS: "Sell points",
+  ALT_WORTH_CHECKING: "Alt line worth checking",
+}
+
+const SHOPPING_STYLE: Record<LineShoppingState, string> = {
+  STAY_AT_MAIN: "border-border bg-secondary/50 text-muted-foreground",
+  BUY_POINTS: "border-[var(--rating-strong)]/40 bg-[var(--rating-strong)]/10 text-[var(--rating-strong)]",
+  SELL_POINTS: "border-[var(--rating-strong)]/40 bg-[var(--rating-strong)]/10 text-[var(--rating-strong)]",
+  ALT_WORTH_CHECKING: "border-primary/40 bg-primary/10 text-primary",
+}
+
+/**
+ * Customer-facing "move the line" status for a leg, derived (display-only) from
+ * the existing BSE grade. Renders the state chip, a directional arrow, the
+ * plain-English hint, and — when an alternate can't be auto-verified — a CTA
+ * that deep-links into the Analyze sub-tab with this game/side preselected.
+ */
+function ShoppingStatus({ leg }: { leg: GameRead }) {
+  const shop = lineShoppingHint(leg)
+  const leadingArrow = shop.direction === "sell" // "←" reads before the label
+  const trailingArrow = shop.direction === "buy" // "→" reads after the label
+  const Arrow = shop.direction === "buy" ? ArrowRight : shop.direction === "sell" ? ArrowLeft : null
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border/60 pt-2">
+      <span
+        className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide ${SHOPPING_STYLE[shop.state]}`}
+      >
+        {leadingArrow && Arrow && <Arrow className="size-3" aria-hidden="true" />}
+        {SHOPPING_COPY[shop.state]}
+        {trailingArrow && Arrow && <Arrow className="size-3" aria-hidden="true" />}
+      </span>
+      {shop.hint && <span className="text-[11px] leading-relaxed text-muted-foreground">{shop.hint}</span>}
+      {shop.state === "ALT_WORTH_CHECKING" && leg.side && (
+        <Link
+          href={`/getting-parlaid?tab=analyze&game=${encodeURIComponent(leg.gameId)}&side=${leg.side}`}
+          className="ml-auto inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary/15"
+        >
+          <Search className="size-3" aria-hidden="true" />
+          Analyze an alternate
+        </Link>
+      )}
+    </div>
+  )
+}
+
 function fmtSpread(n: number | null): string {
   if (n == null) return "—"
   if (n === 0) return "PK"
@@ -233,7 +323,8 @@ function TicketCard({ result }: { result: ProfileResult }) {
 function LegRow({ leg }: { leg: GameRead }) {
   const cls = leg.classification ?? "INSUFFICIENT_DATA"
   return (
-    <li className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <li className="px-4 py-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
           <span>{formatKickoffDate(leg.kickoff)}</span>
@@ -247,16 +338,14 @@ function LegRow({ leg }: { leg: GameRead }) {
           )}
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground">{leg.matchup}</p>
-        {/* Line provenance + shopping recommendation. */}
+        {/* Line provenance badge. Customer-facing recommendation copy is
+            intentionally omitted here; mainLineOnly + recommendation state and
+            the alternate-spread fallback remain intact in lib/parlay/generate.ts
+            and internal diagnostics. */}
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           <span className="rounded border border-[var(--rating-strong)]/40 bg-[var(--rating-strong)]/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-[var(--rating-strong)]">
             {LINE_SOURCE_COPY[leg.source].label}
           </span>
-          {leg.recommendationText && (
-            <span className="font-mono text-[10px] leading-relaxed text-muted-foreground">
-              {leg.recommendation === "STAY_AT_MAIN" ? "Main line" : "Buy alt"} · {leg.recommendationText}
-            </span>
-          )}
         </div>
         {/* Audit trail: leg is traceable to this bse_board_signal + DK snapshot. */}
         <p className="mt-1 font-mono text-[10px] leading-relaxed text-muted-foreground/80">
@@ -269,6 +358,10 @@ function LegRow({ leg }: { leg: GameRead }) {
           {CLASSIFICATION_COPY[cls].label}
         </span>
       </div>
+      </div>
+
+      {/* Line-shopping status: which direction to move the spread, if any. */}
+      <ShoppingStatus leg={leg} />
     </li>
   )
 }

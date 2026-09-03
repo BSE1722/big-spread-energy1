@@ -1,11 +1,12 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import { PageHeader } from "@/components/page-header"
-import { ParlayGenerator } from "@/components/parlay/parlay-generator"
+import { ParlayTools } from "@/components/parlay/parlay-tools"
 
 export const metadata: Metadata = {
-  title: "Getting Parlaid — BSE Parlay Generator | Big Spread Energy",
+  title: "Getting Parlaid — Build & Grade Parlays | Big Spread Energy",
   description:
-    "Let BSE build a parlay from its per-game spread reads. Pick a risk profile and get a ticket whose legs each clear BSE's spread-edge threshold.",
+    "Two ways to attack a parlay in one place: let BSE generate a ticket whose legs each clear its spread-edge threshold, or build your own and grade every leg against the BSE fair line and DraftKings price.",
 }
 
 export default function GettingParlaidPage() {
@@ -14,10 +15,12 @@ export default function GettingParlaidPage() {
       <PageHeader
         eyebrow="Tools"
         title="Getting Parlaid"
-        description="BSE searches combinations to build a ticket whose legs each clear its spread-edge threshold while avoiding stacked shared risk — and will recommend fewer legs, or none, rather than force a bad ticket."
+        description="Two ways to attack a parlay in one place. Let BSE generate a ticket whose legs each clear its spread-edge threshold, or switch to Analyze to build your own and grade every leg against the fair line and the DraftKings price."
       />
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <ParlayGenerator />
+        <Suspense fallback={null}>
+          <ParlayTools />
+        </Suspense>
       </section>
     </main>
   )

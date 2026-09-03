@@ -6,8 +6,8 @@ const columns = [
     title: "Product",
     links: [
       { href: "/board", label: "The Board" },
-      { href: "/parlay-analyzer", label: "Parlay Analyzer" },
       { href: "/getting-parlaid", label: "Getting Parlaid" },
+      { href: "/getting-parlaid?tab=analyze", label: "Parlay Analyzer" },
       { href: "/pricing", label: "BSE Pro" },
     ],
   },

@@ -6,20 +6,97 @@
  * based: there is no background revalidation and no visitor-triggered upstream
  * call. Only `refreshSnapshot()` (admin action) ever hits SportsGameOdds.
  *
- * Storage: a single public Vercel Blob at a stable pathname, overwritten on
- * each refresh (public to match the connected Blob store; it contains only
- * sportsbook market data already shown on the public Board). The prior
- * snapshot's lines are carried forward into each game's
+ * Storage: a single Vercel Blob at a stable pathname, overwritten on each
+ * refresh. It contains only sportsbook market data already shown on the Board.
+ * The prior snapshot's lines are carried forward into each game's
  * lineHistory (opening / previous / current + movement) so line movement can be
  * computed later without changing the BSE model or UI.
+ *
+ * Read resilience: `get()` exposes two retrieval paths — access:"public" (the
+ * public CDN URL) and access:"private" (a token-authenticated origin fetch).
+ * In some runtimes one path intermittently returns 403 while the other
+ * succeeds, and which one fails is not stable across environments. Reading with
+ * a single hardcoded mode therefore silently blanks every DraftKings line and
+ * drops all parlay legs whenever that mode is the one being refused. `readJson`
+ * below tries BOTH paths (with a short retry) and only reports "no snapshot"
+ * when the blob is genuinely absent, so the odds survive either path 403ing.
  */
 
-import { put, get } from "@vercel/blob"
+import { put, get, head, BlobNotFoundError } from "@vercel/blob"
 import { buildFreshMatch, type SeasonContextLite } from "@/lib/board-build"
 import type { GameWithOdds, LineHistory } from "@/lib/odds-match"
 
+/**
+ * Access mode used for WRITES. Objects are stored public (the store's default),
+ * but reads never assume this — see readJson, which is retrieval-path agnostic.
+ */
+const BLOB_WRITE_ACCESS = "public" as const
+
 const SNAPSHOT_PATHNAME = "odds/draftkings-snapshot.json"
 const LOCK_PATHNAME = "odds/refresh.lock.json"
+
+/**
+ * Read + parse a JSON blob resiliently. Returns null ONLY when the blob is
+ * genuinely missing (BlobNotFoundError). Tries both retrieval paths because a
+ * given runtime may 403 one of them; if every attempt fails for a reason other
+ * than "not found", logs loudly and returns null so the caller degrades safely
+ * instead of throwing.
+ */
+async function readJson<T>(pathname: string): Promise<T | null> {
+  let sawNotFound = false
+  let lastError: unknown = null
+
+  const parse = (text: string | null): T | null => (text ? (JSON.parse(text) as T) : null)
+
+  // Ordered list of independent retrieval strategies. Different runtimes/CDN
+  // edges refuse different ones (public CDN vs token-authenticated origin), and
+  // which one 403s is not stable across environments — so we try all of them.
+  const strategies: Array<() => Promise<T | null>> = [
+    // 1. Public CDN read.
+    async () => {
+      const r = await get(pathname, { access: "public" })
+      return r?.stream ? parse(await new Response(r.stream).text()) : null
+    },
+    // 2. Token-authenticated origin read.
+    async () => {
+      const r = await get(pathname, { access: "private" })
+      return r?.stream ? parse(await new Response(r.stream).text()) : null
+    },
+    // 3. head() metadata (token-authenticated) + fetch of its authenticated
+    //    downloadUrl. Survives cases where both get() paths are refused.
+    async () => {
+      const meta = await head(pathname)
+      const resp = await fetch(meta.downloadUrl, {
+        headers: process.env.BLOB_READ_WRITE_TOKEN
+          ? { authorization: `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` }
+          : undefined,
+        cache: "no-store",
+      })
+      if (!resp.ok) throw new Error(`downloadUrl fetch ${resp.status}`)
+      return parse(await resp.text())
+    },
+  ]
+
+  // Two rounds so a transient blip that hits every strategy still recovers.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    for (const run of strategies) {
+      try {
+        return await run()
+      } catch (err) {
+        if (err instanceof BlobNotFoundError) {
+          sawNotFound = true
+          continue
+        }
+        lastError = err
+      }
+    }
+    if (sawNotFound && lastError == null) break
+  }
+
+  if (sawNotFound && lastError == null) return null
+  console.error(`[v0] readJson(${pathname}): all reads FAILED (blob likely exists but unreadable):`, (lastError as Error)?.message)
+  return null
+}
 
 /** A running refresh older than this is treated as stale (crashed) and cleared. */
 const LOCK_STALE_MS = 2 * 60 * 1000
@@ -54,22 +131,12 @@ export interface RefreshSummary {
  * SportsGameOdds request — it only reads durable storage.
  */
 export async function loadSnapshot(): Promise<OddsSnapshot | null> {
-  try {
-    const result = await get(SNAPSHOT_PATHNAME, { access: "public" })
-    if (!result || !result.stream) return null
-    const text = await new Response(result.stream).text()
-    if (!text) return null
-    return JSON.parse(text) as OddsSnapshot
-  } catch (err) {
-    // A missing blob is a normal "no snapshot yet" state, not an error.
-    console.log("[v0] loadSnapshot: no existing snapshot or read failed:", (err as Error)?.message)
-    return null
-  }
+  return readJson<OddsSnapshot>(SNAPSHOT_PATHNAME)
 }
 
 async function saveSnapshot(snapshot: OddsSnapshot): Promise<void> {
   await put(SNAPSHOT_PATHNAME, JSON.stringify(snapshot), {
-    access: "public",
+    access: BLOB_WRITE_ACCESS,
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: "application/json",
@@ -84,20 +151,12 @@ interface RefreshLock {
 }
 
 async function readLock(): Promise<RefreshLock | null> {
-  try {
-    const result = await get(LOCK_PATHNAME, { access: "public" })
-    if (!result || !result.stream) return null
-    const text = await new Response(result.stream).text()
-    if (!text) return null
-    return JSON.parse(text) as RefreshLock
-  } catch {
-    return null
-  }
+  return readJson<RefreshLock>(LOCK_PATHNAME)
 }
 
 async function writeLock(lock: RefreshLock): Promise<void> {
   await put(LOCK_PATHNAME, JSON.stringify(lock), {
-    access: "public",
+    access: BLOB_WRITE_ACCESS,
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: "application/json",

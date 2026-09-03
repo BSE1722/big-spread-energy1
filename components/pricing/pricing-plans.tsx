@@ -91,8 +91,12 @@ export function PricingPlans() {
         >
           <span
             className={cn(
-              "absolute top-0.5 size-5 rounded-full bg-background transition-transform",
-              annual ? "translate-x-6" : "translate-x-0.5",
+              // left-0.5 anchors the thumb to the track's left edge. Without it
+              // the button's default text-align:center resolves the absolute
+              // thumb's static position to mid-track, so translate-x-6 pushed it
+              // past the right edge and overlapped the "Annual" label.
+              "absolute left-0.5 top-0.5 size-5 rounded-full bg-background transition-transform",
+              annual ? "translate-x-5" : "translate-x-0",
             )}
           />
         </button>
