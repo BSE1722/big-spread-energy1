@@ -23,11 +23,15 @@
 import {
   evaluateBet,
   summarizeParlay,
+  selectBestRung,
+  combineAmericanPrices,
   LINE_EDGE_GATE,
   type BetSide,
   type BetClassification,
   type PriceTier,
   type ParlaySummary,
+  type LadderRung,
+  type LineSource,
 } from "@/lib/bse/price-aware"
 
 /**
@@ -76,6 +80,15 @@ export interface GameRead {
   rating: number | null
   /** Clears the frozen line-edge gate AND has a real price to combine. */
   eligible: boolean
+  /** ---- line-shopping recommendation (ladder-ready; see recommendLine) ---- */
+  /** Provenance of the evaluated number. Board legs are always LIVE_DK. */
+  source: LineSource
+  /** True when only the DK main line was available (no alternate rungs to shop). */
+  mainLineOnly: boolean
+  /** Which line BSE recommends taking after shopping the available ladder. */
+  recommendation: "STAY_AT_MAIN" | "BUY_ALTERNATE" | null
+  /** Plain-English explanation of the recommendation. */
+  recommendationText: string | null
   /** ---- audit trail: traceable to the bse_board_signal row + DK snapshot ---- */
   bookmaker: string | null
   snapshotAt: string | null
@@ -122,6 +135,10 @@ export function evaluateGame(g: GeneratorGame): GameRead {
       priceTier: null,
       rating: g.bseRating,
       eligible: false,
+      source: "LIVE_DK",
+      mainLineOnly: true,
+      recommendation: null,
+      recommendationText: null,
     }
   }
 
@@ -142,6 +159,24 @@ export function evaluateGame(g: GeneratorGame): GameRead {
 
   const eligible = ev.lineEdge != null && ev.lineEdge >= LINE_EDGE_GATE && price != null
 
+  // Shop the available DraftKings ladder for this side. Today the feed gives us
+  // only the main line (SGO audit: no alternate rungs on our tier), so the
+  // ladder has one rung and selectBestRung reports mainLineOnly — but the moment
+  // alternate ingestion lands, `ladderRungsFor` is the ONLY place to extend and
+  // this shops the whole ladder with no other change.
+  const ladder = ladderRungsFor(g, side, offeredHomeSpread, price)
+  const selection = selectBestRung(g.fairSpread, ladder, side)
+  const bestSpread = selection.best?.offeredHomeSpread ?? null
+  const recommendation: GameRead["recommendation"] =
+    selection.mainLineOnly || bestSpread == null || bestSpread === offeredHomeSpread
+      ? "STAY_AT_MAIN"
+      : "BUY_ALTERNATE"
+  const recommendationText = selection.mainLineOnly
+    ? "No DraftKings alternate spreads are available from our odds feed, so BSE evaluates the main line."
+    : recommendation === "STAY_AT_MAIN"
+      ? "Main line is the best value on the ladder — buying extra points isn't worth the added juice."
+      : `Best value on the DK ladder: ${bestSpread! < 0 ? bestSpread : `+${bestSpread}`} (home-relative).`
+
   return {
     ...base,
     hasProjection: true,
@@ -157,7 +192,29 @@ export function evaluateGame(g: GeneratorGame): GameRead {
     priceTier: ev.priceTier,
     rating: g.bseRating,
     eligible,
+    source: "LIVE_DK",
+    mainLineOnly: selection.mainLineOnly,
+    recommendation,
+    recommendationText,
   }
+}
+
+/**
+ * The real DraftKings rungs available to shop for one side of a game. Currently
+ * only the main line is ingested (see lib/sgo.ts — the client requests main-line
+ * oddIDs only, and our SGO tier does not expose a full-game alternate ladder for
+ * DraftKings), so this returns a single rung. This is the ONE seam to extend
+ * when alternate-ladder ingestion is added; nothing else in the generator needs
+ * to change for ladder shopping to activate. It NEVER fabricates rungs.
+ */
+function ladderRungsFor(
+  _g: GeneratorGame,
+  _side: BetSide,
+  offeredHomeSpread: number | null,
+  price: number | null,
+): LadderRung[] {
+  if (offeredHomeSpread == null) return []
+  return [{ homeSpread: offeredHomeSpread, price }]
 }
 
 /** Every game's read, in kickoff order. Drives the slate badges. */
@@ -193,8 +250,8 @@ export interface RiskProfileDef {
  * still edge-clearing) leg is permitted. No profile changes the edge gate.
  */
 export const RISK_PROFILES: RiskProfileDef[] = [
-  { id: "safer", label: "Safe(r) Build", maxLegs: 3, minLegs: 2, allowExpensive: false },
-  { id: "balanced", label: "Sweet Spot", maxLegs: 4, minLegs: 2, allowExpensive: true },
+  { id: "safer", label: "Highest Edge", maxLegs: 3, minLegs: 2, allowExpensive: false },
+  { id: "balanced", label: "Balanced", maxLegs: 4, minLegs: 2, allowExpensive: true },
   { id: "longshot", label: "Long Shot", maxLegs: 6, minLegs: 2, allowExpensive: true },
 ]
 
@@ -213,16 +270,6 @@ function sortCandidates(a: GameRead, b: GameRead): number {
   const kickoff = new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime()
   if (kickoff !== 0) return kickoff
   return a.gameId.localeCompare(b.gameId)
-}
-
-/* --------------------------------- pricing -------------------------------- */
-
-function decimalFromAmerican(a: number): number {
-  return a < 0 ? 1 + 100 / -a : 1 + a / 100
-}
-function americanFromDecimal(d: number): number | null {
-  if (!Number.isFinite(d) || d <= 1) return null
-  return d >= 2 ? Math.round((d - 1) * 100) : -Math.round(100 / (d - 1))
 }
 
 /* --------------------------------- tickets -------------------------------- */
@@ -268,11 +315,7 @@ function buildTicket(def: RiskProfileDef, candidates: GameRead[]): ProfileResult
   }
 
   const summary = summarizeParlay(legs.map((l) => ({ classification: l.classification!, lineEdge: l.lineEdge })))
-  const allPriced = legs.every((l) => l.price != null)
-  const combinedDecimal = allPriced
-    ? legs.reduce((p, l) => p * decimalFromAmerican(l.price as number), 1)
-    : null
-  const combinedAmerican = combinedDecimal != null ? americanFromDecimal(combinedDecimal) : null
+  const combined = combineAmericanPrices(legs.map((l) => l.price))
 
   return {
     profile: def.id,
@@ -284,8 +327,8 @@ function buildTicket(def: RiskProfileDef, candidates: GameRead[]): ProfileResult
       legCount: legs.length,
       totalLineEdge: summary.totalLineEdge,
       summary,
-      combinedDecimal: combinedDecimal != null ? Math.round(combinedDecimal * 1000) / 1000 : null,
-      combinedAmerican,
+      combinedDecimal: combined?.decimal ?? null,
+      combinedAmerican: combined?.american ?? null,
     },
     reason: null,
   }

@@ -5,7 +5,7 @@ import { Dice5, Clock, Target, ShieldCheck, Rocket, type LucideIcon } from "luci
 import { CurrentWeekSlate } from "@/components/parlay/current-week-slate"
 import { useLiveBoard, formatKickoff, formatKickoffDate } from "@/lib/use-live-board"
 import { generateAllTickets, type ProfileResult, type GameRead, type RiskProfileId } from "@/lib/parlay/generate"
-import { CLASSIFICATION_COPY, type BetClassification } from "@/lib/bse/price-aware"
+import { CLASSIFICATION_COPY, LINE_SOURCE_COPY, type BetClassification } from "@/lib/bse/price-aware"
 
 /**
  * Getting Parlaid — BSE's parlay builder.
@@ -18,16 +18,20 @@ import { CLASSIFICATION_COPY, type BetClassification } from "@/lib/bse/price-awa
  * and the real slate it will draw from — it never fabricates a ticket.
  */
 
-const PROFILE_META: Record<RiskProfileId, { icon: LucideIcon; description: string }> = {
+// Labels describe HOW BSE built the ticket, not a promise of safety.
+const PROFILE_META: Record<RiskProfileId, { label: string; icon: LucideIcon; description: string }> = {
   safer: {
+    label: "Highest Edge",
     icon: ShieldCheck,
-    description: "Fewer legs, each with a larger spread edge at a non-punitive price.",
+    description: "Fewest legs, each the largest spread edge at a non-punitive price. Buying points doesn't make a leg 'safe'.",
   },
   balanced: {
+    label: "Balanced",
     icon: Target,
-    description: "Balanced build — solid per-leg spread edge without over-reaching on legs.",
+    description: "Solid per-leg spread edge without over-reaching on leg count.",
   },
   longshot: {
+    label: "Long Shot",
     icon: Rocket,
     description: "More legs for a bigger payout, while each still clears BSE's edge threshold.",
   },
@@ -57,7 +61,7 @@ export function ParlayGenerator() {
           <div className="mt-4 flex flex-col gap-2">
             {OBJECTIVE_ORDER.map((id) => {
               const meta = PROFILE_META[id]
-              const label = id === "safer" ? "Safe(r) Build" : id === "balanced" ? "Sweet Spot" : "Long Shot"
+              const label = meta.label
               return (
                 <div key={id} className="rounded-lg border border-border px-4 py-3">
                   <span className="flex items-center gap-2">
@@ -243,6 +247,17 @@ function LegRow({ leg }: { leg: GameRead }) {
           )}
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground">{leg.matchup}</p>
+        {/* Line provenance + shopping recommendation. */}
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+          <span className="rounded border border-[var(--rating-strong)]/40 bg-[var(--rating-strong)]/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-[var(--rating-strong)]">
+            {LINE_SOURCE_COPY[leg.source].label}
+          </span>
+          {leg.recommendationText && (
+            <span className="font-mono text-[10px] leading-relaxed text-muted-foreground">
+              {leg.recommendation === "STAY_AT_MAIN" ? "Main line" : "Buy alt"} · {leg.recommendationText}
+            </span>
+          )}
+        </div>
         {/* Audit trail: leg is traceable to this bse_board_signal + DK snapshot. */}
         <p className="mt-1 font-mono text-[10px] leading-relaxed text-muted-foreground/80">
           {`#${leg.gameId} · fair ${fmtSpread(leg.fairHomeSpread)} · ${leg.bookmaker ?? "dk"}${leg.snapshotAt ? ` · ${new Date(leg.snapshotAt).toISOString().slice(0, 16).replace("T", " ")}Z` : ""}`}
