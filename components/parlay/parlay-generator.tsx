@@ -231,7 +231,7 @@ const SHOPPING_STYLE: Record<LineShoppingState, string> = {
  * Customer-facing "move the line" status for a leg, derived (display-only) from
  * the existing BSE grade. Renders the state chip, a directional arrow, the
  * plain-English hint, and — when an alternate can't be auto-verified — a CTA
- * that deep-links into the Parlay Analyzer with this game/side preselected.
+ * that deep-links into the Analyze sub-tab with this game/side preselected.
  */
 function ShoppingStatus({ leg }: { leg: GameRead }) {
   const shop = lineShoppingHint(leg)
@@ -251,7 +251,7 @@ function ShoppingStatus({ leg }: { leg: GameRead }) {
       {shop.hint && <span className="text-[11px] leading-relaxed text-muted-foreground">{shop.hint}</span>}
       {shop.state === "ALT_WORTH_CHECKING" && leg.side && (
         <Link
-          href={`/parlay-analyzer?game=${encodeURIComponent(leg.gameId)}&side=${leg.side}`}
+          href={`/getting-parlaid?tab=analyze&game=${encodeURIComponent(leg.gameId)}&side=${leg.side}`}
           className="ml-auto inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/5 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wide text-primary transition-colors hover:bg-primary/15"
         >
           <Search className="size-3" aria-hidden="true" />
