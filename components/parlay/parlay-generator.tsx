@@ -247,16 +247,14 @@ function LegRow({ leg }: { leg: GameRead }) {
           )}
         </p>
         <p className="mt-0.5 text-xs text-muted-foreground">{leg.matchup}</p>
-        {/* Line provenance + shopping recommendation. */}
+        {/* Line provenance badge. Customer-facing recommendation copy is
+            intentionally omitted here; mainLineOnly + recommendation state and
+            the alternate-spread fallback remain intact in lib/parlay/generate.ts
+            and internal diagnostics. */}
         <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
           <span className="rounded border border-[var(--rating-strong)]/40 bg-[var(--rating-strong)]/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-[var(--rating-strong)]">
             {LINE_SOURCE_COPY[leg.source].label}
           </span>
-          {leg.recommendationText && (
-            <span className="font-mono text-[10px] leading-relaxed text-muted-foreground">
-              {leg.recommendation === "STAY_AT_MAIN" ? "Main line" : "Buy alt"} · {leg.recommendationText}
-            </span>
-          )}
         </div>
         {/* Audit trail: leg is traceable to this bse_board_signal + DK snapshot. */}
         <p className="mt-1 font-mono text-[10px] leading-relaxed text-muted-foreground/80">
