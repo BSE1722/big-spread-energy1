@@ -10,18 +10,21 @@ import {
   type LiveBoardGame,
 } from "@/lib/use-live-board"
 import { TeamName } from "@/components/team-name"
+import { evaluateGame } from "@/lib/parlay/generate"
 
 const PLACEHOLDER = "—"
 
 /**
  * The real current-week slate, shared by both parlay tools. Every game and
  * market line comes from the live board (/api/cfbd-board), so this advances
- * automatically with the active week. It intentionally shows only real market
- * data and tags each game "Awaiting BSE grade" — no fabricated legs, ratings,
- * probabilities, or EV until the model publishes.
+ * automatically with the active week. It shows only real market data and grades
+ * each game through the SAME per-game read the ticket generator uses (no
+ * fabricated legs, ratings, probabilities, or EV): "Awaiting BSE Grade" when no
+ * projection exists, "No BSE edge" when a projection exists but misses the gate,
+ * and the real spread edge when it qualifies.
  */
 export function CurrentWeekSlate() {
-  const { games, week, loading, error } = useLiveBoard()
+  const { games, week, projectionsAvailable, loading, error } = useLiveBoard()
 
   if (loading) {
     return (
@@ -65,16 +68,27 @@ export function CurrentWeekSlate() {
       </div>
       <ul className="divide-y divide-border">
         {rows.map((g) => (
-          <SlateRow key={g.id} game={g} />
+          <SlateRow key={g.id} game={g} projectionsAvailable={projectionsAvailable} />
         ))}
       </ul>
     </div>
   )
 }
 
-function SlateRow({ game }: { game: LiveBoardGame }) {
+function SlateRow({
+  game,
+  projectionsAvailable,
+}: {
+  game: LiveBoardGame
+  projectionsAvailable: boolean
+}) {
   const spread = formatFavoredSpread(game) ?? PLACEHOLDER
   const total = game.marketTotal != null ? `O/U ${game.marketTotal.toFixed(1)}` : PLACEHOLDER
+
+  // Grade this game through the SAME read the ticket generator uses so the
+  // badge never drifts from the tickets. Three real states, no fabrication.
+  const read = evaluateGame(game)
+  const showGrade = projectionsAvailable && read.hasProjection
 
   return (
     <li>
@@ -97,13 +111,45 @@ function SlateRow({ game }: { game: LiveBoardGame }) {
         <div className="flex items-center justify-between gap-6 border-t border-border pt-3 sm:justify-end sm:border-0 sm:pt-0 sm:gap-8">
           <Stat label="Spread" value={spread} />
           <Stat label="Total" value={total} />
-          <span className="hidden rounded border border-border px-2 py-1 font-mono text-[10px] uppercase tracking-wide text-muted-foreground sm:inline-block">
-            Awaiting BSE grade
-          </span>
+          <SlateBadge showGrade={showGrade} read={read} />
           <ArrowRight className="hidden size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 sm:block" />
         </div>
       </Link>
     </li>
+  )
+}
+
+function SlateBadge({
+  showGrade,
+  read,
+}: {
+  showGrade: boolean
+  read: ReturnType<typeof evaluateGame>
+}) {
+  // 1. No projection published yet → honest pending state.
+  if (!showGrade) {
+    return (
+      <span className="hidden rounded border border-border px-2 py-1 font-mono text-[10px] uppercase tracking-wide text-muted-foreground sm:inline-block">
+        Awaiting BSE Grade
+      </span>
+    )
+  }
+
+  // 2. Projection exists and clears the edge gate → real qualifying read.
+  if (read.eligible && read.lineEdge != null) {
+    const edge = `${read.lineEdge > 0 ? "+" : ""}${read.lineEdge.toFixed(1)}`
+    return (
+      <span className="hidden rounded border border-[var(--rating-strong)]/40 bg-[var(--rating-strong)]/10 px-2 py-1 font-mono text-[10px] uppercase tracking-wide text-[var(--rating-strong)] sm:inline-block">
+        {`BSE ${read.pickedTeamAbbr} ${edge}`}
+      </span>
+    )
+  }
+
+  // 3. Projection exists but misses the gate → non-eligible state.
+  return (
+    <span className="hidden rounded border border-border bg-secondary/50 px-2 py-1 font-mono text-[10px] uppercase tracking-wide text-muted-foreground sm:inline-block">
+      No BSE edge
+    </span>
   )
 }
 
