@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Plus, X, SlidersHorizontal, RotateCcw, Info } from "lucide-react"
 import {
   useLiveBoard,
@@ -155,6 +155,25 @@ export function InteractiveAnalyzer() {
   function setAlt(key: string, altHomeSpread: number | null, altPrice: number | null) {
     setLegs((prev) => prev.map((l) => (l.key === key ? { ...l, altHomeSpread, altPrice } : l)))
   }
+
+  // Deep-link preselection: Getting Parlaid's "Analyze an alternate" CTA links
+  // here with ?game=<id>&side=<home|away>. Seed that exact leg once the board
+  // loads so the user can immediately type the DK alternate they see. Read from
+  // the URL directly (client-only) to avoid a Suspense boundary requirement.
+  const seededRef = useRef(false)
+  useEffect(() => {
+    if (seededRef.current || loading || games.length === 0) return
+    seededRef.current = true
+    const params = new URLSearchParams(window.location.search)
+    const gameId = params.get("game")
+    if (!gameId || !games.some((g) => g.id === gameId)) return
+    const side: BetSide = params.get("side") === "away" ? "away" : "home"
+    setLegs((prev) =>
+      prev.some((l) => l.gameId === gameId)
+        ? prev
+        : [...prev, { key: `${gameId}:${Date.now()}`, gameId, side, altHomeSpread: null, altPrice: null }],
+    )
+  }, [loading, games])
 
   // Evaluate every leg against the frozen fair line + its (main or alt) price.
   const evaluated = legs.map((leg) => {

@@ -87,6 +87,13 @@ export interface GameRead {
   mainLineOnly: boolean
   /** Which line BSE recommends taking after shopping the available ladder. */
   recommendation: "STAY_AT_MAIN" | "BUY_ALTERNATE" | null
+  /**
+   * Direction of the best VERIFIED ladder rung vs the main line, when a real
+   * multi-rung ladder was evaluated: "buy" = a safer number (fewer points to
+   * cover), "sell" = a longer number. Null today (only the main line is
+   * ingested, so there is nothing to move to). Never inferred/fabricated.
+   */
+  recommendationDirection: "buy" | "sell" | null
   /** Plain-English explanation of the recommendation. */
   recommendationText: string | null
   /** ---- audit trail: traceable to the bse_board_signal row + DK snapshot ---- */
@@ -138,6 +145,7 @@ export function evaluateGame(g: GeneratorGame): GameRead {
       source: "LIVE_DK",
       mainLineOnly: true,
       recommendation: null,
+      recommendationDirection: null,
       recommendationText: null,
     }
   }
@@ -177,6 +185,19 @@ export function evaluateGame(g: GeneratorGame): GameRead {
       ? "Main line is the best value on the ladder — buying extra points isn't worth the added juice."
       : `Best value on the DK ladder: ${bestSpread! < 0 ? bestSpread : `+${bestSpread}`} (home-relative).`
 
+  // Direction of the verified best rung vs the main line (team-facing): a more
+  // favorable picked spread = "buy" (safer number), a less favorable one =
+  // "sell". Only meaningful when a REAL ladder was evaluated; null today.
+  const bestPicked = bestSpread == null ? null : side === "home" ? bestSpread : -bestSpread
+  const recommendationDirection: "buy" | "sell" | null =
+    !selection.mainLineOnly && bestPicked != null && ev.pickedSpread != null
+      ? bestPicked > ev.pickedSpread
+        ? "buy"
+        : bestPicked < ev.pickedSpread
+          ? "sell"
+          : null
+      : null
+
   return {
     ...base,
     hasProjection: true,
@@ -195,6 +216,7 @@ export function evaluateGame(g: GeneratorGame): GameRead {
     source: "LIVE_DK",
     mainLineOnly: selection.mainLineOnly,
     recommendation,
+    recommendationDirection,
     recommendationText,
   }
 }
@@ -215,6 +237,101 @@ function ladderRungsFor(
 ): LadderRung[] {
   if (offeredHomeSpread == null) return []
   return [{ homeSpread: offeredHomeSpread, price }]
+}
+
+/* --------------------------- line-shopping hint --------------------------- */
+
+/**
+ * DISPLAY-ONLY line-edge cushion at which BSE suggests a bettor CHECK a safer
+ * alternate number. This is NOT a bet threshold, is NOT part of the frozen
+ * model, and is never derived from results — it only controls when the
+ * customer-facing "worth checking" buy cue appears.
+ *
+ * Default is gate-derived, not arbitrary: `LINE_EDGE_GATE + 1`. The meaning is
+ * "even after buying one point of protection, the number would still clear
+ * BSE's edge gate," which is the honest precondition for suggesting a bettor
+ * shop a safer number. Tunable via env, matching price-aware.ts's tunables.
+ */
+export const ALT_WORTH_CHECKING_CUSHION = Number(
+  process.env.BSE_ALT_WORTH_CHECKING_CUSHION ?? LINE_EDGE_GATE + 1,
+)
+
+export type LineShoppingState = "STAY_AT_MAIN" | "BUY_POINTS" | "SELL_POINTS" | "ALT_WORTH_CHECKING"
+
+export interface LineShopping {
+  state: LineShoppingState
+  /** "buy" = safer number (→), "sell" = longer number (←), null = neither. */
+  direction: "buy" | "sell" | null
+  /** True ONLY when derived from a real evaluated DK ladder (never today). */
+  verified: boolean
+  /** Short, plain-English cue for the customer. */
+  hint: string
+}
+
+/**
+ * Map an already-graded leg to a customer-facing "move the line" cue. This is
+ * pure DISPLAY logic layered on top of the existing price-aware grade — it does
+ * not re-grade, change any threshold, or fabricate an alternate spread/price.
+ *
+ *   - BUY_POINTS / SELL_POINTS are asserted ONLY when a REAL multi-rung DK
+ *     ladder was evaluated (!mainLineOnly) and price-aware `selectBestRung`
+ *     picked a non-main rung; the direction comes from that verified rung.
+ *     Today the SGO tier ingests only the main line, so this never fires.
+ *   - When only the main line is available (today), BSE cannot verify a ladder,
+ *     so it can only SUGGEST checking an alternate (ALT_WORTH_CHECKING), with a
+ *     direction inferred from EXISTING signals, never a fabricated number:
+ *       • expensive price (GOOD_LINE_EXPENSIVE) → a longer number may price
+ *         better (sell, ←);
+ *       • a comfortable cushion on a well-priced number → a safer number may
+ *         still hold value (buy, →).
+ *   - Otherwise STAY_AT_MAIN.
+ */
+export function lineShoppingHint(read: GameRead): LineShopping {
+  if (!read.hasProjection || read.side == null) {
+    return { state: "STAY_AT_MAIN", direction: null, verified: false, hint: "" }
+  }
+
+  // Verified ladder path (real alternate rungs evaluated). Dead today.
+  if (!read.mainLineOnly) {
+    if (read.recommendation === "BUY_ALTERNATE" && read.recommendationDirection) {
+      return {
+        state: read.recommendationDirection === "buy" ? "BUY_POINTS" : "SELL_POINTS",
+        direction: read.recommendationDirection,
+        verified: true,
+        hint: read.recommendationText ?? "A better DraftKings number is available.",
+      }
+    }
+    return {
+      state: "STAY_AT_MAIN",
+      direction: null,
+      verified: true,
+      hint: read.recommendationText ?? "Main line is the best value on the ladder.",
+    }
+  }
+
+  // Unverifiable (main line only = today): SUGGEST checking, never assert.
+  if (read.classification === "GOOD_LINE_EXPENSIVE") {
+    return {
+      state: "ALT_WORTH_CHECKING",
+      direction: "sell",
+      verified: false,
+      hint: "The price is steep — a longer number may price better on DraftKings.",
+    }
+  }
+  if (read.classification === "STRONG_LINE_PRICE_OK" && (read.lineEdge ?? 0) >= ALT_WORTH_CHECKING_CUSHION) {
+    return {
+      state: "ALT_WORTH_CHECKING",
+      direction: "buy",
+      verified: false,
+      hint: "Big cushion vs the fair line — a safer number may still hold value.",
+    }
+  }
+  return {
+    state: "STAY_AT_MAIN",
+    direction: null,
+    verified: false,
+    hint: "Main line is the play — no clear alternate advantage to shop.",
+  }
 }
 
 /** Every game's read, in kickoff order. Drives the slate badges. */
