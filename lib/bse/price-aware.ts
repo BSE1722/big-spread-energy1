@@ -135,6 +135,34 @@ export function priceTier(price: number | null | undefined): PriceTier {
   return "prohibitive"
 }
 
+/** American odds -> decimal odds. Pure identity; used for combining leg prices. */
+export function decimalFromAmerican(a: number): number {
+  return a < 0 ? 1 + 100 / -a : 1 + a / 100
+}
+/** Decimal odds -> American odds. Null when decimal is degenerate (<= 1). */
+export function americanFromDecimal(d: number): number | null {
+  if (!Number.isFinite(d) || d <= 1) return null
+  return d >= 2 ? Math.round((d - 1) * 100) : -Math.round(100 / (d - 1))
+}
+
+/**
+ * Combine per-leg American prices into the real parlay price by multiplying
+ * decimal odds. This is the MARKET price (juice) of the combined ticket — NOT
+ * an expected value or win-probability claim. Returns null if any leg is
+ * missing a price, so we never show a partial/guessed combined number.
+ */
+export function combineAmericanPrices(
+  prices: (number | null | undefined)[],
+): { decimal: number; american: number | null } | null {
+  if (prices.length === 0) return null
+  let dec = 1
+  for (const p of prices) {
+    if (p == null || !Number.isFinite(p)) return null
+    dec *= decimalFromAmerican(p)
+  }
+  return { decimal: Math.round(dec * 1000) / 1000, american: americanFromDecimal(dec) }
+}
+
 /* -------------------------------- Line edge ------------------------------- */
 
 /**
@@ -332,6 +360,117 @@ export function selectBestRung(
         ? "Only the DraftKings main line is ingested; alternate rungs were not fabricated. Enter alternate spreads/prices to compare."
         : `Evaluated ${rungs.length} DraftKings rungs for the ${side} side.`,
   }
+}
+
+/* ---------------------------- Line provenance ----------------------------- */
+
+/**
+ * Where a spread + price came from. This is a data-integrity distinction the UI
+ * must surface: a verified DraftKings main line (from SportsGameOdds) is NOT the
+ * same as a number the user typed off their own bet slip.
+ */
+export type LineSource = "LIVE_DK" | "USER_ENTERED"
+
+export const LINE_SOURCE_COPY: Record<LineSource, { label: string; long: string }> = {
+  LIVE_DK: { label: "LIVE DK", long: "Verified DraftKings line from SportsGameOdds" },
+  USER_ENTERED: { label: "USER ENTERED", long: "Manually entered — not verified sportsbook data" },
+}
+
+/* -------------------------- Buy-points tradeoff --------------------------- */
+
+/**
+ * Max breakeven cost, in percentage points per point of spread bought, that BSE
+ * still calls a reasonable tradeoff when the resulting price is not already in
+ * the "reasonable" tier. Env-tunable like the price bands; NEVER derived from
+ * results. Example: moving a line 2 pts that raises breakeven by 8 points costs
+ * 4.0 pts/pt.
+ */
+export const BUY_POINTS_COST_PER_POINT_MAX = Number(
+  process.env.BSE_BUY_POINTS_COST_PER_POINT_MAX ?? 4,
+)
+
+export interface PointsPurchaseInput {
+  /** Team-facing spread being taken (away = -homeSpread). */
+  pickedSpread: number | null
+  /** American price for that number. */
+  price: number | null
+}
+
+export interface PointsPurchaseAssessment {
+  /** Extra protection bought, in points (positive = safer number). */
+  pointsGained: number | null
+  fromBreakeven: number | null
+  toBreakeven: number | null
+  /** Increase in implied breakeven from the move, in percentage points. */
+  breakevenCostPct: number | null
+  /** breakevenCostPct per point of protection. */
+  costPerPoint: number | null
+  toTier: PriceTier
+  /** True = the extra protection is worth the added juice; false = too pricey. */
+  worthwhile: boolean | null
+  verdict: string
+}
+
+/**
+ * Decide whether moving from one spread/price to another (e.g. buying points off
+ * the DK main line to a safer alternate) is worthwhile — WITHOUT any EV or
+ * win-probability claim. Pure arithmetic on points of protection and implied
+ * breakeven (the win rate the PRICE demands, a definitional identity).
+ *
+ * Rule (transparent, documented):
+ *   - If the move doesn't buy protection (pointsGained <= 0), it isn't a
+ *     point-purchase — say so.
+ *   - If the safer number is still "reasonable" priced, it's worth it.
+ *   - Otherwise, worth it only if breakeven cost per point <= the tunable gate;
+ *     above that the juice outweighs the protection → stay at the cheaper line.
+ */
+export function assessPointsPurchase(
+  from: PointsPurchaseInput,
+  to: PointsPurchaseInput,
+): PointsPurchaseAssessment {
+  const fromBreakeven = americanToImpliedProb(from.price)
+  const toBreakeven = americanToImpliedProb(to.price)
+  const toTier = priceTier(to.price)
+
+  const pointsGained =
+    from.pickedSpread != null && to.pickedSpread != null
+      ? Math.round((to.pickedSpread - from.pickedSpread) * 100) / 100
+      : null
+
+  const breakevenCostPct =
+    fromBreakeven != null && toBreakeven != null
+      ? Math.round((toBreakeven - fromBreakeven) * 1000) / 10
+      : null
+
+  const costPerPoint =
+    breakevenCostPct != null && pointsGained != null && pointsGained > 0
+      ? Math.round((breakevenCostPct / pointsGained) * 10) / 10
+      : null
+
+  let worthwhile: boolean | null
+  let verdict: string
+
+  if (pointsGained == null || breakevenCostPct == null) {
+    worthwhile = null
+    verdict = "Need both a spread and a price on each line to weigh the tradeoff."
+  } else if (pointsGained <= 0) {
+    worthwhile = false
+    verdict =
+      pointsGained === 0
+        ? "Same number — this only changes the price, not the protection."
+        : `This gives up ${Math.abs(pointsGained)} pt of protection, not buys it.`
+  } else if (toTier === "reasonable") {
+    worthwhile = true
+    verdict = `Worth it — ${pointsGained} pt more protection while the price stays reasonable.`
+  } else if (costPerPoint != null && costPerPoint <= BUY_POINTS_COST_PER_POINT_MAX) {
+    worthwhile = true
+    verdict = `Reasonable tradeoff — ${pointsGained} pt of protection costs ${breakevenCostPct} pt of breakeven (${costPerPoint}/pt).`
+  } else {
+    worthwhile = false
+    verdict = `Too expensive — ${breakevenCostPct} pt of added breakeven for ${pointsGained} pt (${costPerPoint ?? "—"}/pt). Stay at the cheaper line.`
+  }
+
+  return { pointsGained, fromBreakeven, toBreakeven, breakevenCostPct, costPerPoint, toTier, worthwhile, verdict }
 }
 
 /* ------------------------------ Parlay summary ---------------------------- */

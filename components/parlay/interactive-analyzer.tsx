@@ -13,7 +13,10 @@ import { CurrentWeekSlate } from "@/components/parlay/current-week-slate"
 import {
   evaluateBet,
   summarizeParlay,
+  assessPointsPurchase,
+  combineAmericanPrices,
   CLASSIFICATION_COPY,
+  LINE_SOURCE_COPY,
   type BetSide,
   type BetClassification,
   type BetEvaluation,
@@ -70,6 +73,53 @@ function pickedSpreadFor(homeSpread: number | null, side: BetSide): number | nul
   return side === "home" ? homeSpread : -homeSpread
 }
 
+/** A leg identified as the ticket's best or worst, for the parlay-level read. */
+interface LegPoint {
+  label: string
+  classification: BetClassification
+  lineEdge: number | null
+  detail: string
+}
+
+const CLASS_RANK: Record<BetClassification, number> = {
+  STRONG_LINE_PRICE_OK: 3,
+  GOOD_LINE_EXPENSIVE: 2,
+  NO_EDGE: 1,
+  INSUFFICIENT_DATA: 0,
+}
+
+interface EvaluatedLeg {
+  leg: Leg
+  game: LiveBoardGame | undefined
+  evaluation: BetEvaluation
+  usingAlt: boolean
+}
+
+/**
+ * Identify the strongest and weakest legs (which leg helps / hurts the ticket
+ * most) from real per-leg classifications and line edges. No EV/win-prob.
+ */
+function analyzeLegs(evaluated: EvaluatedLeg[]): { weakest: LegPoint | null; strongest: LegPoint | null } {
+  const points: LegPoint[] = evaluated.map((e) => {
+    const abbr = e.game ? (e.leg.side === "home" ? e.game.home.abbr : e.game.away.abbr) : "—"
+    return {
+      label: `${abbr} ${fmtSpread(e.evaluation.pickedSpread)}`,
+      classification: e.evaluation.classification,
+      lineEdge: e.evaluation.lineEdge,
+      detail: CLASSIFICATION_COPY[e.evaluation.classification].label,
+    }
+  })
+  if (points.length < 2) return { weakest: null, strongest: null }
+
+  const byWorst = [...points].sort(
+    (a, b) => CLASS_RANK[a.classification] - CLASS_RANK[b.classification] || (a.lineEdge ?? 0) - (b.lineEdge ?? 0),
+  )
+  const byBest = [...points].sort(
+    (a, b) => CLASS_RANK[b.classification] - CLASS_RANK[a.classification] || (b.lineEdge ?? 0) - (a.lineEdge ?? 0),
+  )
+  return { weakest: byWorst[0] ?? null, strongest: byBest[0] ?? null }
+}
+
 const BADGE_STYLE: Record<BetClassification, string> = {
   STRONG_LINE_PRICE_OK: "border-[var(--rating-strong)]/40 bg-[var(--rating-strong)]/10 text-[var(--rating-strong)]",
   GOOD_LINE_EXPENSIVE: "border-[var(--rating-mid)]/40 bg-[var(--rating-mid)]/10 text-[var(--rating-mid)]",
@@ -121,6 +171,11 @@ export function InteractiveAnalyzer() {
   const summary = summarizeParlay(
     evaluated.map((e) => ({ classification: e.evaluation.classification, lineEdge: e.evaluation.lineEdge })),
   )
+
+  // Parlay-level readout (no EV/win-prob): real combined price when every leg
+  // has a price, plus which leg helps and hurts the ticket most.
+  const combined = combineAmericanPrices(evaluated.map((e) => e.evaluation.price))
+  const legAnalysis = analyzeLegs(evaluated)
 
   if (loading) {
     return (
@@ -212,7 +267,14 @@ export function InteractiveAnalyzer() {
       </div>
 
       {/* Ticket summary */}
-      {legs.length > 0 && <TicketSummary summary={summary} />}
+      {legs.length > 0 && (
+        <TicketSummary
+          summary={summary}
+          combinedAmerican={combined?.american ?? null}
+          weakest={legAnalysis.weakest}
+          strongest={legAnalysis.strongest}
+        />
+      )}
     </div>
   )
 }
@@ -255,6 +317,25 @@ function LegCard({
   const fairPicked = pickedSpreadFor(game.fairSpread, side)
   const copy = CLASSIFICATION_COPY[evaluation.classification]
   const breakevenPct = evaluation.impliedBreakeven != null ? `${(evaluation.impliedBreakeven * 100).toFixed(1)}%` : "—"
+  const source = LINE_SOURCE_COPY[usingAlt ? "USER_ENTERED" : "LIVE_DK"]
+
+  // When the user entered an alternate, weigh it against the verified DK main
+  // line: how much protection was bought vs how much extra juice it costs.
+  const mainEval = usingAlt
+    ? evaluateBet({
+        fairHomeSpread: game.fairSpread,
+        offeredHomeSpread: game.marketSpread,
+        price: mainPriceFor(game, side),
+        side,
+      })
+    : null
+  const tradeoff =
+    mainEval != null
+      ? assessPointsPurchase(
+          { pickedSpread: mainEval.pickedSpread, price: mainEval.price },
+          { pickedSpread: evaluation.pickedSpread, price: evaluation.price },
+        )
+      : null
 
   return (
     <li className="overflow-hidden rounded-xl border border-border bg-card">
@@ -270,9 +351,21 @@ function LegCard({
             <TeamName name={pickedTeam.name} abbr={pickedTeam.abbr} size="sm" />
             <span className="font-display text-lg font-bold tabular-nums text-foreground">{fmtSpread(pickedSpread)}</span>
           </div>
-          <p className="mt-0.5 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
-            {side === "home" ? `vs ${game.away.abbr}` : `@ ${game.home.abbr}`}
-          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <p className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
+              {side === "home" ? `vs ${game.away.abbr}` : `@ ${game.home.abbr}`}
+            </p>
+            <span
+              title={source.long}
+              className={`rounded border px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide ${
+                usingAlt
+                  ? "border-[var(--rating-mid)]/50 bg-[var(--rating-mid)]/10 text-[var(--rating-mid)]"
+                  : "border-[var(--rating-strong)]/40 bg-[var(--rating-strong)]/10 text-[var(--rating-strong)]"
+              }`}
+            >
+              {source.label}
+            </span>
+          </div>
         </div>
         <button
           type="button"
@@ -315,6 +408,28 @@ function LegCard({
           </p>
         </div>
       </div>
+
+      {/* buy-points tradeoff vs the verified DK main line */}
+      {tradeoff != null && tradeoff.pointsGained != null && (
+        <div className="flex items-start gap-2 border-t border-border bg-secondary/30 px-4 py-2.5">
+          <span
+            className={`mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+              tradeoff.worthwhile
+                ? "bg-[var(--rating-strong)]/20 text-[var(--rating-strong)]"
+                : "bg-[var(--rating-mid)]/20 text-[var(--rating-mid)]"
+            }`}
+            aria-hidden="true"
+          >
+            {tradeoff.worthwhile ? "✓" : "!"}
+          </span>
+          <div className="min-w-0">
+            <p className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
+              vs DK main {fmtSpread(pickedSpreadFor(game.marketSpread, side))} ({fmtPrice(mainPriceFor(game, side))})
+            </p>
+            <p className="mt-0.5 text-xs leading-relaxed text-foreground text-pretty">{tradeoff.verdict}</p>
+          </div>
+        </div>
+      )}
 
       {/* adjust panel */}
       <div className="border-t border-border px-4 py-2.5">
@@ -552,7 +667,17 @@ function SideButton({
 
 /* ------------------------------ ticket summary ----------------------------- */
 
-function TicketSummary({ summary }: { summary: ReturnType<typeof summarizeParlay> }) {
+function TicketSummary({
+  summary,
+  combinedAmerican,
+  weakest,
+  strongest,
+}: {
+  summary: ReturnType<typeof summarizeParlay>
+  combinedAmerican: number | null
+  weakest: LegPoint | null
+  strongest: LegPoint | null
+}) {
   const tone = summary.allStrong
     ? "border-[var(--rating-strong)]/40 bg-[var(--rating-strong)]/5"
     : summary.insufficient > 0 || summary.noEdge > 0
@@ -575,6 +700,37 @@ function TicketSummary({ summary }: { summary: ReturnType<typeof summarizeParlay
         <SummaryStat label="No edge" value={summary.noEdge} tone={summary.noEdge ? "bad" : "neutral"} />
         <SummaryStat label="Total line edge" value={`${fmtEdge(summary.totalLineEdge)} pt`} tone="neutral" />
       </div>
+
+      {/* Combined real parlay price + which leg helps / hurts most. */}
+      {(combinedAmerican != null || strongest || weakest) && (
+        <div className="mt-3 grid gap-2 border-t border-border pt-3 sm:grid-cols-3">
+          <div className="flex flex-col">
+            <span className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">Combined price</span>
+            <span className="font-display text-lg font-bold tabular-nums text-foreground">
+              {combinedAmerican != null ? fmtPrice(combinedAmerican) : "—"}
+            </span>
+            <span className="font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
+              {combinedAmerican != null ? "DK parlay juice — not EV" : "needs a price on every leg"}
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">Strongest leg</span>
+            <span className="font-display text-sm font-semibold text-[var(--rating-strong)]">
+              {strongest ? strongest.label : "—"}
+            </span>
+            <span className="font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
+              {strongest ? strongest.detail : "add 2+ legs"}
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">Hurting most</span>
+            <span className="font-display text-sm font-semibold text-foreground">{weakest ? weakest.label : "—"}</span>
+            <span className="font-mono text-[9px] uppercase tracking-wide text-muted-foreground">
+              {weakest ? weakest.detail : "add 2+ legs"}
+            </span>
+          </div>
+        </div>
+      )}
 
       <p className="mt-3 flex items-start gap-1.5 border-t border-border pt-3 font-mono text-[10px] leading-relaxed text-muted-foreground">
         <Info className="mt-0.5 size-3 shrink-0" />
