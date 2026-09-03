@@ -6,17 +6,28 @@
  * based: there is no background revalidation and no visitor-triggered upstream
  * call. Only `refreshSnapshot()` (admin action) ever hits SportsGameOdds.
  *
- * Storage: a single public Vercel Blob at a stable pathname, overwritten on
- * each refresh (public to match the connected Blob store; it contains only
- * sportsbook market data already shown on the public Board). The prior
- * snapshot's lines are carried forward into each game's
+ * Storage: a single Vercel Blob at a stable pathname, overwritten on each
+ * refresh and read back with token-authenticated private access (the connected
+ * store denies unauthenticated public content reads). It contains only
+ * sportsbook market data already shown on the Board. The prior snapshot's lines
+ * are carried forward into each game's
  * lineHistory (opening / previous / current + movement) so line movement can be
  * computed later without changing the BSE model or UI.
  */
 
-import { put, get } from "@vercel/blob"
+import { put, get, BlobNotFoundError } from "@vercel/blob"
 import { buildFreshMatch, type SeasonContextLite } from "@/lib/board-build"
 import type { GameWithOdds, LineHistory } from "@/lib/odds-match"
+
+/**
+ * Blob access mode for the odds snapshot + lock. The connected Blob store
+ * serves content privately (token-authenticated origin reads); a "public"
+ * content read of these objects is denied (403) by the store. Reads and writes
+ * MUST use the same mode, so both are pinned to "private" here. `get(access:
+ * "private")` authenticates the content read with BLOB_READ_WRITE_TOKEN and
+ * works regardless of how the object was originally written.
+ */
+const BLOB_ACCESS = "private" as const
 
 const SNAPSHOT_PATHNAME = "odds/draftkings-snapshot.json"
 const LOCK_PATHNAME = "odds/refresh.lock.json"
@@ -55,21 +66,28 @@ export interface RefreshSummary {
  */
 export async function loadSnapshot(): Promise<OddsSnapshot | null> {
   try {
-    const result = await get(SNAPSHOT_PATHNAME, { access: "public" })
+    const result = await get(SNAPSHOT_PATHNAME, { access: BLOB_ACCESS })
     if (!result || !result.stream) return null
     const text = await new Response(result.stream).text()
     if (!text) return null
     return JSON.parse(text) as OddsSnapshot
   } catch (err) {
-    // A missing blob is a normal "no snapshot yet" state, not an error.
-    console.log("[v0] loadSnapshot: no existing snapshot or read failed:", (err as Error)?.message)
+    // A genuinely missing blob is the normal "no snapshot yet" state → null.
+    if (err instanceof BlobNotFoundError) {
+      console.log("[v0] loadSnapshot: no snapshot stored yet.")
+      return null
+    }
+    // Any OTHER failure (e.g. a 403 access-mode mismatch) is NOT "no odds" — it
+    // would silently blank every DraftKings line and drop all parlay legs. Log
+    // loudly and still degrade to null, but make the real cause diagnosable.
+    console.error("[v0] loadSnapshot: snapshot read FAILED (not a missing blob):", (err as Error)?.message)
     return null
   }
 }
 
 async function saveSnapshot(snapshot: OddsSnapshot): Promise<void> {
   await put(SNAPSHOT_PATHNAME, JSON.stringify(snapshot), {
-    access: "public",
+    access: BLOB_ACCESS,
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: "application/json",
@@ -85,7 +103,7 @@ interface RefreshLock {
 
 async function readLock(): Promise<RefreshLock | null> {
   try {
-    const result = await get(LOCK_PATHNAME, { access: "public" })
+    const result = await get(LOCK_PATHNAME, { access: BLOB_ACCESS })
     if (!result || !result.stream) return null
     const text = await new Response(result.stream).text()
     if (!text) return null
@@ -97,7 +115,7 @@ async function readLock(): Promise<RefreshLock | null> {
 
 async function writeLock(lock: RefreshLock): Promise<void> {
   await put(LOCK_PATHNAME, JSON.stringify(lock), {
-    access: "public",
+    access: BLOB_ACCESS,
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: "application/json",
