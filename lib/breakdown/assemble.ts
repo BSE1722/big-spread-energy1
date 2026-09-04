@@ -23,6 +23,7 @@ import {
   type ChangeTrigger,
   type ContextFactor,
 } from "@/lib/bse/context-engine"
+import { buildNarrative, type BreakdownNarrative } from "@/lib/breakdown/narrative"
 import type { GameWithOdds } from "@/lib/odds-match"
 
 function round1(n: number | null): number | null {
@@ -116,6 +117,7 @@ export interface BreakdownAnalysis {
   context: ContextRead
   verdict: Verdict
   readStrength: ReadStrength
+  narrative: BreakdownNarrative
   factors: ContextFactor[]
   marketIntel: MarketIntel
   weather: WeatherImpact
@@ -326,6 +328,39 @@ export async function assembleBreakdown(gameId: string): Promise<AssembledBreakd
   const marketIntel = marketIntelFrom(snap?.lineHistory ?? null, context.baseFairHomeSpread, finalFair)
   const changes = whatCouldChange({ verdict, thresholds, weather })
 
+  // --- Narrative layer (pure prose + itemized ledger over the audited read) ---
+  const narrative = buildNarrative({
+    homeTeam: game.home.name,
+    awayTeam: game.away.name,
+    neutralSite: game.neutralSite,
+    base: {
+      fairHomeSpread: baseFair,
+      edgePoints: sig ? sig.edge : null,
+      rating: signal ? signal.rating : null,
+      threshold: LEAN_THRESHOLD,
+    },
+    context,
+    verdict,
+    marketSpreadHome,
+    market: {
+      openingSpread: marketIntel.openingSpread,
+      currentSpread: marketIntel.currentSpread,
+      spreadMovement: marketIntel.spreadMovement,
+      moveDirection: marketIntel.moveDirection,
+      moveNarrative: marketIntel.moveNarrative,
+    },
+    weather,
+    weatherDetail: weatherDetail
+      ? {
+          temperatureF: weatherDetail.temperatureF,
+          windSpeedMph: weatherDetail.windSpeedMph,
+          windGustMph: weatherDetail.windGustMph,
+          precipitationProbabilityPct: weatherDetail.precipitationProbabilityPct,
+          humidityPct: weatherDetail.humidityPct,
+        }
+      : null,
+  })
+
   const candidate = await getFrozenCandidate().catch(() => null)
   const freshness: Freshness = {
     model: { at: candidate?.frozenAt ?? null, hash: candidate?.modelHash ?? null },
@@ -352,6 +387,7 @@ export async function assembleBreakdown(gameId: string): Promise<AssembledBreakd
     context,
     verdict,
     readStrength: strength,
+    narrative,
     factors: CONTEXT_FACTORS,
     marketIntel,
     weather,

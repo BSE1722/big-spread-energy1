@@ -14,9 +14,12 @@ import {
   CheckCircle2,
   MinusCircle,
   XCircle,
+  ScrollText,
+  FileText,
 } from "lucide-react"
 import { formatSpreadTeam } from "@/lib/bse/context-engine"
 import { WEATHER_IMPACT_LABEL } from "@/lib/bse/weather-impact"
+import type { FactorStatus } from "@/lib/breakdown/narrative"
 import type { BreakdownAnalysis } from "@/lib/breakdown/assemble"
 import { AltSpreadLab } from "@/components/breakdown/alt-spread-lab"
 
@@ -77,6 +80,7 @@ export function BreakdownFull({
     context,
     verdict,
     readStrength,
+    narrative,
     factors,
     marketIntel,
     weather,
@@ -146,6 +150,70 @@ export function BreakdownFull({
           <Sub note={readStrength.meaning} />
         </Panel>
       </div>
+
+      {/* 2b. WHY BSE READS IT THIS WAY — written analysis per factor */}
+      <Panel icon={ScrollText} title="Why BSE Reads It This Way" span>
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          A written read on every input feeding the fair spread — what BSE evaluated, what it found, and whether it
+          moved the number or was already inside the frozen model. Nothing is fabricated; missing feeds are labelled.
+        </p>
+        <ul className="mt-3 space-y-2.5">
+          {narrative.why.map((f) => (
+            <li key={f.key} className="rounded-lg bg-background p-3.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusIcon status={f.status} />
+                <span className="font-mono text-xs font-semibold text-foreground">{f.label}</span>
+                <StatusBadge status={f.status} label={f.statusLabel} />
+              </div>
+              <p className="mt-1.5 text-xs leading-relaxed text-foreground/75">{f.text}</p>
+            </li>
+          ))}
+        </ul>
+      </Panel>
+
+      {/* 2c. BSE READ — premium plain-English summary + itemized ledger */}
+      <section className="rounded-xl border border-primary/30 bg-primary/5 p-5">
+        <div className="flex items-center gap-2">
+          <FileText className="size-4 text-primary" />
+          <h2 className="font-mono text-xs font-bold uppercase tracking-widest text-primary">BSE Read</h2>
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-foreground/90">{narrative.bseRead}</p>
+
+        <div className="mt-4 rounded-lg border border-border bg-card p-4">
+          <div className="space-y-1.5 font-mono text-sm">
+            <LedgerRow label="Base model fair spread" value={narrative.ledger.baseFairLabel} strong />
+            {narrative.ledger.adjustments.map((a) => (
+              <div key={a.key} className="flex items-center justify-between gap-3">
+                <span className="flex flex-wrap items-center gap-2 text-foreground/80">
+                  {a.label}
+                  <StatusBadge status={a.status} label={a.statusLabel} />
+                </span>
+                <span className={a.points === 0 ? "text-muted-foreground" : "font-semibold text-primary"}>
+                  {a.points === 0 ? "+0.0" : fmt(a.points, true)}
+                </span>
+              </div>
+            ))}
+            <div className="my-1 border-t border-border" />
+            <LedgerRow label="Final BSE fair spread" value={narrative.ledger.finalFairLabel} strong />
+            <LedgerRow label="Current market spread" value={narrative.ledger.marketLabel} />
+            <LedgerRow label="Final edge" value={narrative.ledger.finalEdgeLabel} />
+            <LedgerRow label="BSE rating" value={narrative.ledger.rating != null ? String(narrative.ledger.rating) : DASH} />
+            <div className="my-1 border-t border-border" />
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-semibold text-foreground">BSE Read</span>
+              <span
+                className={`rounded px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-wider ${
+                  narrative.ledger.readCode === "NO_LEAN"
+                    ? "bg-background text-muted-foreground"
+                    : "bg-primary/15 text-primary"
+                }`}
+              >
+                {narrative.ledger.readLabel}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* 3. HOW BSE GOT THERE — Base → adjustments → Final ledger */}
       <Panel icon={Layers} title="How BSE Got There" span>
@@ -420,6 +488,28 @@ function UnavailableCard({ note }: { note: string }) {
         {note} No adjustment is applied and nothing is inferred from the absence of data.
       </p>
     </div>
+  )
+}
+
+function StatusIcon({ status }: { status: FactorStatus }) {
+  if (status === "ADJUSTED") return <CheckCircle2 className="size-4 shrink-0 text-primary" />
+  if (status === "NO_MATERIAL_IMPACT") return <MinusCircle className="size-4 shrink-0 text-muted-foreground" />
+  if (status === "IN_BASE") return <Layers className="size-4 shrink-0 text-muted-foreground" />
+  return <XCircle className="size-4 shrink-0 text-muted-foreground/70" />
+}
+
+function StatusBadge({ status, label }: { status: FactorStatus; label: string }) {
+  const cls: Record<FactorStatus, string> = {
+    ADJUSTED: "border-primary/40 bg-primary/10 text-primary",
+    NO_MATERIAL_IMPACT: "border-border bg-background text-muted-foreground",
+    IN_BASE: "border-border bg-background text-muted-foreground",
+    NOT_WIRED: "border-dashed border-border bg-background text-muted-foreground",
+    DATA_UNAVAILABLE: "border-dashed border-border bg-background text-muted-foreground",
+  }
+  return (
+    <span className={`rounded border px-1.5 py-0.5 font-mono text-[0.5625rem] uppercase tracking-wider ${cls[status]}`}>
+      {label}
+    </span>
   )
 }
 
