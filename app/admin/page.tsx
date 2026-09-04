@@ -95,6 +95,21 @@ export default async function AdminPage() {
       </section>
 
       <section className="mt-12 border-t border-border pt-8">
+        <h2 className="mb-2 font-display text-xl font-bold text-foreground">Postgame Review</h2>
+        <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+          The honest validation dataset. Record analyzed tickets (frozen at analysis time), grade them from
+          official CFBD finals, and read a deterministic postmortem — right/wrong calls, warning signs,
+          alt-line protection, confidence calibration, and ticket fragility.
+        </p>
+        <a
+          href="/admin/review"
+          className="inline-flex items-center rounded-md border border-border bg-card px-4 py-2 font-mono text-sm text-foreground transition-colors hover:bg-muted"
+        >
+          Open Postgame Review →
+        </a>
+      </section>
+
+      <section className="mt-12 border-t border-border pt-8">
         <h2 className="mb-2 font-display text-xl font-bold text-foreground">Research</h2>
         <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
           Shadow validation for the one frozen research candidate. These are logged, before-kickoff signals — not

@@ -10,6 +10,7 @@ import {
 } from "@/lib/use-live-board"
 import { TeamName } from "@/components/team-name"
 import { CurrentWeekSlate } from "@/components/parlay/current-week-slate"
+import { SaveForGrading, type SavableLeg } from "@/components/parlay/save-for-grading"
 import {
   evaluateBet,
   summarizeParlay,
@@ -294,8 +295,52 @@ export function InteractiveAnalyzer() {
           strongest={legAnalysis.strongest}
         />
       )}
+
+      {/* Admin-only: snapshot this ticket into the Postgame Review dataset.
+          Self-hides for non-admins; legs save as unrated (no numeric rating). */}
+      {legs.length > 0 && (
+        <SaveForGrading
+          legs={buildSavableLegs(evaluated)}
+          season={games[0]?.season ?? new Date().getFullYear()}
+          week={week ?? games[0]?.week ?? 1}
+          combinedAmerican={combined?.american ?? null}
+        />
+      )}
     </div>
   )
+}
+
+/**
+ * Map evaluated analyzer legs into the frozen Postgame Review shape. Only legs
+ * whose game resolved (so a CFBD id exists for grading) are included. The line
+ * saved is the REAL number the leg was graded against (alt when the user typed
+ * one, else the DK main line), team-facing to match the pick side.
+ */
+function buildSavableLegs(evaluated: EvaluatedLeg[]): SavableLeg[] {
+  const out: SavableLeg[] = []
+  for (const e of evaluated) {
+    if (!e.game) continue
+    const teamName = e.leg.side === "home" ? e.game.home.name : e.game.away.name
+    out.push({
+      gameId: e.game.id, // already `cfbd-<id>`
+      season: e.game.season,
+      week: e.game.week,
+      kickoffIso: e.game.kickoffTBD ? null : e.game.kickoff,
+      homeTeam: e.game.home.name,
+      awayTeam: e.game.away.name,
+      pickSide: e.leg.side,
+      pickLabel: `${teamName} ${fmtSpread(e.evaluation.pickedSpread)}`,
+      lineValue: e.evaluation.pickedSpread,
+      priceAmerican: e.evaluation.price,
+      classification: e.evaluation.classification,
+      lineEdge: e.evaluation.lineEdge,
+      fairLine: e.game.fairSpread,
+      altRecommendation: e.usingAlt
+        ? { pickedSpread: e.evaluation.pickedSpread, price: e.evaluation.price, verdict: e.evaluation.classification, worthwhile: null }
+        : null,
+    })
+  }
+  return out
 }
 
 /* --------------------------------- leg card -------------------------------- */
