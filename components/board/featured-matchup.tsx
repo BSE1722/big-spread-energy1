@@ -40,7 +40,7 @@ export function FeaturedMatchup({ game, access, accessLoading, onRequestUnlock }
 
   return (
     <section
-      className="relative overflow-hidden rounded-2xl border border-primary/30 bg-card p-6 sm:p-8"
+      className="@container/featured relative overflow-hidden rounded-2xl border border-primary/30 bg-card p-6 @2xl/featured:p-8"
       aria-label="BSE Game of the Week"
     >
       <div className="pointer-events-none absolute inset-0 radial-fade opacity-60" aria-hidden="true" />
@@ -52,10 +52,10 @@ export function FeaturedMatchup({ game, access, accessLoading, onRequestUnlock }
           </span>
         </div>
 
-        <div className="mt-5 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mt-5 flex flex-col gap-6 @2xl/featured:flex-row @2xl/featured:items-center @2xl/featured:justify-between">
           {/* Matchup */}
           <div className="min-w-0">
-            <div className="flex items-center gap-2 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
               <span>{formatKickoffDate(game.kickoff)}</span>
               <span aria-hidden="true">·</span>
               <span>{formatKickoff(game.kickoff, game.kickoffTBD)}</span>
@@ -67,14 +67,14 @@ export function FeaturedMatchup({ game, access, accessLoading, onRequestUnlock }
               )}
             </div>
             <div className="mt-3 flex flex-col gap-2">
-              <TeamName name={game.away.name} abbr={game.away.abbr} size="lg" className="text-xl sm:text-2xl" />
+              <TeamName name={game.away.name} abbr={game.away.abbr} size="lg" className="text-xl @sm/featured:text-2xl" />
               <span className="font-display text-xs uppercase tracking-widest text-muted-foreground">at</span>
-              <TeamName name={game.home.name} abbr={game.home.abbr} size="lg" className="text-xl sm:text-2xl" />
+              <TeamName name={game.home.name} abbr={game.home.abbr} size="lg" className="text-xl @sm/featured:text-2xl" />
             </div>
           </div>
 
           {/* Rating + lines */}
-          <div className="flex items-center gap-8">
+          <div className="flex items-center justify-between gap-6 @2xl/featured:justify-start @2xl/featured:gap-8">
             <BseRatingBadge rating={game.bseRating} size="lg" />
             <div className="flex flex-col gap-3">
               <div>
@@ -112,7 +112,7 @@ export function FeaturedMatchup({ game, access, accessLoading, onRequestUnlock }
           {state === "loading" ? (
             <div className="h-12 w-full max-w-xs animate-pulse rounded-lg bg-secondary/60" />
           ) : state === "guest" ? (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 @lg/featured:flex-row @lg/featured:items-center @lg/featured:justify-between">
               <p className="text-pretty text-sm text-muted-foreground">
                 Want to see what BSE sees? Create a free account for one full breakdown every week.
               </p>
@@ -128,7 +128,7 @@ export function FeaturedMatchup({ game, access, accessLoading, onRequestUnlock }
               </Link>
             </div>
           ) : state === "rookie-available" ? (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 @lg/featured:flex-row @lg/featured:items-center @lg/featured:justify-between">
               <p className="text-pretty text-sm text-muted-foreground">
                 Spend your free weekly breakdown on this game, or browse the Board first.
               </p>
@@ -141,7 +141,7 @@ export function FeaturedMatchup({ game, access, accessLoading, onRequestUnlock }
               </Button>
             </div>
           ) : state === "rookie-used-other" ? (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 @lg/featured:flex-row @lg/featured:items-center @lg/featured:justify-between">
               <p className="text-pretty text-sm text-muted-foreground">
                 You&apos;ve used this week&apos;s free breakdown. Go Pro to unlock every game.
               </p>
@@ -161,7 +161,7 @@ export function FeaturedMatchup({ game, access, accessLoading, onRequestUnlock }
               href={breakdownHref}
               className={cn(
                 buttonVariants({ variant: "default" }),
-                "min-h-12 w-full gap-2 px-6 font-display font-semibold uppercase tracking-wide sm:w-auto",
+                "min-h-12 w-full gap-2 px-6 font-display font-semibold uppercase tracking-wide @lg/featured:w-auto",
               )}
             >
               View full breakdown
