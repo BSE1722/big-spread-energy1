@@ -1,11 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server"
-import { getCurrentContext } from "@/lib/bse/season"
-import { getCfbdGameLites } from "@/lib/board-build"
-import { loadSnapshot } from "@/lib/odds-snapshot"
 import { getAccessState, canViewBreakdown } from "@/lib/access"
-import { getBoardSignalForGame } from "@/lib/board-signal/service"
-import { LEAN_THRESHOLD, describeSignal } from "@/lib/bse/model-signal"
-import type { GameWithOdds } from "@/lib/odds-match"
+import { assembleBreakdown } from "@/lib/breakdown/assemble"
 
 /**
  * Full BSE breakdown for a single game — SERVER-GATED.
@@ -14,63 +9,33 @@ import type { GameWithOdds } from "@/lib/odds-match"
  * passes for the current viewer:
  *   - Pro           → any game
  *   - Rookie        → only the one game they unlocked this week
- *   - Guest/others  → 403, with a `locked` flag so the client can show the
- *                     correct upgrade/sign-up state. No premium values leak.
+ *   - Guest/others  → 403-style `locked` flag so the client shows the correct
+ *                     upgrade/sign-up state. No premium values leak.
  *
- * Data honesty: market spread/total/moneyline + line movement come from the
- * frozen snapshot (real values). The BSE spread read (fair spread, edge, lean,
- * 0-100 rating) comes from the FROZEN model's display cache and is explicitly
- * flagged in-validation. Fields the model does not produce (totals, factors,
- * weather, injuries, news, simulation, best line, win probability) stay
- * null/unavailable — never fabricated.
+ * All assembly (base model read, context adjustments, market intel, weather
+ * impact, alt lab, freshness) lives in `assembleBreakdown` so this route and
+ * the server-rendered page share one honest, auditable source of truth.
+ *
+ * Data honesty is enforced in the assembler: market + line movement are real
+ * snapshot values; the base spread comes from the FROZEN model; weather impact
+ * is computed from real stored forecasts; injuries/news are reported as
+ * DATA UNAVAILABLE rather than fabricated or silently assumed neutral.
  */
 export const dynamic = "force-dynamic"
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ gameId: string }> }) {
   const { gameId } = await params
-  const ctx = getCurrentContext()
   const access = await getAccessState()
 
-  // Identify the game from the canonical CFBD schedule.
-  const cfbdGames = await getCfbdGameLites(ctx).catch(() => [])
-  const game = cfbdGames.find((g) => g.id === gameId) ?? null
-  if (!game) {
+  const assembled = await assembleBreakdown(gameId)
+  if (!assembled.found || !assembled.header) {
     return NextResponse.json({ ok: false, error: "Game not found." }, { status: 404 })
   }
 
-  // Public header info every viewer is allowed to see (matchup, kickoff, and
-  // the market line + BSE rating that already appear on the Board).
-  const snapshot = await loadSnapshot().catch(() => null)
-  const snap: GameWithOdds | undefined = snapshot?.games.find((s) => s.cfbdId === gameId)
-  const matched = snap?.oddsStatus === "matched"
-  const m = snap?.market
-  const marketTotal =
-    matched && m && m.total.points != null && m.total.withinPlausibleRange ? m.total.points : null
+  // Header info every viewer is allowed to see (matchup, kickoff, market line,
+  // and the public BSE rating that already appears on the Board).
+  const header = assembled.header
 
-  // Frozen-model read for this game (display cache; prediction fields only).
-  const { signal: sig } = await getBoardSignalForGame(game.season, game.week, gameId).catch(() => ({
-    signal: null,
-  }))
-
-  const header = {
-    id: game.id,
-    season: game.season,
-    week: game.week,
-    kickoff: game.kickoff,
-    kickoffTBD: game.kickoffTBD,
-    neutralSite: game.neutralSite,
-    away: { name: game.away.name, abbr: game.away.abbr },
-    home: { name: game.home.name, abbr: game.home.abbr },
-    marketSpread: matched && m ? m.spread.home : null,
-    marketTotal,
-    marketMoneyline: { home: m?.moneyline.home ?? null, away: m?.moneyline.away ?? null },
-    oddsStatus: snap?.oddsStatus ?? "unavailable",
-    // BSE rating is public on the Board; mirrors it here. Null until the frozen
-    // model has scored this game.
-    bseRating: sig ? sig.rating : (null as number | null),
-  }
-
-  // Authorization: only assemble the premium payload if allowed.
   if (!canViewBreakdown(access, gameId)) {
     return NextResponse.json(
       {
@@ -85,33 +50,6 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     )
   }
 
-  // Unlocked. Real market intelligence from the snapshot + the frozen model's
-  // spread read. The model produces ONE signal: a spread residual (edge). We
-  // surface the lean, fair spread, edge, and 0-100 signal strength — and
-  // nothing we don't have (no win probability, EV, totals model, weather,
-  // injuries, or news are fabricated). Everything model-derived is flagged
-  // in-validation so it is never presented as proven performance.
-  const modelSignal = sig ? describeSignal(sig, game.home.name, game.away.name, LEAN_THRESHOLD) : null
-  const leanTeam = modelSignal?.leanTeam ?? null
-
-  const analysis = {
-    lineMovement: snap?.lineHistory ?? null,
-    bestLine: null,
-    fairSpread: sig ? sig.fairHomeSpread : (null as number | null),
-    fairTotal: null as number | null, // totals are intentionally not modeled
-    modelEdgeSpread: sig ? sig.edge : (null as number | null),
-    modelEdgeTotal: null as number | null,
-    pick: leanTeam,
-    modelSignal,
-    factors: [] as { label: string; value: string | number | null }[],
-    weather: null as string | null,
-    injuries: [] as { team: string; note: string }[],
-    news: [] as { headline: string; source: string | null }[],
-    simulation: null as { runs: number; homeWinPct: number | null } | null,
-    explanation: null as string | null,
-    modelAvailable: !!sig,
-  }
-
   return NextResponse.json(
     {
       ok: true,
@@ -119,7 +57,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       tier: access.tier,
       viaWeeklyUnlock: access.tier === "rookie",
       header,
-      analysis,
+      analysis: assembled.analysis,
+      snapshotAt: assembled.snapshotAt,
     },
     { headers: { "Cache-Control": "private, no-store" } },
   )

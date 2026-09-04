@@ -266,6 +266,165 @@ export const gradingRuns = pgTable("grading_runs", {
 })
 
 // ---------------------------------------------------------------------------
+// POSTGAME BSE REVIEW — honest validation dataset.
+//
+// SCOPE: an admin-owned record of analyzed parlays ("tickets") that are FROZEN
+// at analysis time and later graded from official CFBD final scores, then a
+// deterministic postmortem is derived from the recorded fields.
+//
+// TWO IMMUTABLE ZONES per leg:
+//   1. PREGAME snapshot — everything the analyzer knew before kickoff. Written
+//      ONCE at record time and NEVER mutated afterward. Hindsight can never
+//      alter the original prediction (the whole point of the dataset).
+//   2. GRADED results — filled once from CFBD finals. Idempotent; only written
+//      while the leg is still "pending".
+//
+// HONESTY RULE: bseRating is the REAL rating that existed at analysis time, or
+// NULL. It is never fabricated, inferred, recalculated, or overwritten. Legs
+// without a real rating are excluded from confidence-calibration buckets.
+// ---------------------------------------------------------------------------
+
+/**
+ * One analyzed parlay ("ticket"), frozen at analysis time. `ticketNumber` is a
+ * human sequential id (#001, #002...). Ticket-level graded results are DERIVED
+ * from the legs; the `recorded*` columns hold an admin-asserted whole-ticket
+ * ground truth (used for historical tickets whose individual legs may not all
+ * be captured) and are shown alongside — never in place of — the graded counts.
+ */
+export const reviewTickets = pgTable(
+  "review_tickets",
+  {
+    id: text("id").primaryKey(),
+    ticketNumber: integer("ticketNumber").notNull(),
+    title: text("title"),
+    // 'admin' = recorded via the dashboard form; 'analyzer' = snapshotted from
+    // the interactive analyzer's live ticket.
+    source: text("source").notNull().default("admin"),
+
+    season: integer("season").notNull(),
+    week: integer("week").notNull(),
+    seasonType: text("seasonType").notNull().default("regular"),
+
+    // Frozen analysis time + who recorded it.
+    analyzedAt: timestamp("analyzedAt", { withTimezone: true }).notNull(),
+    createdBy: text("createdBy"),
+    notes: text("notes"),
+
+    // Real combined parlay price (juice), when every leg had a price. Never EV.
+    combinedPriceAmerican: integer("combinedPriceAmerican"),
+    legCount: integer("legCount").notNull().default(0),
+
+    // Pregame ticket-fragility, computed at record time and FROZEN.
+    fragilityTier: text("fragilityTier"), // LOW | MODERATE | HIGH | EXTREME
+    fragilityScore: doublePrecision("fragilityScore"),
+    fragilityReasons: jsonb("fragilityReasons"),
+    // Which legIndex was flagged the pregame weakest link.
+    weakestLegIndex: integer("weakestLegIndex"),
+
+    // Admin-asserted whole-ticket ground truth (optional). For Ticket #001 the
+    // owner recorded 6 legs / 4-2; these are displayed as "recorded" facts and
+    // never overwrite the counts computed from individually-graded legs.
+    recordedLegCount: integer("recordedLegCount"),
+    recordedWins: integer("recordedWins"),
+    recordedLosses: integer("recordedLosses"),
+    recordedPushes: integer("recordedPushes"),
+
+    // Tamper-evidence over the frozen pregame content. Server-generated only.
+    lockHash: text("lockHash").notNull(),
+
+    // Derived graded result (from legs).
+    status: text("status").notNull().default("pending"), // pending | graded
+    overallGrade: text("overallGrade"), // win | loss
+    legsWon: integer("legsWon"),
+    legsLost: integer("legsLost"),
+    legsPushed: integer("legsPushed"),
+    individualWinRate: doublePrecision("individualWinRate"),
+    gradedAt: timestamp("gradedAt", { withTimezone: true }),
+    gradedSource: text("gradedSource"),
+
+    createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    ticketNumberUnique: unique("review_tickets_number_unique").on(t.ticketNumber),
+    statusIdx: index("review_tickets_status_idx").on(t.status),
+    seasonWeekIdx: index("review_tickets_season_week_idx").on(t.season, t.week, t.seasonType),
+  }),
+)
+
+/**
+ * One leg of a review ticket. The pregame columns are frozen at record time;
+ * the graded columns are filled once from CFBD finals. `gameId` is `cfbd-<id>`
+ * to match the same CFBD lookup the Official Picks grader uses.
+ */
+export const reviewLegs = pgTable(
+  "review_legs",
+  {
+    id: text("id").primaryKey(),
+    ticketId: text("ticketId").notNull(),
+    legIndex: integer("legIndex").notNull(),
+
+    // ---- PREGAME (immutable) ----
+    gameId: text("gameId"), // cfbd-<id>; null when the game could not be resolved
+    season: integer("season").notNull(),
+    week: integer("week").notNull(),
+    seasonType: text("seasonType").notNull().default("regular"),
+    homeTeam: text("homeTeam").notNull(),
+    awayTeam: text("awayTeam").notNull(),
+    kickoff: timestamp("kickoff", { withTimezone: true }),
+
+    market: text("market").notNull().default("spread"), // spread | total | moneyline
+    pickSide: text("pickSide").notNull(), // home | away | over | under
+    pickLabel: text("pickLabel").notNull(), // e.g. "Georgia Tech -2.5"
+    // Frozen line relative to the PICKED team (matches gradePick's convention).
+    lineValue: doublePrecision("lineValue"),
+    priceAmerican: integer("priceAmerican"),
+    book: text("book").notNull().default("draftkings"),
+
+    // Real analyzer read at analysis time — REAL value or NULL, never fabricated.
+    bseRating: doublePrecision("bseRating"),
+    classification: text("classification"), // STRONG_LINE_PRICE_OK | ...
+    lineEdge: doublePrecision("lineEdge"), // points better than BSE fair
+    fairLine: doublePrecision("fairLine"), // home-relative BSE fair spread
+    recommendation: text("recommendation"),
+    confidenceRead: text("confidenceRead"),
+    riskFlags: jsonb("riskFlags"), // [{code,label,detail}]
+    altRecommendation: jsonb("altRecommendation"), // {pickedSpread,price,verdict,worthwhile}
+    contextInfo: jsonb("contextInfo"), // weather/injury/matchup/market at analysis
+    analyzedAt: timestamp("analyzedAt", { withTimezone: true }).notNull(),
+    lockHash: text("lockHash").notNull(),
+
+    // ---- GRADED (filled from CFBD finals; never touches pregame) ----
+    status: text("status").notNull().default("pending"), // pending | graded
+    homeScore: integer("homeScore"),
+    awayScore: integer("awayScore"),
+    grade: text("grade"), // win | loss | push
+    unitsDelta: doublePrecision("unitsDelta"),
+    favoriteWonOutright: boolean("favoriteWonOutright"),
+    // Picked-team actual margin (home/away points differential for the pick side).
+    actualMargin: doublePrecision("actualMargin"),
+    // Margin the pick needed to cover (= -lineValue for a spread).
+    requiredMargin: doublePrecision("requiredMargin"),
+    // actualMargin + lineValue: > 0 covered, = 0 push, < 0 missed.
+    marginVsSpread: doublePrecision("marginVsSpread"),
+    altWouldHaveWon: boolean("altWouldHaveWon"),
+    // saved | improved_not_needed | still_lost | favorite_lost_no_protection | na
+    altProtectionOutcome: text("altProtectionOutcome"),
+    gradedAt: timestamp("gradedAt", { withTimezone: true }),
+    gradedSource: text("gradedSource"),
+
+    createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    ticketLegUnique: unique("review_legs_ticket_leg_unique").on(t.ticketId, t.legIndex),
+    ticketIdx: index("review_legs_ticket_idx").on(t.ticketId),
+    statusIdx: index("review_legs_status_idx").on(t.status),
+    seasonWeekIdx: index("review_legs_season_week_idx").on(t.season, t.week, t.seasonType),
+  }),
+)
+
+// ---------------------------------------------------------------------------
 // Weather ingestion (INFRASTRUCTURE ONLY — no model math here).
 //
 // SOURCE-OF-TRUTH SPLIT (unchanged):
