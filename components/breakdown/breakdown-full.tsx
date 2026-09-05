@@ -16,10 +16,13 @@ import {
   XCircle,
   ScrollText,
   FileText,
+  Swords,
+  ChevronDown,
+  Cloudy,
 } from "lucide-react"
 import { formatSpreadTeam } from "@/lib/bse/context-engine"
 import { WEATHER_IMPACT_LABEL } from "@/lib/bse/weather-impact"
-import type { FactorStatus } from "@/lib/breakdown/narrative"
+import type { FactorStatus, KeyFactor } from "@/lib/breakdown/narrative"
 import type { BreakdownAnalysis } from "@/lib/breakdown/assemble"
 import { AltSpreadLab } from "@/components/breakdown/alt-spread-lab"
 
@@ -44,22 +47,18 @@ function timeAgo(iso: string | null): string {
 }
 
 const VERDICT_TONE: Record<string, string> = {
-  pass: "border-border bg-card text-foreground",
+  like: "border-primary bg-primary/15 text-foreground",
   lean: "border-primary/40 bg-primary/10 text-foreground",
-  strong: "border-primary bg-primary/15 text-foreground",
+  pass: "border-border bg-card text-foreground",
   neutral: "border-border bg-card text-muted-foreground",
 }
 
 /**
- * The full unlocked Pro breakdown — an analytics terminal, not a grid of empty
- * cards. Everything is assembled server-side in lib/breakdown/assemble.ts:
- *   - BSE Verdict + plain-English why
- *   - Final BSE fair spread vs market (with the Base → Final ledger)
- *   - Why BSE sees it (factor map / double-count guard)
- *   - Market intelligence (open/current/base/final + edge-at-open vs edge-now)
- *   - Weather (real impact calc), Injuries & News (honest DATA UNAVAILABLE)
- *   - Alternate Spread Lab (value thresholds + interactive check)
- *   - What could change the read, and data freshness / provenance
+ * The full unlocked Pro breakdown — a plain-English game report, not a database
+ * dump. Everything is assembled server-side in lib/breakdown/assemble.ts and
+ * phrased in lib/breakdown/narrative.ts. The customer hierarchy leads with the
+ * conclusion (verdict → number → the read → key factors) and pushes the audit
+ * trail (factor map, full ledger, freshness) into an expandable Deep Dive.
  *
  * Nothing here is fabricated. Where a provider is missing, the section says so.
  */
@@ -94,6 +93,8 @@ export function BreakdownFull({
 
   const homeAbbr = homeTeam.length > 4 ? homeTeam.slice(0, 4).toUpperCase() : homeTeam.toUpperCase()
   const awayAbbr = awayTeam.length > 4 ? awayTeam.slice(0, 4).toUpperCase() : awayTeam.toUpperCase()
+  const matchupWhy = narrative.why.find((f) => f.key === "matchup")
+  const readParagraphs = narrative.bseRead.split("\n\n").filter(Boolean)
 
   if (!modelAvailable) {
     return (
@@ -113,23 +114,28 @@ export function BreakdownFull({
 
   return (
     <div className="mt-6 space-y-4">
-      {/* In-validation banner */}
-      <div className="flex items-start gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
-        <ShieldAlert className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
-        <p className="text-xs leading-relaxed text-foreground/80">{inValidationNote}</p>
-      </div>
-
-      {/* 1. VERDICT */}
-      <section className={`rounded-xl border p-5 ${VERDICT_TONE[verdict.tone] ?? VERDICT_TONE.neutral}`}>
-        <div className="flex items-center gap-2">
+      {/* 1. VERDICT — plain-English headline + one-line reason */}
+      <section className={`rounded-xl border p-5 ${VERDICT_TONE[narrative.verdict.tone] ?? VERDICT_TONE.neutral}`}>
+        <div className="flex flex-wrap items-center gap-2">
           <Target className="size-4 text-primary" />
           <h2 className="font-mono text-xs font-bold uppercase tracking-widest text-primary">BSE Verdict</h2>
+          {narrative.verdict.flags.map((f) => (
+            <span
+              key={f}
+              className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 font-mono text-[0.5625rem] font-bold uppercase tracking-wider text-primary"
+            >
+              <Cloudy className="size-3" aria-hidden="true" />
+              {f}
+            </span>
+          ))}
         </div>
-        <p className="mt-2 font-display text-2xl font-bold tracking-tight text-balance sm:text-3xl">{verdict.headline}</p>
-        <p className="mt-2 text-sm leading-relaxed text-foreground/80">{verdict.explanation}</p>
+        <p className="mt-2 font-display text-2xl font-bold tracking-tight text-balance sm:text-3xl">
+          {narrative.verdict.headline}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-foreground/80">{narrative.verdict.plain}</p>
       </section>
 
-      {/* 2. FINAL FAIR vs MARKET + strength */}
+      {/* 2. FINAL FAIR vs MARKET + EDGE */}
       <div className="grid gap-4 md:grid-cols-3">
         <Panel icon={Target} title="Final BSE Fair">
           <BigStat value={formatSpreadTeam(context.finalFairHomeSpread, homeTeam, awayTeam)} tone="primary" />
@@ -151,121 +157,82 @@ export function BreakdownFull({
         </Panel>
       </div>
 
-      {/* 2b. WHY BSE READS IT THIS WAY — written analysis per factor */}
-      <Panel icon={ScrollText} title="Why BSE Reads It This Way" span>
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          A written read on every input feeding the fair spread — what BSE evaluated, what it found, and whether it
-          moved the number or was already inside the frozen model. Nothing is fabricated; missing feeds are labelled.
-        </p>
-        <ul className="mt-3 space-y-2.5">
-          {narrative.why.map((f) => (
-            <li key={f.key} className="rounded-lg bg-background p-3.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusIcon status={f.status} />
-                <span className="font-mono text-xs font-semibold text-foreground">{f.label}</span>
-                <StatusBadge status={f.status} label={f.statusLabel} />
-              </div>
-              <p className="mt-1.5 text-xs leading-relaxed text-foreground/75">{f.text}</p>
-            </li>
-          ))}
-        </ul>
-      </Panel>
-
-      {/* 2c. BSE READ — premium plain-English summary + itemized ledger */}
+      {/* 3. THE BSE READ — the story, in plain English */}
       <section className="rounded-xl border border-primary/30 bg-primary/5 p-5">
         <div className="flex items-center gap-2">
           <FileText className="size-4 text-primary" />
-          <h2 className="font-mono text-xs font-bold uppercase tracking-widest text-primary">BSE Read</h2>
+          <h2 className="font-mono text-xs font-bold uppercase tracking-widest text-primary">The BSE Read</h2>
         </div>
-        <p className="mt-3 text-sm leading-relaxed text-foreground/90">{narrative.bseRead}</p>
-
-        <div className="mt-4 rounded-lg border border-border bg-card p-4">
-          <div className="space-y-1.5 font-mono text-sm">
-            <LedgerRow label="Base model fair spread" value={narrative.ledger.baseFairLabel} strong />
-            {narrative.ledger.adjustments.map((a) => (
-              <div key={a.key} className="flex items-center justify-between gap-3">
-                <span className="flex flex-wrap items-center gap-2 text-foreground/80">
-                  {a.label}
-                  <StatusBadge status={a.status} label={a.statusLabel} />
-                </span>
-                <span className={a.points === 0 ? "text-muted-foreground" : "font-semibold text-primary"}>
-                  {a.points === 0 ? "+0.0" : fmt(a.points, true)}
-                </span>
-              </div>
-            ))}
-            <div className="my-1 border-t border-border" />
-            <LedgerRow label="Final BSE fair spread" value={narrative.ledger.finalFairLabel} strong />
-            <LedgerRow label="Current market spread" value={narrative.ledger.marketLabel} />
-            <LedgerRow label="Final edge" value={narrative.ledger.finalEdgeLabel} />
-            <LedgerRow label="BSE rating" value={narrative.ledger.rating != null ? String(narrative.ledger.rating) : DASH} />
-            <div className="my-1 border-t border-border" />
-            <div className="flex items-center justify-between gap-3">
-              <span className="font-semibold text-foreground">BSE Read</span>
-              <span
-                className={`rounded px-2 py-0.5 font-mono text-xs font-bold uppercase tracking-wider ${
-                  narrative.ledger.readCode === "NO_LEAN"
-                    ? "bg-background text-muted-foreground"
-                    : "bg-primary/15 text-primary"
-                }`}
-              >
-                {narrative.ledger.readLabel}
-              </span>
-            </div>
-          </div>
+        <div className="mt-3 space-y-3">
+          {readParagraphs.map((p, i) => (
+            <p key={i} className="text-sm leading-relaxed text-foreground/90">
+              {p}
+            </p>
+          ))}
         </div>
       </section>
 
-      {/* 3. HOW BSE GOT THERE — Base → adjustments → Final ledger */}
-      <Panel icon={Layers} title="How BSE Got There" span>
-        <div className="space-y-1.5 font-mono text-sm">
-          <LedgerRow label="Base model fair spread" value={formatSpreadTeam(context.baseFairHomeSpread, homeTeam, awayTeam)} strong />
-          {context.adjustments.map((a) => (
-            <LedgerRow
-              key={a.key}
-              label={a.label}
-              value={a.points === 0 ? "0.0" : fmt(a.points, true)}
-              muted={a.points === 0}
-              note={a.detail}
-            />
-          ))}
-          <div className="my-1 border-t border-border" />
-          <LedgerRow
-            label="Final BSE fair spread"
-            value={formatSpreadTeam(context.finalFairHomeSpread, homeTeam, awayTeam)}
-            strong
-          />
-        </div>
-        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-          The base number is the frozen model. Context adjustments only apply current-game information the model does
-          not already contain — so with no injury/news feed connected and weather being a totals effect, the final
-          currently equals the base. Every line above shows exactly why.
-        </p>
-      </Panel>
-
-      {/* 4. WHY BSE SEES IT — factor map / double-count guard */}
-      <Panel icon={TrendingUp} title="Why BSE Sees It — Factor Map" span>
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          Every input, and whether it is already inside the frozen model (so re-adjusting would double count) or
-          eligible to move the final number.
-        </p>
-        <ul className="mt-3 space-y-2">
-          {factors.map((f) => (
-            <li key={f.key} className="flex items-start gap-3 rounded-lg bg-background p-3">
-              <DispositionIcon disposition={f.disposition} />
+      {/* 4. KEY FACTORS — the handful of things that actually drive the read */}
+      <Panel icon={ScrollText} title="Key Factors" span>
+        <ul className="space-y-2.5">
+          {narrative.keyFactors.map((f) => (
+            <li key={f.key} className="flex items-start gap-3 rounded-lg bg-background p-3.5">
+              <KeyFactorIcon tone={f.tone} />
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-xs font-semibold text-foreground">{f.label}</span>
-                  <DispositionBadge disposition={f.disposition} inBase={f.inBaseModel} />
-                </div>
-                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{f.method}</p>
+                <span className="font-mono text-xs font-semibold uppercase tracking-wider text-foreground">
+                  {f.label}
+                </span>
+                <p className="mt-1 text-sm leading-relaxed text-foreground/80">{f.text}</p>
               </div>
             </li>
           ))}
         </ul>
       </Panel>
 
-      {/* 5. MARKET INTELLIGENCE */}
-      <Panel icon={LineChart} title="Market Intelligence" span>
+      {/* 5. WEATHER + INJURIES */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Panel icon={CloudSun} title="Weather">
+          {weather.status === "ok" ? (
+            <>
+              <div className="flex items-end gap-3">
+                <BigStat value={WEATHER_IMPACT_LABEL[weather.level]} tone={weather.level === "none" ? "foreground" : "primary"} />
+                <span className="pb-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">impact</span>
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-foreground/80">{weather.reasoning}</p>
+              {weatherDetail ? (
+                <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 font-mono text-xs">
+                  <Row k="Temp" v={weatherDetail.temperatureF != null ? `${Math.round(weatherDetail.temperatureF)}°F` : DASH} />
+                  <Row k="Wind" v={weatherDetail.windSpeedMph != null ? `${Math.round(weatherDetail.windSpeedMph)} mph` : DASH} />
+                  <Row k="Gusts" v={weatherDetail.windGustMph != null ? `${Math.round(weatherDetail.windGustMph)} mph` : DASH} />
+                  <Row k="Precip" v={weatherDetail.precipitationProbabilityPct != null ? `${weatherDetail.precipitationProbabilityPct}%` : DASH} />
+                </dl>
+              ) : null}
+              <p className="mt-2 text-[0.6875rem] leading-relaxed text-muted-foreground">{weather.spreadNote}</p>
+            </>
+          ) : weather.status === "indoor" ? (
+            <>
+              <BigStat value="INDOOR" tone="foreground" />
+              <Sub note="Dome / retractable roof — weather is off the table." />
+            </>
+          ) : weather.status === "pending_kickoff" ? (
+            <>
+              <BigStat value="PENDING" tone="muted" />
+              <Sub note="Kickoff time isn't locked yet, so there's no reliable game-hour forecast. Nothing is assumed." />
+            </>
+          ) : (
+            <>
+              <BigStat value={DASH} tone="muted" />
+              <Sub note="Data currently unavailable — no weather call, and no assumption of clear skies." />
+            </>
+          )}
+        </Panel>
+        <Panel icon={Stethoscope} title="Injuries & Personnel">
+          <UnavailableCard note={freshness.injuries.note} />
+        </Panel>
+      </div>
+
+      {/* 6. MARKET MOVEMENT */}
+      <Panel icon={LineChart} title="Market Movement" span>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg bg-background p-4">
             <p className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">Spread (home)</p>
@@ -273,12 +240,11 @@ export function BreakdownFull({
               <Row k="Open" v={fmt(marketIntel.openingSpread, true)} />
               <Row k="Now" v={fmt(marketIntel.currentSpread, true)} highlight />
               <Row k="Move" v={fmt(marketIntel.spreadMovement, true)} />
-              <Row k="BSE base" v={fmt(marketIntel.baseFairHomeSpread, true)} />
               <Row k="BSE final" v={fmt(marketIntel.finalFairHomeSpread, true)} />
             </dl>
           </div>
           <div className="rounded-lg bg-background p-4">
-            <p className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">Edge vs BSE final</p>
+            <p className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">Edge & totals</p>
             <dl className="mt-2 space-y-1.5 font-mono text-sm">
               <Row k="Edge at open" v={fmt(marketIntel.edgeAtOpenHome, true)} />
               <Row k="Edge now" v={fmt(marketIntel.edgeNowHome, true)} highlight />
@@ -288,50 +254,18 @@ export function BreakdownFull({
             </dl>
           </div>
         </div>
-        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{marketIntel.moveNarrative}</p>
+        <p className="mt-3 text-sm leading-relaxed text-foreground/80">{marketIntel.moveNarrative}</p>
       </Panel>
 
-      {/* 6. WEATHER — real impact calc */}
-      <Panel icon={CloudSun} title="Weather">
-        {weather.status === "ok" ? (
-          <>
-            <div className="flex items-end gap-3">
-              <BigStat value={WEATHER_IMPACT_LABEL[weather.level]} tone={weather.level === "none" ? "foreground" : "primary"} />
-              <span className="pb-1 font-mono text-xs uppercase tracking-wider text-muted-foreground">impact</span>
-            </div>
-            <p className="mt-2 text-xs leading-relaxed text-foreground/80">{weather.reasoning}</p>
-            {weatherDetail ? (
-              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 font-mono text-xs">
-                <Row k="Temp" v={weatherDetail.temperatureF != null ? `${Math.round(weatherDetail.temperatureF)}°F` : DASH} />
-                <Row k="Wind" v={weatherDetail.windSpeedMph != null ? `${Math.round(weatherDetail.windSpeedMph)} mph` : DASH} />
-                <Row k="Gusts" v={weatherDetail.windGustMph != null ? `${Math.round(weatherDetail.windGustMph)} mph` : DASH} />
-                <Row k="Precip" v={weatherDetail.precipitationProbabilityPct != null ? `${weatherDetail.precipitationProbabilityPct}%` : DASH} />
-              </dl>
-            ) : null}
-            <p className="mt-2 text-[0.6875rem] leading-relaxed text-muted-foreground">{weather.spreadNote}</p>
-          </>
-        ) : weather.status === "indoor" ? (
-          <>
-            <BigStat value="INDOOR" tone="foreground" />
-            <Sub note="Dome / retractable roof — weather neutralized." />
-          </>
-        ) : weather.status === "pending_kickoff" ? (
-          <>
-            <BigStat value="PENDING" tone="muted" />
-            <Sub note="Forecast refines as kickoff approaches; too far out for a reliable read." />
-          </>
-        ) : (
-          <>
-            <BigStat value={DASH} tone="muted" />
-            <Sub note="DATA CURRENTLY UNAVAILABLE — no adjustment applied." />
-          </>
-        )}
-      </Panel>
-
-      {/* 7. INJURIES & PERSONNEL + NEWS — honest unavailable */}
+      {/* 7. MATCHUP + NEWS */}
       <div className="grid gap-4 md:grid-cols-2">
-        <Panel icon={Stethoscope} title="Injuries & Personnel">
-          <UnavailableCard note={freshness.injuries.note} />
+        <Panel icon={Swords} title="Matchup">
+          <p className="text-sm leading-relaxed text-foreground/80">
+            {matchupWhy?.text ?? "Matchup detail unavailable."}
+          </p>
+          <p className="mt-2 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
+            Already inside the BSE number — shown, never double-counted
+          </p>
         </Panel>
         <Panel icon={Newspaper} title="News & Context">
           <UnavailableCard note={freshness.news.note} />
@@ -362,18 +296,12 @@ export function BreakdownFull({
               <p className="mt-2 text-xs text-muted-foreground">No fair line yet — thresholds unavailable.</p>
             )}
             <p className="mt-2 text-[0.6875rem] leading-relaxed text-muted-foreground">
-              The market number at which each side clears BSE&apos;s {altLab.thresholds?.gate ?? 1}-pt line-edge gate.
+              The market number at which each side clears BSE&apos;s {altLab.thresholds?.gate ?? 1}-pt line-value gate.
             </p>
           </div>
         </div>
         <div className="mt-3">
-          <AltSpreadLab
-            gameId={gameId}
-            homeTeam={homeTeam}
-            awayTeam={awayTeam}
-            homeAbbr={homeAbbr}
-            awayAbbr={awayAbbr}
-          />
+          <AltSpreadLab gameId={gameId} homeTeam={homeTeam} awayTeam={awayTeam} homeAbbr={homeAbbr} awayAbbr={awayAbbr} />
         </div>
       </Panel>
 
@@ -389,23 +317,121 @@ export function BreakdownFull({
         </ul>
       </Panel>
 
-      {/* 10. DATA FRESHNESS / PROVENANCE */}
-      <Panel icon={Clock} title="Data Freshness & Sources" span>
-        <dl className="grid gap-x-4 gap-y-2 font-mono text-xs sm:grid-cols-2">
-          <Row k="BSE model run" v={freshness.model.at ? timeAgo(freshness.model.at) : "frozen (validation)"} />
-          <Row k="DraftKings refresh" v={`${timeAgo(freshness.market.at)} (${freshness.market.status})`} />
-          <Row
-            k="Weather refresh"
-            v={freshness.weather.status === "ok" || freshness.weather.status === "indoor" ? timeAgo(freshness.weather.at) : freshness.weather.status}
-          />
-          <Row k="Injury refresh" v="unavailable" />
-          <Row k="News refresh" v="unavailable" />
-          <Row k="Snapshot" v={timeAgo(snapshotAt)} />
-        </dl>
-        {freshness.model.hash ? (
-          <p className="mt-3 font-mono text-[0.625rem] text-muted-foreground">model {freshness.model.hash.slice(0, 12)}</p>
-        ) : null}
-      </Panel>
+      {/* 10. DEEP DIVE / METHODOLOGY — expandable audit trail for advanced users */}
+      <details className="group rounded-xl border border-border bg-card">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-5 [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center gap-2">
+            <TrendingUp className="size-4 text-primary" />
+            <span className="font-display text-sm font-bold uppercase tracking-widest text-foreground">
+              Deep Dive & Methodology
+            </span>
+          </span>
+          <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+        </summary>
+
+        <div className="space-y-6 border-t border-border p-5">
+          {/* Compliance / in-validation note */}
+          <div className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4">
+            <ShieldAlert className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+            <p className="text-xs leading-relaxed text-foreground/80">{inValidationNote}</p>
+          </div>
+
+          {/* Why BSE reads it this way — full per-factor prose */}
+          <div>
+            <h4 className="font-mono text-xs font-bold uppercase tracking-widest text-primary">Why BSE Reads It This Way</h4>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              A written read on every input feeding the number — what BSE evaluated, what it found, and whether it moved
+              the number or was already inside the model. Missing feeds are labelled, never fabricated.
+            </p>
+            <ul className="mt-3 space-y-2.5">
+              {narrative.why.map((f) => (
+                <li key={f.key} className="rounded-lg bg-background p-3.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusIcon status={f.status} />
+                    <span className="font-mono text-xs font-semibold text-foreground">{f.label}</span>
+                    <StatusBadge status={f.status} label={f.statusLabel} />
+                  </div>
+                  <p className="mt-1.5 text-xs leading-relaxed text-foreground/75">{f.text}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Base → Final ledger */}
+          <div>
+            <h4 className="font-mono text-xs font-bold uppercase tracking-widest text-primary">How BSE Got There</h4>
+            <div className="mt-3 space-y-1.5 font-mono text-sm">
+              <LedgerRow label="Base model fair spread" value={narrative.ledger.baseFairLabel} strong />
+              {narrative.ledger.adjustments.map((a) => (
+                <div key={a.key} className="flex items-center justify-between gap-3">
+                  <span className="flex flex-wrap items-center gap-2 text-foreground/80">
+                    {a.label}
+                    <StatusBadge status={a.status} label={a.statusLabel} />
+                  </span>
+                  <span className={a.points === 0 ? "text-muted-foreground" : "font-semibold text-primary"}>
+                    {a.points === 0 ? "+0.0" : fmt(a.points, true)}
+                  </span>
+                </div>
+              ))}
+              <div className="my-1 border-t border-border" />
+              <LedgerRow label="Final BSE fair spread" value={narrative.ledger.finalFairLabel} strong />
+              <LedgerRow label="Current market spread" value={narrative.ledger.marketLabel} />
+              <LedgerRow label="Final edge" value={narrative.ledger.finalEdgeLabel} />
+              <LedgerRow label="BSE rating" value={narrative.ledger.rating != null ? String(narrative.ledger.rating) : DASH} />
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+              The base number is the frozen model. Context only adjusts for current-game information the model does not
+              already contain — so with no injury/news feed connected and weather being a scoring (totals) effect, the
+              final currently equals the base. Every line shows exactly why.
+            </p>
+          </div>
+
+          {/* Factor map / double-count guard */}
+          <div>
+            <h4 className="font-mono text-xs font-bold uppercase tracking-widest text-primary">Factor Map</h4>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              Every input, and whether it is already inside the frozen model (so re-adjusting would double count) or is
+              eligible to move the final number.
+            </p>
+            <ul className="mt-3 space-y-2">
+              {factors.map((f) => (
+                <li key={f.key} className="flex items-start gap-3 rounded-lg bg-background p-3">
+                  <DispositionIcon disposition={f.disposition} />
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-mono text-xs font-semibold text-foreground">{f.label}</span>
+                      <DispositionBadge disposition={f.disposition} inBase={f.inBaseModel} />
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{f.method}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Data freshness / provenance */}
+          <div>
+            <div className="flex items-center gap-2">
+              <Clock className="size-4 text-primary" />
+              <h4 className="font-mono text-xs font-bold uppercase tracking-widest text-primary">Data Freshness & Sources</h4>
+            </div>
+            <dl className="mt-3 grid gap-x-4 gap-y-2 font-mono text-xs sm:grid-cols-2">
+              <Row k="BSE model run" v={freshness.model.at ? timeAgo(freshness.model.at) : "frozen (validation)"} />
+              <Row k="DraftKings refresh" v={`${timeAgo(freshness.market.at)} (${freshness.market.status})`} />
+              <Row
+                k="Weather refresh"
+                v={freshness.weather.status === "ok" || freshness.weather.status === "indoor" ? timeAgo(freshness.weather.at) : freshness.weather.status}
+              />
+              <Row k="Injury refresh" v="unavailable" />
+              <Row k="News refresh" v="unavailable" />
+              <Row k="Snapshot" v={timeAgo(snapshotAt)} />
+            </dl>
+            {freshness.model.hash ? (
+              <p className="mt-3 font-mono text-[0.625rem] text-muted-foreground">model {freshness.model.hash.slice(0, 12)}</p>
+            ) : null}
+          </div>
+        </div>
+      </details>
     </div>
   )
 }
@@ -489,6 +515,12 @@ function UnavailableCard({ note }: { note: string }) {
       </p>
     </div>
   )
+}
+
+function KeyFactorIcon({ tone }: { tone: KeyFactor["tone"] }) {
+  if (tone === "pro") return <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+  if (tone === "con") return <AlertTriangle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+  return <MinusCircle className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
 }
 
 function StatusIcon({ status }: { status: FactorStatus }) {
