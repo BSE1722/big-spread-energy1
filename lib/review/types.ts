@@ -66,6 +66,8 @@ export interface RecordTicketInput {
   seasonType?: string
   analyzedAtIso?: string | null
   createdBy?: string | null
+  /** Account that owns this snapshot (analyzer/tool saves). NULL for admin entries. */
+  userId?: string | null
   notes?: string | null
   combinedPriceAmerican?: number | null
   /** Optional admin-asserted whole-ticket ground truth. */

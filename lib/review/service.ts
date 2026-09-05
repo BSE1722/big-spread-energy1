@@ -198,6 +198,7 @@ export async function recordTicket(input: RecordTicketInput): Promise<RecordResu
     seasonType: input.seasonType ?? "regular",
     analyzedAt,
     createdBy: input.createdBy ?? null,
+    userId: input.userId ?? null,
     notes: input.notes ?? null,
     combinedPriceAmerican: input.combinedPriceAmerican ?? null,
     legCount: legRows.length,
