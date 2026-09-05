@@ -127,11 +127,54 @@ export interface RefreshSummary {
 /* ------------------------------- Load / Save ------------------------------ */
 
 /**
+ * Last snapshot we successfully read, held in module memory. The snapshot is
+ * IMMUTABLE between manual admin refreshes, so the copy we last read is still
+ * authoritative during a transient blob-read outage.
+ *
+ * Why this exists: the Blob CDN intermittently 403s every retrieval path at once
+ * for a short window (observed in logs; unreproducible seconds later). Without
+ * this bridge, one such blip makes loadSnapshot() return null, which silently
+ * blanks EVERY line on the customer Board and grades EVERY analyzer leg as
+ * UNVERIFIED — presenting an infra blip as though the games have no odds. Serving
+ * the last-good frozen snapshot through the blip is correct because that data
+ * cannot have changed without an admin refresh (which updates this cache inline).
+ */
+let lastGoodSnapshot: { snapshot: OddsSnapshot; readAt: number } | null = null
+
+/**
+ * How long a transient outage may keep serving the last-good snapshot. Bridges
+ * realistic blips (seconds to minutes) but eventually yields to the honest
+ * "odds unavailable" state if the blob is unreadable for a prolonged period, so
+ * a genuinely deleted snapshot is not served from memory forever.
+ */
+const SNAPSHOT_CACHE_TTL_MS = 30 * 60 * 1000
+
+/**
  * Read the stored snapshot. Returns null when none exists yet. NEVER triggers a
  * SportsGameOdds request — it only reads durable storage.
+ *
+ * On a successful read, refreshes the in-memory last-good copy. When the live
+ * read comes back empty (transient all-path 403, or a momentary miss), falls
+ * back to that last-good copy while it is within the TTL rather than blanking
+ * the board. Returns null only when we have no usable cached copy either.
  */
 export async function loadSnapshot(): Promise<OddsSnapshot | null> {
-  return readJson<OddsSnapshot>(SNAPSHOT_PATHNAME)
+  const fresh = await readJson<OddsSnapshot>(SNAPSHOT_PATHNAME)
+  if (fresh) {
+    lastGoodSnapshot = { snapshot: fresh, readAt: Date.now() }
+    return fresh
+  }
+
+  if (lastGoodSnapshot && Date.now() - lastGoodSnapshot.readAt < SNAPSHOT_CACHE_TTL_MS) {
+    console.warn(
+      `[v0] loadSnapshot: live blob read unavailable; serving last-good snapshot read at ${new Date(
+        lastGoodSnapshot.readAt,
+      ).toISOString()} (frozen data, safe until next admin refresh)`,
+    )
+    return lastGoodSnapshot.snapshot
+  }
+
+  return null
 }
 
 async function saveSnapshot(snapshot: OddsSnapshot): Promise<void> {
@@ -277,6 +320,9 @@ export async function refreshSnapshot(ctx: SeasonContextLite): Promise<RefreshSu
   }
 
   await saveSnapshot(snapshot)
+  // Prime the last-good cache inline so this instance serves the brand-new
+  // snapshot immediately, even if its next blob read happens to hit a 403 blip.
+  lastGoodSnapshot = { snapshot, readAt: Date.now() }
 
   return {
     refreshed: games.length,
