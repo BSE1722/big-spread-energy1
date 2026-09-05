@@ -6,7 +6,9 @@ import { AdminRefresh } from "@/components/admin/admin-refresh"
 import { AdminDashboard } from "@/components/admin/admin-dashboard"
 import { AdminPicks } from "@/components/admin/admin-picks"
 import { WeeklyOps } from "@/components/admin/weekly-ops"
+import { ToolConfig } from "@/components/admin/tool-config"
 import { getWeeklyOpsSnapshot } from "@/lib/weekly-ops/service"
+import { getToolLimits } from "@/lib/config/service"
 import {
   listPredictions,
   listCorrections,
@@ -47,6 +49,9 @@ export default async function AdminPage() {
   // aggregator throws (e.g. a data source is briefly unavailable) we degrade
   // gracefully rather than break the whole control room.
   const weeklyOps = await getWeeklyOpsSnapshot().catch(() => null)
+
+  // Editable free-tier tool limits (falls back to defaults if unset).
+  const toolLimits = await getToolLimits()
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
