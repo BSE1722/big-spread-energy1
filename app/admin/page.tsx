@@ -115,6 +115,30 @@ export default async function AdminPage() {
       </section>
 
       <section className="mt-12 border-t border-border pt-8">
+        <h2 className="mb-2 font-display text-xl font-bold text-foreground">Rating Calibration</h2>
+        <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+          How the frozen pregame BSE Rating has actually performed. Built only from graded legs whose rating was
+          captured before kickoff — never recalculated, never fabricated. Buckets appear only once they have real
+          observations.
+        </p>
+        <a
+          href="/admin/calibration"
+          className="inline-flex items-center rounded-md border border-border bg-card px-4 py-2 font-mono text-sm text-foreground transition-colors hover:bg-muted"
+        >
+          Open Rating Calibration →
+        </a>
+      </section>
+
+      <section className="mt-12 border-t border-border pt-8">
+        <h2 className="mb-2 font-display text-xl font-bold text-foreground">Tool Access Limits</h2>
+        <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+          Free-tier weekly allowances for the tools. Changes take effect immediately — no redeploy. Pro members are
+          always unlimited.
+        </p>
+        <ToolConfig initial={toolLimits} />
+      </section>
+
+      <section className="mt-12 border-t border-border pt-8">
         <h2 className="mb-2 font-display text-xl font-bold text-foreground">Research</h2>
         <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
           Shadow validation for the one frozen research candidate. These are logged, before-kickoff signals — not
