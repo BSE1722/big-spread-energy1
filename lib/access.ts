@@ -22,7 +22,7 @@ import { headers } from "next/headers"
 import { and, eq } from "drizzle-orm"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { weeklyUnlocks, subscriptions } from "@/lib/db/schema"
+import { weeklyUnlocks, subscriptions, user as userTable } from "@/lib/db/schema"
 import { getCurrentContext, type SeasonContext } from "@/lib/bse/season"
 
 export type AccessTier = "guest" | "rookie" | "pro"
@@ -52,8 +52,26 @@ export async function getSessionUser() {
   return session?.user ?? null
 }
 
-/** Is this user currently BSE Pro? Scoped by userId; active/trialing = Pro. */
+/**
+ * Is this user currently BSE Pro? Scoped by userId.
+ *
+ * Owners/admins ALWAYS have full Pro access — every Pro-gated surface resolves
+ * Pro through this one function (directly, or via getAccessState → tier), so
+ * short-circuiting here grants an admin unlimited access to all current and
+ * future Pro features without any Stripe subscription or subscriptions row.
+ * The role is read fresh from the DB every check, so revoking admin takes
+ * effect immediately. Normal free/paid users are unaffected.
+ *
+ * Otherwise: an active/trialing subscription = Pro.
+ */
 export async function isProUser(userId: string): Promise<boolean> {
+  const adminRows = await db
+    .select({ role: userTable.role })
+    .from(userTable)
+    .where(eq(userTable.id, userId))
+    .limit(1)
+  if (adminRows[0]?.role === "admin") return true
+
   const rows = await db
     .select({ status: subscriptions.status, currentPeriodEnd: subscriptions.currentPeriodEnd })
     .from(subscriptions)
