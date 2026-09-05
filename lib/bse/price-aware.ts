@@ -94,6 +94,47 @@ export const CLASSIFICATION_COPY: Record<BetClassification, { label: string; blu
   },
 }
 
+/**
+ * Grade of the TAKEN NUMBER's line value ALONE — "are the points good?" —
+ * deliberately independent of how expensive the price is (that lives in
+ * `priceTier`). This lets a leg read as HIGH points / expensive price at the
+ * same time, which is exactly the bought-down-favorite case.
+ */
+export type PointsGrade = "HIGH" | "LOW" | "NA"
+
+export const POINTS_GRADE_COPY: Record<PointsGrade, { label: string; blurb: string }> = {
+  HIGH: {
+    label: "POINTS: HIGH",
+    blurb: "The number clears the BSE fair line by at least a full point — strong line value, price aside.",
+  },
+  LOW: {
+    label: "POINTS: LOW",
+    blurb: "The number isn't a full point better than the BSE fair line — thin line value.",
+  },
+  NA: {
+    label: "POINTS: N/A",
+    blurb: "Missing a BSE grade or price, so the number's line value can't be graded.",
+  },
+}
+
+/**
+ * Read the line-value grade straight off `classification`. This is a PURE 1:1
+ * relabel — both STRONG_LINE_PRICE_OK and GOOD_LINE_EXPENSIVE already mean the
+ * number cleared the |edge| >= 1 line-edge gate, so both are HIGH; NO_EDGE is
+ * LOW; INSUFFICIENT_DATA is N/A. No new math, no coefficient, no price input.
+ */
+export function pointsGrade(classification: BetClassification): PointsGrade {
+  switch (classification) {
+    case "STRONG_LINE_PRICE_OK":
+    case "GOOD_LINE_EXPENSIVE":
+      return "HIGH"
+    case "NO_EDGE":
+      return "LOW"
+    case "INSUFFICIENT_DATA":
+      return "NA"
+  }
+}
+
 /* --------------------------------- Prices --------------------------------- */
 
 /**

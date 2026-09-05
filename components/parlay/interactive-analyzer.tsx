@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react"
-import { Plus, X, SlidersHorizontal, RotateCcw, Info, Zap, Lock, Search } from "lucide-react"
+import { Plus, X, SlidersHorizontal, RotateCcw, Info, Zap, Lock, Search, TrendingUp } from "lucide-react"
 import {
   useLiveBoard,
   formatKickoff,
@@ -22,10 +22,13 @@ import {
   LINE_SOURCE_COPY,
   TREATMENT_COPY,
   DISPOSITION_COPY,
+  POINTS_GRADE_COPY,
+  pointsGrade,
   type BetSide,
   type BetClassification,
   type LegTreatment,
   type TicketDisposition,
+  type PointsGrade,
 } from "@/lib/bse/price-aware"
 
 /**
@@ -110,6 +113,23 @@ function TreatmentChip({ treatment }: { treatment: LegTreatment }) {
       className={`inline-flex items-center rounded-md border px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-wide ${TREATMENT_STYLE[treatment]}`}
     >
       {TREATMENT_COPY[treatment].label}
+    </span>
+  )
+}
+
+/** Line-value-only chip (the number graded HIGH/LOW, price set aside). */
+const POINTS_STYLE: Record<PointsGrade, string> = {
+  HIGH: "border-[var(--rating-strong)]/40 bg-[var(--rating-strong)]/10 text-[var(--rating-strong)]",
+  LOW: "border-[var(--rating-mid)]/40 bg-[var(--rating-mid)]/10 text-[var(--rating-mid)]",
+  NA: "border-border bg-secondary/50 text-muted-foreground",
+}
+function PointsChip({ grade }: { grade: PointsGrade }) {
+  return (
+    <span
+      title={POINTS_GRADE_COPY[grade].blurb}
+      className={`inline-flex items-center rounded-md border px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-wide ${POINTS_STYLE[grade]}`}
+    >
+      {POINTS_GRADE_COPY[grade].label}
     </span>
   )
 }
@@ -575,6 +595,16 @@ function RevealedLegCard({ leg }: { leg: AnalyzerLegResult }) {
   const copy = CLASSIFICATION_COPY[leg.classification]
   const breakevenPct = leg.impliedBreakeven != null ? `${(leg.impliedBreakeven * 100).toFixed(1)}%` : "—"
   const source = LINE_SOURCE_COPY[leg.usingAlt ? "USER_ENTERED" : "LIVE_DK"]
+  const points = pointsGrade(leg.classification)
+
+  // Vague, deliberately UNGRADED nudge: the number is good (HIGH points) but the
+  // price is punitive. We point the direction (give cushion back toward the main
+  // line, stay inside fair) without naming a spread or price — BSE can't grade a
+  // rung it can't see, and never quotes payout. The user re-enters an alternate
+  // above to get a real grade.
+  const showMoveUpHint =
+    leg.classification === "GOOD_LINE_EXPENSIVE" && leg.fairPicked != null && leg.lineEdge != null
+  const fairText = fmtSpread(leg.fairPicked != null ? Math.round(leg.fairPicked * 10) / 10 : null)
 
   return (
     <li className="overflow-hidden rounded-xl border border-border bg-card">
@@ -621,6 +651,7 @@ function RevealedLegCard({ leg }: { leg: AnalyzerLegResult }) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             <TreatmentChip treatment={leg.treatment} />
+            {points !== "NA" && <PointsChip grade={points} />}
             <span className={`inline-flex items-center rounded-md border px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-wide ${BADGE_STYLE[leg.classification]}`}>
               {copy.label}
             </span>
@@ -635,6 +666,22 @@ function RevealedLegCard({ leg }: { leg: AnalyzerLegResult }) {
           </p>
         </div>
       </div>
+
+      {showMoveUpHint && (
+        <div className="border-t border-[var(--rating-mid)]/30 bg-[var(--rating-mid)]/5 px-4 py-3">
+          <div className="flex items-start gap-2">
+            <TrendingUp className="mt-0.5 size-4 shrink-0 text-[var(--rating-mid)]" />
+            <div className="min-w-0">
+              <p className="font-display text-xs font-semibold uppercase tracking-wide text-[var(--rating-mid)]">
+                Room to move this number
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground text-pretty">
+                {`Good number — ${fmtEdge(leg.lineEdge)} pt better than the BSE fair line — but you're paying up for it. There's room to give some of that cushion back toward the main line for a friendlier price. Keep the number inside BSE fair (${fairText}); past that it loses its edge. BSE won't quote a spread or price here — enter that alternate on the leg above and re-analyze to grade it.`}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </li>
   )
 }
