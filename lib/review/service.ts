@@ -5,9 +5,10 @@ import { and, asc, desc, eq, inArray } from "drizzle-orm"
 import { db } from "@/lib/db"
 import { reviewTickets, reviewLegs } from "@/lib/db/schema"
 import { getCfbdGames } from "@/lib/cfbd"
+import { getBoardSignals } from "@/lib/board-signal/service"
 import { rawWeekForCanonical } from "@/lib/bse/week-identity"
 import { gradePick, unitsForWin, type Market, type PickSide } from "@/lib/predictions/grade"
-import type { RecordTicketInput, ReviewLeg, ReviewTicket } from "@/lib/review/types"
+import type { RecordLegInput, RecordTicketInput, ReviewLeg, ReviewTicket } from "@/lib/review/types"
 import { computeFragility } from "@/lib/review/fragility"
 
 /* --------------------------------------------------------------------------
@@ -81,6 +82,38 @@ function weekKey(p: { season: number; week: number; seasonType: string }): strin
 }
 
 /* --------------------------------------------------------------------------
+ * CANONICAL BSE RATING CAPTURE
+ * Fill each leg's rating from the SAME frozen-signal loader the Board and Full
+ * Breakdown read (getBoardSignals → buildBoardSignal → ratingFromEdge). This is
+ * NOT a second rating derivation and NEVER fabricates: the loader returns the
+ * exact 0–100 rating shown to the user, or nothing (→ null). Legs carry the
+ * CANONICAL week, so we translate to the RAW provider week the signal table is
+ * keyed by. Lookups are by game id, so the raw-week-1 (Week 0 + Week 1) fusion
+ * still selects the correct game. One query per (season, rawWeek) group.
+ * ------------------------------------------------------------------------ */
+async function loadCanonicalRatings(legs: RecordLegInput[]): Promise<Map<string, number>> {
+  const out = new Map<string, number>()
+  const groups = new Map<string, { season: number; rawWeek: number }>()
+  for (const l of legs) {
+    if (!l.gameId) continue
+    const rawWeek = rawWeekForCanonical(l.week)
+    groups.set(`${l.season}::${rawWeek}`, { season: l.season, rawWeek })
+  }
+  for (const { season, rawWeek } of groups.values()) {
+    try {
+      const { byGameId } = await getBoardSignals(season, rawWeek)
+      for (const [gid, sig] of byGameId) {
+        if (sig.rating != null) out.set(gid, sig.rating)
+      }
+    } catch (err) {
+      // Never fabricate — a load failure just leaves affected legs unrated.
+      console.error("[v0] canonical rating capture failed for", season, rawWeek, err)
+    }
+  }
+  return out
+}
+
+/* --------------------------------------------------------------------------
  * RECORD — freeze a ticket + its legs. Pregame zone written ONCE.
  * ------------------------------------------------------------------------ */
 export async function recordTicket(input: RecordTicketInput): Promise<RecordResult> {
@@ -100,9 +133,15 @@ export async function recordTicket(input: RecordTicketInput): Promise<RecordResu
 
   const frag = computeFragility(input.legs)
 
+  // Capture the canonical BSE Rating each leg's game showed at analysis time
+  // (real 0–100 value or null — never fabricated). Only fills when the caller
+  // didn't already pin an explicit rating.
+  const canonicalRatings = await loadCanonicalRatings(input.legs)
+
   const ticketId = randomUUID()
   const legRows = input.legs.map((leg, legIndex) => {
     const market = leg.market ?? "spread"
+    const capturedRating = leg.bseRating ?? (leg.gameId ? canonicalRatings.get(leg.gameId) ?? null : null)
     const lockHash = legLockHash({
       ticketNumber,
       legIndex,
@@ -114,7 +153,7 @@ export async function recordTicket(input: RecordTicketInput): Promise<RecordResu
       pickLabel: leg.pickLabel,
       lineValue: leg.lineValue,
       priceAmerican: leg.priceAmerican,
-      bseRating: leg.bseRating,
+      bseRating: capturedRating,
       analyzedAt: analyzedAtIso,
     })
     return {
@@ -134,7 +173,7 @@ export async function recordTicket(input: RecordTicketInput): Promise<RecordResu
       lineValue: leg.lineValue,
       priceAmerican: leg.priceAmerican,
       book: leg.book ?? "draftkings",
-      bseRating: leg.bseRating, // REAL or null — never fabricated
+      bseRating: capturedRating, // canonical Board rating at analysis time, or null — never fabricated
       classification: leg.classification ?? null,
       lineEdge: leg.lineEdge ?? null,
       fairLine: leg.fairLine ?? null,

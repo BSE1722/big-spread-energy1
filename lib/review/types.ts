@@ -42,8 +42,12 @@ export interface RecordLegInput {
   lineValue: number | null
   priceAmerican: number | null
   book?: string
-  /** REAL rating at analysis time, or null. Never fabricated. */
-  bseRating: number | null
+  /**
+   * Optional explicit rating override. Normally OMITTED: the recorder fills
+   * this server-side from the canonical Board signal loader at analysis time
+   * (real 0–100 value or null). Never fabricated by callers.
+   */
+  bseRating?: number | null
   classification?: string | null
   lineEdge?: number | null
   fairLine?: number | null

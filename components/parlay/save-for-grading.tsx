@@ -9,9 +9,10 @@ import type { RecordLegInput } from "@/lib/review/types"
  * snapshots the current ticket into the Postgame Review dataset, frozen at
  * analysis time.
  *
- * HONESTY: the interactive analyzer produces a real CLASSIFICATION and line
- * edge — but NO numeric 0–100 BSE Rating. So every leg is saved with
- * bseRating: null (unrated). We never fabricate a rating to fill the field.
+ * HONESTY: the recorder fills each leg's BSE Rating server-side from the SAME
+ * canonical Board signal loader the customer saw (real 0–100 value, or null
+ * when that game has no frozen signal). We never fabricate a rating, and this
+ * client never supplies one.
  */
 export interface SavableLeg {
   gameId: string // already `cfbd-<id>`
@@ -74,7 +75,7 @@ export function SaveForGrading({
       pickLabel: l.pickLabel,
       lineValue: l.lineValue,
       priceAmerican: l.priceAmerican,
-      bseRating: null, // analyzer produces no numeric rating — never fabricated
+      // bseRating intentionally omitted — recorder captures the canonical value
       classification: l.classification,
       lineEdge: l.lineEdge,
       fairLine: l.fairLine,
@@ -106,8 +107,8 @@ export function SaveForGrading({
       {msg && <p className={`text-[11px] ${msg.ok ? "text-primary" : "text-destructive"}`}>{msg.text}</p>}
       {!msg && (
         <p className="text-[11px] text-muted-foreground">
-          Freezes this ticket into the Postgame Review dataset. Legs save as unrated (the analyzer produces no
-          numeric rating).
+          Freezes this ticket into the Postgame Review dataset, capturing each leg&apos;s BSE Rating exactly as shown
+          at analysis time.
         </p>
       )}
     </div>
