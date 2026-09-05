@@ -6,6 +6,7 @@ import { loadSnapshot } from "@/lib/odds-snapshot"
 import { getBoardSignalForGame } from "@/lib/board-signal/service"
 import { getFrozenCandidate } from "@/lib/shadow/service"
 import { getLatestWeather } from "@/lib/weather/store"
+import { isForecastStale } from "@/lib/weather/cadence"
 import { describeSignal, LEAN_THRESHOLD, type SignalDescription } from "@/lib/bse/model-signal"
 import { evaluateBet, type BetEvaluation } from "@/lib/bse/price-aware"
 import { computeWeatherImpact, type WeatherImpact, type WeatherImpactInput, type WeatherReadStatus } from "@/lib/bse/weather-impact"
@@ -267,7 +268,21 @@ export async function assembleBreakdown(gameId: string): Promise<AssembledBreakd
 
   // --- Weather (real, from Neon game_weather) ---
   const weatherRow = await getLatestWeather(gameId).catch(() => null)
-  const weather = computeWeatherImpact(toWeatherInput(weatherRow))
+  const weatherInput = toWeatherInput(weatherRow)
+  // FRESHNESS GATE (scheduling/freshness only — no impact math touched): never
+  // present a stale forecast as current. If an otherwise-`ok` reading is older
+  // than the accepted window for its kickoff proximity (e.g. an ingestion
+  // outage), downgrade it to "stale" so the breakdown labels it rather than
+  // showing old numbers as live. The frozen final pre-kickoff snapshot is
+  // exempt — isForecastStale returns false once kickoff has passed.
+  if (weatherInput.status === "ok" && weatherRow) {
+    const kickoffMs = Date.parse(game.kickoff)
+    const fetchedMs = weatherRow.fetchedAt ? Date.parse(String(weatherRow.fetchedAt)) : null
+    if (isForecastStale({ kickoffMs, fetchedMs })) {
+      weatherInput.status = "stale"
+    }
+  }
+  const weather = computeWeatherImpact(weatherInput)
   const weatherDetail: WeatherDetail | null = weatherRow
     ? {
         fetchedAt: weatherRow.fetchedAt ? new Date(String(weatherRow.fetchedAt)).toISOString() : null,

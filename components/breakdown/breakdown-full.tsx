@@ -219,6 +219,16 @@ export function BreakdownFull({
               <BigStat value="PENDING" tone="muted" />
               <Sub note="Kickoff time isn't locked yet, so there's no reliable game-hour forecast. Nothing is assumed." />
             </>
+          ) : weather.status === "stale" ? (
+            <>
+              <BigStat value="STALE" tone="muted" />
+              <Sub note="The last forecast is out of date and hasn't refreshed recently, so BSE isn't presenting it as current — treated as unavailable, no weather assumption made." />
+              {weatherDetail?.fetchedAt ? (
+                <p className="mt-2 font-mono text-[0.625rem] text-muted-foreground">
+                  last reading {timeAgo(weatherDetail.fetchedAt)}
+                </p>
+              ) : null}
+            </>
           ) : (
             <>
               <BigStat value={DASH} tone="muted" />
@@ -420,7 +430,13 @@ export function BreakdownFull({
               <Row k="DraftKings refresh" v={`${timeAgo(freshness.market.at)} (${freshness.market.status})`} />
               <Row
                 k="Weather refresh"
-                v={freshness.weather.status === "ok" || freshness.weather.status === "indoor" ? timeAgo(freshness.weather.at) : freshness.weather.status}
+                v={
+                  freshness.weather.status === "ok" || freshness.weather.status === "indoor"
+                    ? timeAgo(freshness.weather.at)
+                    : freshness.weather.status === "stale"
+                      ? `${timeAgo(freshness.weather.at)} (stale)`
+                      : freshness.weather.status
+                }
               />
               <Row k="Injury refresh" v="unavailable" />
               <Row k="News refresh" v="unavailable" />
