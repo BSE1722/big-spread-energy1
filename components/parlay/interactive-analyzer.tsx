@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react"
-import { Plus, X, SlidersHorizontal, RotateCcw, Info, Zap, Lock } from "lucide-react"
+import { Plus, X, SlidersHorizontal, RotateCcw, Info, Zap, Lock, Search } from "lucide-react"
 import {
   useLiveBoard,
   formatKickoff,
@@ -9,6 +9,8 @@ import {
   type LiveBoardGame,
 } from "@/lib/use-live-board"
 import { TeamName } from "@/components/team-name"
+import { TeamLogo } from "@/components/team-logo"
+import { getTeamColor } from "@/lib/bse"
 import { CurrentWeekSlate } from "@/components/parlay/current-week-slate"
 import { useAccess } from "@/lib/use-access"
 import { useToolUsage } from "@/lib/use-tool-usage"
@@ -333,6 +335,7 @@ function BuildLegCard({
 
   const side = leg.side
   const pickedTeam = side === "home" ? game.home : game.away
+  const teamColor = getTeamColor(pickedTeam.name)
   const usingAlt = leg.altHomeSpread != null || leg.altPrice != null
   const offeredHomeSpread = leg.altHomeSpread ?? game.marketSpread
   const pickedSpread = pickedSpreadFor(offeredHomeSpread, side)
@@ -340,7 +343,10 @@ function BuildLegCard({
   const source = LINE_SOURCE_COPY[usingAlt ? "USER_ENTERED" : "LIVE_DK"]
 
   return (
-    <li className="overflow-hidden rounded-xl border border-border bg-card">
+    <li
+      style={{ borderLeftColor: teamColor, borderLeftWidth: 3 }}
+      className="overflow-hidden rounded-xl border border-border bg-card"
+    >
       <div className="flex items-start justify-between gap-3 px-4 py-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
@@ -710,7 +716,27 @@ function GamePicker({
   onPick: (gameId: string, side: BetSide) => void
   onClose: () => void
 }) {
-  const rows = [...games].sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime())
+  const [query, setQuery] = useState("")
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const rows = useMemo(
+    () => [...games].sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime()),
+    [games],
+  )
+
+  // Filter by either team's full name or abbreviation so users can jump
+  // straight to their team instead of scrolling the whole slate.
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return rows
+    return rows.filter((g) =>
+      [g.home.name, g.home.abbr, g.away.name, g.away.abbr].some((s) => s.toLowerCase().includes(q)),
+    )
+  }, [rows, query])
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
 
   return (
     <div className="mt-3 overflow-hidden rounded-xl border border-border bg-card">
@@ -722,11 +748,43 @@ function GamePicker({
           <X className="size-4" />
         </button>
       </div>
+
+      {/* Team search — filter the slate down to a team fast */}
+      <div className="border-b border-border p-3">
+        <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3">
+          <Search className="size-4 shrink-0 text-muted-foreground" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search your team (e.g. Georgia, OSU, Oregon)"
+            className="min-h-11 w-full bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground"
+            aria-label="Search games by team"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("")
+                inputRef.current?.focus()
+              }}
+              aria-label="Clear search"
+              className="grid size-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
       {rows.length === 0 ? (
         <p className="px-4 py-4 text-sm text-muted-foreground">Every game on the board is already on your ticket.</p>
+      ) : filtered.length === 0 ? (
+        <p className="px-4 py-4 text-sm text-muted-foreground">{`No games match “${query.trim()}.” Try a school name or abbreviation.`}</p>
       ) : (
         <ul className="max-h-96 divide-y divide-border overflow-y-auto scrollbar-none">
-          {rows.map((g) => (
+          {filtered.map((g) => (
             <PickerRow key={g.id} game={g} onPick={onPick} />
           ))}
         </ul>
@@ -771,14 +829,19 @@ function SideButton({
   disabled: boolean
   onClick: () => void
 }) {
+  const color = getTeamColor(team.name)
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
+      style={{ borderLeftColor: color, borderLeftWidth: 3 }}
       className="flex min-h-11 items-center justify-between gap-2 rounded-lg border border-border bg-secondary/40 px-3 py-2 text-left transition-colors hover:border-primary/50 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
     >
-      <span className="min-w-0 truncate font-display text-sm font-semibold text-foreground">{team.abbr}</span>
+      <span className="flex min-w-0 items-center gap-2">
+        <TeamLogo name={team.name} abbr={team.abbr} size="sm" />
+        <span className="min-w-0 truncate font-display text-sm font-semibold text-foreground">{team.abbr}</span>
+      </span>
       <span className="font-display text-sm font-bold tabular-nums text-foreground">{fmtSpread(spread)}</span>
     </button>
   )
