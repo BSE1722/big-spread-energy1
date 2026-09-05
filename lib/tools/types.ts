@@ -1,4 +1,11 @@
-import type { BetSide, BetClassification, PriceTier, ParlaySummary } from "@/lib/bse/price-aware"
+import type {
+  BetSide,
+  BetClassification,
+  PriceTier,
+  ParlaySummary,
+  LegTreatment,
+  TicketDisposition,
+} from "@/lib/bse/price-aware"
 import type { GenerateResult } from "@/lib/parlay/generate"
 
 /**
@@ -61,6 +68,8 @@ export interface AnalyzerLegResult {
   fairPicked: number | null
   lineEdge: number | null
   classification: BetClassification
+  /** Action-language relabel of `classification` (pure 1:1, no new math). */
+  treatment: LegTreatment
   priceTier: PriceTier | null
   impliedBreakeven: number | null
   /** Canonical Board rating for this game (real 0–100 or null). */
@@ -68,10 +77,40 @@ export interface AnalyzerLegResult {
   usingAlt: boolean
 }
 
+/** A validated board pick offered as a replacement for a weak leg. */
+export interface AnalyzerSwapCandidate {
+  gameId: string
+  matchup: string
+  pickLabel: string
+  bseRating: number | null
+  /** Team-facing market spread for the candidate pick side. */
+  pickedSpread: number | null
+  /** Team-facing BSE fair spread for the candidate pick side. */
+  fairPicked: number | null
+  lineEdge: number | null
+  priceTier: PriceTier | null
+  impliedBreakeven: number | null
+}
+
+/** One weak leg paired with its best validated upgrade (or null when none). */
+export interface AnalyzerSwap {
+  legGameId: string
+  legLabel: string
+  legTreatment: LegTreatment
+  /** null = no validated upgrade currently on the board. */
+  candidate: AnalyzerSwapCandidate | null
+}
+
 export interface AnalyzerResult {
   legs: AnalyzerLegResult[]
   combinedAmerican: number | null
   summary: ParlaySummary
+  /** Whole-ticket call derived deterministically from the summary counts. */
+  disposition: TicketDisposition
+  /** Plain-English ticket read, generated from the same counts/labels. */
+  narrative: string
+  /** Upgrade suggestions for each non-KEEP leg (candidate null when none). */
+  swaps: AnalyzerSwap[]
   weakestLabel: string | null
   strongestLabel: string | null
   analyzedAtIso: string

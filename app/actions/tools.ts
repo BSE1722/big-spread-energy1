@@ -7,7 +7,18 @@ import { getAdmin } from "@/lib/admin-auth"
 import { getLiveBoard } from "@/lib/board-feed"
 import { recordTicket } from "@/lib/review/service"
 import type { RecordLegInput } from "@/lib/review/types"
-import { evaluateBet, summarizeParlay, combineAmericanPrices, CLASSIFICATION_COPY, type BetSide, type BetClassification } from "@/lib/bse/price-aware"
+import {
+  evaluateBet,
+  summarizeParlay,
+  combineAmericanPrices,
+  CLASSIFICATION_COPY,
+  legTreatment,
+  ticketDisposition,
+  TREATMENT_COPY,
+  DISPOSITION_COPY,
+  type BetSide,
+  type BetClassification,
+} from "@/lib/bse/price-aware"
 import { generateAllTickets } from "@/lib/parlay/generate"
 import {
   getToolUsage,
@@ -21,6 +32,8 @@ import type {
   AnalyzerLegInput,
   AnalyzerLegResult,
   AnalyzerResult,
+  AnalyzerSwap,
+  AnalyzerSwapCandidate,
   RunAnalyzerResult,
   GenerateParlaidResult,
 } from "@/lib/tools/types"
@@ -49,6 +62,123 @@ const CLASS_RANK: Record<BetClassification, number> = {
   GOOD_LINE_EXPENSIVE: 2,
   NO_EDGE: 1,
   INSUFFICIENT_DATA: 0,
+}
+
+/** Minimal board-game shape the swap search reads (all real model outputs). */
+type SwapBoardGame = {
+  id: string
+  home: { name: string; abbr: string }
+  away: { name: string; abbr: string }
+  fairSpread: number | null
+  marketSpread: number | null
+  marketSpreadPrice?: { home: number | null; away: number | null }
+  bseRating: number | null
+  pick: string | null
+}
+
+/**
+ * For every analyzed leg BSE does NOT already KEEP, find the single best board
+ * pick to replace it with. A candidate must: be a different game not already on
+ * the ticket, carry a real BSE lean (`pick`), grade STRONG_LINE_PRICE_OK through
+ * the SAME evaluateBet on its live main line, and outrank the leg it replaces on
+ * canonical bseRating. Ranked by rating then line edge. Nothing is fabricated —
+ * when no board pick qualifies, the candidate is null ("no validated upgrade").
+ */
+function findSwaps(
+  legs: AnalyzerLegResult[],
+  boardGames: SwapBoardGame[],
+  excludeGameIds: Set<string>,
+): AnalyzerSwap[] {
+  const needsHelp = legs.filter((l) => l.treatment !== "KEEP")
+  if (needsHelp.length === 0) return []
+
+  const usedCandidateIds = new Set<string>()
+  const swaps: AnalyzerSwap[] = []
+
+  for (const leg of needsHelp) {
+    let best: { cand: AnalyzerSwapCandidate; rating: number; edge: number } | null = null
+
+    for (const g of boardGames) {
+      if (excludeGameIds.has(g.id) || usedCandidateIds.has(g.id)) continue
+      if (!g.pick || g.fairSpread == null || g.marketSpread == null || g.bseRating == null) continue
+
+      const side: BetSide = g.pick === g.home.name ? "home" : "away"
+      const price = mainPriceFor(g, side)
+      const ev = evaluateBet({ fairHomeSpread: g.fairSpread, offeredHomeSpread: g.marketSpread, price, side })
+      if (ev.classification !== "STRONG_LINE_PRICE_OK") continue
+
+      // Must beat the leg it replaces. Unverified legs (no rating) accept any
+      // rated STRONG candidate; rated legs require a strictly higher rating.
+      if (leg.bseRating != null && g.bseRating <= leg.bseRating) continue
+
+      const rating = g.bseRating
+      const edge = ev.lineEdge ?? Number.NEGATIVE_INFINITY
+      if (!best || rating > best.rating || (rating === best.rating && edge > best.edge)) {
+        const pickedTeamName = side === "home" ? g.home.name : g.away.name
+        best = {
+          rating,
+          edge,
+          cand: {
+            gameId: g.id,
+            matchup: `${g.away.name} @ ${g.home.name}`,
+            pickLabel: `${pickedTeamName} ${fmtSpread(ev.pickedSpread)}`,
+            bseRating: g.bseRating,
+            pickedSpread: ev.pickedSpread,
+            fairPicked: pickedSpreadFor(g.fairSpread, side),
+            lineEdge: ev.lineEdge,
+            priceTier: ev.priceTier,
+            impliedBreakeven: ev.impliedBreakeven,
+          },
+        }
+      }
+    }
+
+    if (best) usedCandidateIds.add(best.cand.gameId)
+    swaps.push({
+      legGameId: leg.gameId,
+      legLabel: leg.pickLabel,
+      legTreatment: leg.treatment,
+      candidate: best?.cand ?? null,
+    })
+  }
+
+  return swaps
+}
+
+/**
+ * Plain-English ticket read assembled ONLY from the disposition + real leg
+ * labels/counts already in the result, so it can never contradict the cards.
+ */
+function buildTicketNarrative(
+  disposition: ReturnType<typeof ticketDisposition>,
+  summary: ReturnType<typeof summarizeParlay>,
+  legs: AnalyzerLegResult[],
+): string {
+  const keeps = legs.filter((l) => l.treatment === "KEEP")
+  const cautions = legs.filter((l) => l.treatment === "CAUTION")
+  const cuts = legs.filter((l) => l.treatment === "CUT")
+  const unverified = legs.filter((l) => l.treatment === "UNVERIFIED")
+
+  const parts: string[] = [DISPOSITION_COPY[disposition].blurb]
+
+  if (summary.legCount > 0) {
+    const tally = `${keeps.length} keep, ${cautions.length} caution, ${cuts.length} cut, ${unverified.length} unverified`
+    parts.push(`Across ${summary.legCount} leg${summary.legCount === 1 ? "" : "s"}: ${tally}.`)
+  }
+  if (keeps.length > 0) {
+    const bestKeep = [...keeps].sort((a, b) => (b.bseRating ?? 0) - (a.bseRating ?? 0))[0]
+    parts.push(
+      `Strongest leg BSE backs is ${bestKeep.pickLabel}${
+        bestKeep.bseRating != null ? ` (rating ${Math.round(bestKeep.bseRating)})` : ""
+      }.`,
+    )
+  }
+  if (cuts.length > 0) parts.push(`${TREATMENT_COPY.CUT.label}: ${cuts.map((l) => l.pickLabel).join(", ")}.`)
+  if (cautions.length > 0) parts.push(`${TREATMENT_COPY.CAUTION.label}: ${cautions.map((l) => l.pickLabel).join(", ")}.`)
+  if (unverified.length > 0)
+    parts.push(`${TREATMENT_COPY.UNVERIFIED.label}: ${unverified.map((l) => l.pickLabel).join(", ")} — treat as blind.`)
+
+  return parts.join(" ")
 }
 
 /**
@@ -127,6 +257,7 @@ export async function runAnalyzer(legs: AnalyzerLegInput[]): Promise<RunAnalyzer
       fairPicked: pickedSpreadFor(game.fairSpread, side),
       lineEdge: ev.lineEdge,
       classification: ev.classification,
+      treatment: legTreatment(ev.classification), // pure relabel of classification
       priceTier: ev.priceTier,
       impliedBreakeven: ev.impliedBreakeven,
       bseRating: game.bseRating, // canonical board rating (same loader recordTicket captures)
@@ -177,10 +308,25 @@ export async function runAnalyzer(legs: AnalyzerLegInput[]): Promise<RunAnalyzer
     strongestLabel = `${byBest[0].pickLabel} — ${CLASSIFICATION_COPY[byBest[0].classification].label}`
   }
 
+  // Whole-ticket call — deterministic over the summary counts only.
+  const disposition = ticketDisposition(summary)
+
+  // Upgrade search: for every leg BSE doesn't already KEEP, look for a board
+  // pick that grades STRONG at a higher canonical rating. Uses the SAME
+  // evaluateBet + real board fields; never fabricates a candidate.
+  const swaps = findSwaps(resultLegs, board.games, new Set(resultLegs.map((l) => l.gameId)))
+
+  // Narrative — assembled purely from counts + real leg labels, so it can never
+  // contradict the cards above it.
+  const narrative = buildTicketNarrative(disposition, summary, resultLegs)
+
   const result: AnalyzerResult = {
     legs: resultLegs,
     combinedAmerican: combined?.american ?? null,
     summary,
+    disposition,
+    narrative,
+    swaps,
     weakestLabel,
     strongestLabel,
     analyzedAtIso: new Date().toISOString(),

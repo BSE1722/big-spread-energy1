@@ -16,12 +16,16 @@ import { useAccess } from "@/lib/use-access"
 import { useToolUsage } from "@/lib/use-tool-usage"
 import { ToolGate, toolGateMode } from "@/components/parlay/tool-gate"
 import { runAnalyzer } from "@/app/actions/tools"
-import type { AnalyzerLegInput, AnalyzerResult, AnalyzerLegResult } from "@/lib/tools/types"
+import type { AnalyzerLegInput, AnalyzerResult, AnalyzerLegResult, AnalyzerSwap } from "@/lib/tools/types"
 import {
   CLASSIFICATION_COPY,
   LINE_SOURCE_COPY,
+  TREATMENT_COPY,
+  DISPOSITION_COPY,
   type BetSide,
   type BetClassification,
+  type LegTreatment,
+  type TicketDisposition,
 } from "@/lib/bse/price-aware"
 
 /**
@@ -80,6 +84,34 @@ const BADGE_STYLE: Record<BetClassification, string> = {
   GOOD_LINE_EXPENSIVE: "border-[var(--rating-mid)]/40 bg-[var(--rating-mid)]/10 text-[var(--rating-mid)]",
   NO_EDGE: "border-border bg-secondary/50 text-muted-foreground",
   INSUFFICIENT_DATA: "border-border bg-secondary/50 text-muted-foreground",
+}
+
+/** Treatment chip styling — one visual language shared by legs + swaps. */
+const TREATMENT_STYLE: Record<LegTreatment, string> = {
+  KEEP: "border-[var(--rating-strong)]/40 bg-[var(--rating-strong)]/10 text-[var(--rating-strong)]",
+  CAUTION: "border-[var(--rating-mid)]/40 bg-[var(--rating-mid)]/10 text-[var(--rating-mid)]",
+  CUT: "border-destructive/40 bg-destructive/10 text-destructive",
+  UNVERIFIED: "border-border bg-secondary/50 text-muted-foreground",
+}
+
+/** Disposition banner tone. */
+const DISPOSITION_STYLE: Record<TicketDisposition, string> = {
+  PLAY_IT: "border-[var(--rating-strong)]/50 bg-[var(--rating-strong)]/10 text-[var(--rating-strong)]",
+  PLAY_BUT_TRIM: "border-[var(--rating-strong)]/40 bg-[var(--rating-strong)]/5 text-[var(--rating-strong)]",
+  REWORK_IT: "border-[var(--rating-mid)]/50 bg-[var(--rating-mid)]/10 text-[var(--rating-mid)]",
+  PASS: "border-destructive/50 bg-destructive/10 text-destructive",
+  LOW_CONFIDENCE: "border-border bg-secondary/50 text-muted-foreground",
+}
+
+/** Map a leg treatment to the chip used inside a leg card. */
+function TreatmentChip({ treatment }: { treatment: LegTreatment }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-md border px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-wide ${TREATMENT_STYLE[treatment]}`}
+    >
+      {TREATMENT_COPY[treatment].label}
+    </span>
+  )
 }
 
 /** Stable signature of the current ticket selection (for stale-reveal detection). */
@@ -462,11 +494,24 @@ function RevealedTicket({
         )}
       </div>
 
+      {/* Whole-ticket call — derived server-side from the same leg counts. */}
+      <div className={`rounded-xl border p-4 ${DISPOSITION_STYLE[result.disposition]}`}>
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-display text-lg font-bold uppercase tracking-wide">
+            {DISPOSITION_COPY[result.disposition].label}
+          </span>
+          <span className="font-mono text-[11px] uppercase tracking-wide opacity-70">BSE ticket call</span>
+        </div>
+        <p className="mt-2 text-sm leading-relaxed text-foreground text-pretty">{result.narrative}</p>
+      </div>
+
       <ul className="space-y-3">
         {result.legs.map((leg) => (
           <RevealedLegCard key={leg.gameId} leg={leg} />
         ))}
       </ul>
+
+      {result.swaps.length > 0 && <SwapSuggestions swaps={result.swaps} />}
 
       {/* Ticket-level read (from the server summary — no EV / win-prob) */}
       <div className={`rounded-xl border ${tone} p-4`}>
@@ -574,10 +619,13 @@ function RevealedLegCard({ leg }: { leg: AnalyzerLegResult }) {
 
       <div className="flex flex-col gap-2 border-t border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <span className={`inline-flex items-center rounded-md border px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-wide ${BADGE_STYLE[leg.classification]}`}>
-            {copy.label}
-          </span>
-          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{copy.blurb}</p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <TreatmentChip treatment={leg.treatment} />
+            <span className={`inline-flex items-center rounded-md border px-2 py-1 font-mono text-[11px] font-semibold uppercase tracking-wide ${BADGE_STYLE[leg.classification]}`}>
+              {copy.label}
+            </span>
+          </div>
+          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{TREATMENT_COPY[leg.treatment].blurb}</p>
         </div>
         <div className="shrink-0 text-left sm:text-right">
           <p className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">Price breakeven</p>
@@ -588,6 +636,69 @@ function RevealedLegCard({ leg }: { leg: AnalyzerLegResult }) {
         </div>
       </div>
     </li>
+  )
+}
+
+/* ----------------------- make this parlay better -------------------------- */
+
+function SwapSuggestions({ swaps }: { swaps: AnalyzerSwap[] }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="flex items-center gap-2">
+        <Zap className="size-4 text-primary" />
+        <h4 className="font-display text-sm font-semibold uppercase tracking-wide text-foreground">
+          Make this parlay better
+        </h4>
+      </div>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+        BSE only suggests a board pick that grades strong at a higher rating than the leg it replaces. No upgrade is
+        invented — if nothing qualifies, it says so.
+      </p>
+
+      <ul className="mt-3 space-y-3">
+        {swaps.map((swap) => (
+          <li key={swap.legGameId} className="rounded-lg border border-border bg-background p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <TreatmentChip treatment={swap.legTreatment} />
+              <span className="font-display text-sm font-semibold text-foreground">{swap.legLabel}</span>
+            </div>
+
+            {swap.candidate ? (
+              <div className="mt-2.5 flex flex-col gap-2 rounded-lg border border-[var(--rating-strong)]/30 bg-[var(--rating-strong)]/5 p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Swap to</span>
+                    <span className="rounded border border-[var(--rating-strong)]/40 bg-[var(--rating-strong)]/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-[var(--rating-strong)]">
+                      {TREATMENT_COPY.KEEP.label}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 font-display text-base font-semibold text-foreground">{swap.candidate.pickLabel}</p>
+                  <p className="truncate text-xs text-muted-foreground">{swap.candidate.matchup}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-4">
+                  <SwapStat label="BSE rating" value={swap.candidate.bseRating != null ? String(Math.round(swap.candidate.bseRating)) : "—"} />
+                  <SwapStat label="BSE fair" value={fmtSpread(swap.candidate.fairPicked != null ? Math.round(swap.candidate.fairPicked * 10) / 10 : null)} />
+                  <SwapStat label="Line edge" value={`${fmtEdge(swap.candidate.lineEdge)} pt`} />
+                </div>
+              </div>
+            ) : (
+              <p className="mt-2 font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
+                No validated upgrade on the board right now.
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function SwapStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col">
+      <span className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="font-display text-sm font-bold tabular-nums text-foreground">{value}</span>
+    </div>
   )
 }
 
