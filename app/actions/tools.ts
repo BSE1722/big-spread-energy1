@@ -74,6 +74,20 @@ type SwapBoardGame = {
   marketSpreadPrice?: { home: number | null; away: number | null }
   bseRating: number | null
   pick: string | null
+  kickoff: string | null
+  kickoffTBD?: boolean
+}
+
+/**
+ * A game is only a valid swap target if it can still be bet — i.e. it has not
+ * kicked off yet. TBD kickoffs (time unpublished) are treated as future, since
+ * we can't prove they've started. This is what keeps last night's finished
+ * games out of the "MAKE THIS PARLAY BETTER" suggestions.
+ */
+function isBettableNow(g: SwapBoardGame, nowMs: number): boolean {
+  if (g.kickoffTBD || !g.kickoff) return true
+  const t = new Date(g.kickoff).getTime()
+  return !Number.isFinite(t) || t > nowMs
 }
 
 /**
@@ -94,12 +108,14 @@ function findSwaps(
 
   const usedCandidateIds = new Set<string>()
   const swaps: AnalyzerSwap[] = []
+  const nowMs = Date.now()
 
   for (const leg of needsHelp) {
     let best: { cand: AnalyzerSwapCandidate; rating: number; edge: number } | null = null
 
     for (const g of boardGames) {
       if (excludeGameIds.has(g.id) || usedCandidateIds.has(g.id)) continue
+      if (!isBettableNow(g, nowMs)) continue // never suggest a game that already kicked off
       if (!g.pick || g.fairSpread == null || g.marketSpread == null || g.bseRating == null) continue
 
       const side: BetSide = g.pick === g.home.name ? "home" : "away"
