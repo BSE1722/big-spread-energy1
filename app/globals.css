@@ -153,6 +153,26 @@
   }
 }
 
+.animate-live-pulse {
+  animation: live-pulse 1.6s ease-in-out infinite;
+}
+
+/* Live signal card entrance — a sharp, restrained data reveal. */
+@keyframes signal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-signal-in {
+  animation: signal-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 @keyframes hero-float {
   0%,
   100% {
@@ -226,7 +246,9 @@
   .animate-hero-float,
   .animate-energy-flicker,
   .animate-energy-drift,
-  .animate-energy-drift-slow {
+  .animate-energy-drift-slow,
+  .animate-live-pulse,
+  .animate-signal-in {
     animation: none;
   }
 }
