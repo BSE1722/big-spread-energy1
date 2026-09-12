@@ -23,8 +23,13 @@
 
 export type WeatherImpactLevel = "none" | "low" | "moderate" | "high"
 
-/** Honest lifecycle of a weather read (mirrors lib/weather/types WeatherDataStatus). */
-export type WeatherReadStatus = "ok" | "indoor" | "pending_kickoff" | "unavailable" | "none_stored"
+/**
+ * Honest lifecycle of a weather read. The first four mirror the persisted
+ * lib/weather/types WeatherDataStatus. "stale" is a PRESENTATION-ONLY state
+ * derived at read time when an otherwise-`ok` forecast is too old to be shown
+ * as current (e.g. an ingestion outage); it is never written to the database.
+ */
+export type WeatherReadStatus = "ok" | "indoor" | "pending_kickoff" | "unavailable" | "none_stored" | "stale"
 
 /** Minimal forecast shape the impact calc needs (subset of a game_weather row). */
 export interface WeatherImpactInput {
@@ -157,6 +162,18 @@ export function computeWeatherImpact(input: WeatherImpactInput): WeatherImpact {
       factors: [],
       reasoning: "Kickoff time is not yet set, so a specific game-hour forecast cannot be pulled.",
       spreadNote: "No adjustment — awaiting a confirmed kickoff time.",
+      hasForecast: false,
+    }
+  }
+  if (input.status === "stale") {
+    return {
+      status: "stale",
+      level: "none",
+      spreadAdjustment: 0,
+      factors: [],
+      reasoning:
+        "The last stored forecast for this game is out of date and hasn't refreshed recently, so BSE won't present it as current conditions.",
+      spreadNote: "STALE FORECAST — treated as unavailable, no adjustment applied.",
       hasForecast: false,
     }
   }

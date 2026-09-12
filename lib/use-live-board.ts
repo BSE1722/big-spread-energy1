@@ -29,6 +29,7 @@ export interface LiveBoardGame {
     updatedAt: string | null
     totalWithinPlausibleRange: boolean
     rawTotalPoints: number | null
+    lineHistory?: unknown
   }
 
   // BSE model output — null until the engine is wired.

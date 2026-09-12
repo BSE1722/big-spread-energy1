@@ -6,7 +6,9 @@ import { AdminRefresh } from "@/components/admin/admin-refresh"
 import { AdminDashboard } from "@/components/admin/admin-dashboard"
 import { AdminPicks } from "@/components/admin/admin-picks"
 import { WeeklyOps } from "@/components/admin/weekly-ops"
+import { ToolConfig } from "@/components/admin/tool-config"
 import { getWeeklyOpsSnapshot } from "@/lib/weekly-ops/service"
+import { getToolLimits } from "@/lib/config/service"
 import {
   listPredictions,
   listCorrections,
@@ -47,6 +49,9 @@ export default async function AdminPage() {
   // aggregator throws (e.g. a data source is briefly unavailable) we degrade
   // gracefully rather than break the whole control room.
   const weeklyOps = await getWeeklyOpsSnapshot().catch(() => null)
+
+  // Editable free-tier tool limits (falls back to defaults if unset).
+  const toolLimits = await getToolLimits()
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
@@ -107,6 +112,30 @@ export default async function AdminPage() {
         >
           Open Postgame Review →
         </a>
+      </section>
+
+      <section className="mt-12 border-t border-border pt-8">
+        <h2 className="mb-2 font-display text-xl font-bold text-foreground">Rating Calibration</h2>
+        <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+          How the frozen pregame BSE Rating has actually performed. Built only from graded legs whose rating was
+          captured before kickoff — never recalculated, never fabricated. Buckets appear only once they have real
+          observations.
+        </p>
+        <a
+          href="/admin/calibration"
+          className="inline-flex items-center rounded-md border border-border bg-card px-4 py-2 font-mono text-sm text-foreground transition-colors hover:bg-muted"
+        >
+          Open Rating Calibration →
+        </a>
+      </section>
+
+      <section className="mt-12 border-t border-border pt-8">
+        <h2 className="mb-2 font-display text-xl font-bold text-foreground">Tool Access Limits</h2>
+        <p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+          Free-tier weekly allowances for the tools. Changes take effect immediately — no redeploy. Pro members are
+          always unlimited.
+        </p>
+        <ToolConfig initial={toolLimits} />
       </section>
 
       <section className="mt-12 border-t border-border pt-8">

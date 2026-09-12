@@ -14,12 +14,14 @@ const DAY = 24 * HOUR
 
 /**
  * Minimum interval between pulls, by time remaining until kickoff:
- *   > 7 days      → do not fetch (outside reliable hourly horizon)
- *   7 days → 48h  → once daily
- *   48h → 12h     → every 6 hours
- *   12h → 3h      → hourly
- *   < 3h → kickoff→ every 30 minutes
+ *   > 7 days      → do not fetch (outside the useful / reliable forecast window)
+ *   7 days → 24h  → every 3 hours
+ *   24h → 6h      → hourly
+ *   < 6h → kickoff→ every 30 minutes (highest practical resolution near kickoff)
  *   after kickoff → freeze; no more fetches
+ *
+ * These are FRESHNESS/SCHEDULING intervals only. They do not touch the weather
+ * impact classification, its thresholds, or any BSE math.
  */
 export interface CadenceDecision {
   /** Whether a fresh pull should happen now. */
@@ -49,18 +51,15 @@ export function decideRefresh(input: {
   if (timeToKickoff > 7 * DAY) {
     minIntervalMs = null
     tier = "beyond-7d"
-  } else if (timeToKickoff > 48 * HOUR) {
-    minIntervalMs = DAY
-    tier = "7d-48h-daily"
-  } else if (timeToKickoff > 12 * HOUR) {
-    minIntervalMs = 6 * HOUR
-    tier = "48h-12h-6h"
-  } else if (timeToKickoff > 3 * HOUR) {
+  } else if (timeToKickoff > 24 * HOUR) {
+    minIntervalMs = 3 * HOUR
+    tier = "7d-24h-3h"
+  } else if (timeToKickoff > 6 * HOUR) {
     minIntervalMs = HOUR
-    tier = "12h-3h-hourly"
+    tier = "24h-6h-hourly"
   } else {
     minIntervalMs = 30 * MIN
-    tier = "under-3h-30m"
+    tier = "under-6h-30m"
   }
 
   if (minIntervalMs == null) {
@@ -74,4 +73,40 @@ export function decideRefresh(input: {
 
   const elapsed = now - input.lastFetchedMs
   return { due: elapsed >= minIntervalMs, afterKickoff: false, minIntervalMs, tier }
+}
+
+/**
+ * Maximum age an `ok` forecast may reach before the customer-facing breakdown
+ * must stop presenting it as CURRENT. Chosen generously relative to the refresh
+ * cadence so a healthy scheduler never trips it — only a genuine ingestion
+ * outage (several missed cycles) does:
+ *   - inside 24h of kickoff (hourly/30-min tiers) → stale after 3 hours
+ *   - 24h → 7d (3-hour tier)                      → stale after 8 hours
+ *   - kickoff passed                              → never stale (the frozen
+ *     final pre-kickoff reading is intentionally immutable)
+ *
+ * Pure policy: does not fetch, store, or alter any weather value.
+ */
+export function weatherStaleAfterMs(timeToKickoffMs: number): number {
+  if (timeToKickoffMs <= 0) return Number.POSITIVE_INFINITY
+  if (timeToKickoffMs <= 24 * HOUR) return 3 * HOUR
+  return 8 * HOUR
+}
+
+/**
+ * Decide whether the latest stored `ok` forecast is too old to be shown as
+ * current. Returns false when we have no fetch timestamp (nothing to age) or
+ * when kickoff has already passed (frozen final snapshot).
+ */
+export function isForecastStale(input: {
+  kickoffMs: number
+  fetchedMs: number | null
+  now?: number
+}): boolean {
+  if (input.fetchedMs == null || !Number.isFinite(input.kickoffMs)) return false
+  const now = input.now ?? Date.now()
+  const timeToKickoff = input.kickoffMs - now
+  if (timeToKickoff <= 0) return false
+  const age = now - input.fetchedMs
+  return age > weatherStaleAfterMs(timeToKickoff)
 }

@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Search, X, CalendarClock } from "lucide-react"
+import Link from "next/link"
+import { Search, X, CalendarClock, ChevronRight } from "lucide-react"
 import { TeamLogo } from "@/components/team-logo"
 import { TeamName } from "@/components/team-name"
 import { getTeamRank } from "@/lib/bse"
@@ -60,8 +61,38 @@ function useTeamOptions(): TeamOption[] {
   return teams
 }
 
+/**
+ * Set of game IDs on the CURRENT week's board, in the same `cfbd-<id>` format
+ * the breakdown route resolves. A schedule game is openable iff its ID is in
+ * here — future-week games have no breakdown yet, so we must not link them to a
+ * 404. Kept honest by reading the same live board feed The Board itself uses.
+ */
+function useCurrentBoardGameIds(): Set<string> {
+  const [ids, setIds] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    async function loadBoard() {
+      try {
+        const res = await fetch("/api/cfbd-board")
+        if (!res.ok) return
+        const data = await res.json()
+        const gameIds: string[] = Array.isArray(data.games)
+          ? data.games.map((g: { id: string }) => g.id).filter(Boolean)
+          : []
+        setIds(new Set(gameIds))
+      } catch (error) {
+        console.error("Failed to load board game IDs:", error)
+      }
+    }
+    loadBoard()
+  }, [])
+
+  return ids
+}
+
 export function TeamSearch() {
   const teams = useTeamOptions()
+  const boardGameIds = useCurrentBoardGameIds()
   const [query, setQuery] = useState("")
   const [selected, setSelected] = useState<string | null>(null)
   const [liveGames, setLiveGames] = useState<CfbdGame[]>([])
@@ -225,9 +256,11 @@ export function TeamSearch() {
                 {results.length} scheduled {results.length === 1 ? "game" : "games"} for {selected}
               </p>
               <div className="mt-2 flex flex-col gap-2">
-                {results.map((g) => (
-                  <TeamGameCard key={g.id} g={g} team={selected} />
-                ))}
+                {results.map((g) => {
+                  const boardId = `cfbd-${g.id}`
+                  const href = boardGameIds.has(boardId) ? `/game/${boardId}` : null
+                  return <TeamGameCard key={g.id} g={g} team={selected} href={href} />
+                })}
               </div>
             </>
           ) : (
@@ -241,7 +274,7 @@ export function TeamSearch() {
   )
 }
 
-function TeamGameCard({ g, team }: { g: CfbdGame; team: string }) {
+function TeamGameCard({ g, team, href }: { g: CfbdGame; team: string; href: string | null }) {
   const isHome = g.homeTeam === team
   const opponent = isHome ? g.awayTeam : g.homeTeam
 
@@ -253,17 +286,49 @@ function TeamGameCard({ g, team }: { g: CfbdGame; team: string }) {
     minute: "2-digit",
   })
 
+  const meta = (
+    <div className="flex items-center gap-4">
+      <div className="font-mono text-[11px] text-muted-foreground">Week {g.week}</div>
+      <div className="font-mono text-[11px] text-muted-foreground">{kickoff}</div>
+      {g.venue && <div className="font-mono text-[11px] text-muted-foreground">{g.venue}</div>}
+    </div>
+  )
+
+  const matchup = (
+    <div className="flex items-center gap-2 font-display text-sm">
+      <span className="font-mono text-[11px] uppercase text-muted-foreground">{isHome ? "vs" : "@"}</span>
+      <TeamName name={opponent} abbr={opponent} size="sm" />
+    </div>
+  )
+
+  // Only current-week games have an assembled breakdown to open. When one
+  // exists, the whole card is a link into the breakdown; otherwise it stays a
+  // static row with an explicit "upcoming" marker so the lack of a tap target
+  // reads as intentional, not broken.
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="group flex min-h-11 flex-col gap-3 rounded-lg border border-border bg-background p-3 transition-colors hover:border-primary/50 hover:bg-primary/5 sm:flex-row sm:items-center sm:justify-between"
+      >
+        {matchup}
+        <div className="flex items-center gap-3">
+          {meta}
+          <span className="flex items-center gap-1 font-mono text-[11px] font-semibold uppercase tracking-wide text-primary">
+            <span className="hidden sm:inline">Breakdown</span>
+            <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </div>
+      </Link>
+    )
+  }
+
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-2 font-display text-sm">
-        <span className="font-mono text-[11px] uppercase text-muted-foreground">{isHome ? "vs" : "@"}</span>
-        <TeamName name={opponent} abbr={opponent} size="sm" />
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="font-mono text-[11px] text-muted-foreground">Week {g.week}</div>
-        <div className="font-mono text-[11px] text-muted-foreground">{kickoff}</div>
-        {g.venue && <div className="font-mono text-[11px] text-muted-foreground">{g.venue}</div>}
+      {matchup}
+      <div className="flex items-center gap-3">
+        {meta}
+        <span className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground/70">Upcoming</span>
       </div>
     </div>
   )

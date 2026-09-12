@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState, useTransition } from "react"
 import Link from "next/link"
 import {
   Dice5,
@@ -12,13 +12,19 @@ import {
   ArrowRight,
   ArrowLeft,
   Search,
+  Dices,
+  Lock,
   type LucideIcon,
 } from "lucide-react"
 import { CurrentWeekSlate } from "@/components/parlay/current-week-slate"
 import { useLiveBoard, formatKickoff, formatKickoffDate } from "@/lib/use-live-board"
+import { useAccess } from "@/lib/use-access"
+import { useToolUsage } from "@/lib/use-tool-usage"
+import { ToolGate, toolGateMode } from "@/components/parlay/tool-gate"
+import { generateParlaid } from "@/app/actions/tools"
 import {
-  generateAllTickets,
   lineShoppingHint,
+  type GenerateResult,
   type ProfileResult,
   type GameRead,
   type RiskProfileId,
@@ -58,15 +64,53 @@ const PROFILE_META: Record<RiskProfileId, { label: string; icon: LucideIcon; des
 
 const OBJECTIVE_ORDER: RiskProfileId[] = ["balanced", "safer", "longshot"]
 
-export function ParlayGenerator() {
-  const { games, projectionsAvailable, loading, error } = useLiveBoard()
+function toByProfile(result: GenerateResult): Map<RiskProfileId, ProfileResult> {
+  const m = new Map<RiskProfileId, ProfileResult>()
+  for (const r of result.results) m.set(r.profile, r)
+  return m
+}
 
-  const generated = useMemo(() => generateAllTickets(games), [games])
-  const byProfile = useMemo(() => {
-    const m = new Map<RiskProfileId, ProfileResult>()
-    for (const r of generated.results) m.set(r.profile, r)
-    return m
-  }, [generated])
+export function ParlayGenerator() {
+  const { projectionsAvailable, loading, error } = useLiveBoard()
+  const access = useAccess()
+  const usage = useToolUsage()
+
+  const [result, setResult] = useState<GenerateResult | null>(null)
+  const [runError, setRunError] = useState<string | null>(null)
+  const [emptied, setEmptied] = useState(false)
+  const [pending, startTransition] = useTransition()
+
+  const usageInfo = usage.data?.usage?.parlaid ?? null
+  const lastParlaid = usage.data?.lastParlaid ?? null
+  const gateMode = toolGateMode({
+    loading: access.loading || usage.loading,
+    isGuest: access.isGuest,
+    isPro: access.isPro,
+    usage: usageInfo,
+  })
+
+  function generate() {
+    setRunError(null)
+    setEmptied(false)
+    startTransition(async () => {
+      const res = await generateParlaid()
+      if (res.status === "ok") {
+        setResult(res.result)
+        usage.setUsage(res.usage)
+      } else if (res.status === "empty") {
+        setResult(res.result)
+        setEmptied(true)
+        usage.setUsage(res.usage)
+      } else if (res.status === "locked") {
+        usage.setUsage(res.usage)
+        await usage.refresh()
+      } else if (res.status === "auth") {
+        await access.refresh()
+      } else {
+        setRunError(res.error)
+      }
+    })
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
@@ -104,7 +148,7 @@ export function ParlayGenerator() {
         </div>
       </div>
 
-      {/* Tickets when reads are published; honest pending state otherwise. */}
+      {/* Tickets are generated on demand; honest pending state otherwise. */}
       <div className="space-y-6">
         <MoveTheLineCallout />
 
@@ -121,7 +165,48 @@ export function ParlayGenerator() {
         ) : !projectionsAvailable ? (
           <PendingBanner />
         ) : (
-          <GeneratedTickets byProfile={byProfile} candidateCount={generated.candidates.length} />
+          <div className="space-y-4">
+            {/* Gate + Generate control */}
+            <div className="rounded-xl border border-border bg-card p-4">
+              <ToolGate mode={gateMode} usage={usageInfo} isPro={access.isPro} labels={{ singular: "parlay", plural: "parlays" }}>
+                <button
+                  type="button"
+                  onClick={generate}
+                  disabled={pending}
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 font-display text-base font-semibold uppercase tracking-wide text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Dices className="size-4" />
+                  {pending ? "Building tickets…" : result ? "Regenerate tickets" : "Generate tickets"}
+                </button>
+              </ToolGate>
+              {runError && <p className="mt-2 text-center text-xs text-destructive">{runError}</p>}
+            </div>
+
+            {/* At-limit: re-show the last generated tickets read-only. */}
+            {gateMode === "locked" && !result && lastParlaid?.payload != null && (
+              <div className="space-y-4">
+                <p className="flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-wide text-foreground">
+                  <Lock className="size-3.5 text-muted-foreground" />
+                  Your last generated tickets
+                </p>
+                <GeneratedTickets
+                  byProfile={toByProfile(lastParlaid.payload as GenerateResult)}
+                  candidateCount={(lastParlaid.payload as GenerateResult).candidates.length}
+                />
+              </div>
+            )}
+
+            {/* Freshly generated tickets. */}
+            {result &&
+              (emptied ? (
+                <p className="rounded-lg border border-border bg-card px-4 py-3 text-sm leading-relaxed text-muted-foreground">
+                  BSE didn&apos;t find enough edge-clearing legs to build a ticket this week — it declines rather than
+                  force a bet. This didn&apos;t use one of your generations.
+                </p>
+              ) : (
+                <GeneratedTickets byProfile={toByProfile(result)} candidateCount={result.candidates.length} />
+              ))}
+          </div>
         )}
 
         <CurrentWeekSlate />

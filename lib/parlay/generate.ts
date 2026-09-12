@@ -165,7 +165,8 @@ export function evaluateGame(g: GeneratorGame): GameRead {
     side,
   })
 
-  const eligible = ev.lineEdge != null && ev.lineEdge >= LINE_EDGE_GATE && price != null
+  const eligible =
+    ev.lineEdge != null && ev.lineEdge >= LINE_EDGE_GATE && price != null && isGameBettable(g)
 
   // Shop the available DraftKings ladder for this side. Today the feed gives us
   // only the main line (SGO audit: no alternate rungs on our tier), so the
@@ -332,6 +333,22 @@ export function lineShoppingHint(read: GameRead): LineShopping {
     verified: false,
     hint: "Main line is the play — no clear alternate advantage to shop.",
   }
+}
+
+/**
+ * A game can only become a generated leg if it hasn't kicked off yet. TBD /
+ * unknown kickoffs are treated as future (we can't prove they've started).
+ * Mirrors the analyzer's swap guard so neither surface ever suggests a game
+ * that already started. Full-slate reads still include started games (badged
+ * ineligible); only ticket SELECTION is gated.
+ */
+export function isGameBettable(
+  g: { kickoff: string | null; kickoffTBD?: boolean },
+  nowMs: number = Date.now(),
+): boolean {
+  if (g.kickoffTBD || !g.kickoff) return true
+  const t = new Date(g.kickoff).getTime()
+  return !Number.isFinite(t) || t > nowMs
 }
 
 /** Every game's read, in kickoff order. Drives the slate badges. */

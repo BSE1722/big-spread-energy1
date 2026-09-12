@@ -94,6 +94,47 @@ export const CLASSIFICATION_COPY: Record<BetClassification, { label: string; blu
   },
 }
 
+/**
+ * Grade of the TAKEN NUMBER's line value ALONE — "are the points good?" —
+ * deliberately independent of how expensive the price is (that lives in
+ * `priceTier`). This lets a leg read as HIGH points / expensive price at the
+ * same time, which is exactly the bought-down-favorite case.
+ */
+export type PointsGrade = "HIGH" | "LOW" | "NA"
+
+export const POINTS_GRADE_COPY: Record<PointsGrade, { label: string; blurb: string }> = {
+  HIGH: {
+    label: "POINTS: HIGH",
+    blurb: "The number clears the BSE fair line by at least a full point — strong line value, price aside.",
+  },
+  LOW: {
+    label: "POINTS: LOW",
+    blurb: "The number isn't a full point better than the BSE fair line — thin line value.",
+  },
+  NA: {
+    label: "POINTS: N/A",
+    blurb: "Missing a BSE grade or price, so the number's line value can't be graded.",
+  },
+}
+
+/**
+ * Read the line-value grade straight off `classification`. This is a PURE 1:1
+ * relabel — both STRONG_LINE_PRICE_OK and GOOD_LINE_EXPENSIVE already mean the
+ * number cleared the |edge| >= 1 line-edge gate, so both are HIGH; NO_EDGE is
+ * LOW; INSUFFICIENT_DATA is N/A. No new math, no coefficient, no price input.
+ */
+export function pointsGrade(classification: BetClassification): PointsGrade {
+  switch (classification) {
+    case "STRONG_LINE_PRICE_OK":
+    case "GOOD_LINE_EXPENSIVE":
+      return "HIGH"
+    case "NO_EDGE":
+      return "LOW"
+    case "INSUFFICIENT_DATA":
+      return "NA"
+  }
+}
+
 /* --------------------------------- Prices --------------------------------- */
 
 /**
@@ -518,4 +559,106 @@ export function summarizeParlay(legs: ParlayLegLike[]): ParlaySummary {
   else verdict = "Every leg beats the BSE fair line at an acceptable price."
 
   return { legCount: legs.length, strong, expensive, noEdge, insufficient, totalLineEdge, verdict, allStrong }
+}
+
+/* --------------------------- Leg treatment (verb) ------------------------- */
+
+/**
+ * Action-language relabel of a BetClassification that evaluateBet ALREADY
+ * produced. This is a pure 1:1 mapping — it introduces NO new thresholds, math,
+ * probability, EV, or model input. It only re-expresses the existing verdict as
+ * a verb the bettor can act on:
+ *
+ *   KEEP       <- STRONG_LINE_PRICE_OK  (>= gate pt past fair AND price not punitive)
+ *   CAUTION    <- GOOD_LINE_EXPENSIVE   (beats the fair line, but the price is steep)
+ *   CUT        <- NO_EDGE               (number isn't a full point past the fair line)
+ *   UNVERIFIED <- INSUFFICIENT_DATA     (missing a BSE grade or a price)
+ *
+ * UNVERIFIED is a DATA-CONFIDENCE state, NEVER a prediction that the leg loses.
+ */
+export type LegTreatment = "KEEP" | "CAUTION" | "CUT" | "UNVERIFIED"
+
+export function legTreatment(c: BetClassification): LegTreatment {
+  switch (c) {
+    case "STRONG_LINE_PRICE_OK":
+      return "KEEP"
+    case "GOOD_LINE_EXPENSIVE":
+      return "CAUTION"
+    case "NO_EDGE":
+      return "CUT"
+    case "INSUFFICIENT_DATA":
+      return "UNVERIFIED"
+  }
+}
+
+export const TREATMENT_COPY: Record<LegTreatment, { label: string; blurb: string }> = {
+  KEEP: {
+    label: "KEEP",
+    blurb: "Better than the BSE fair line at a price that isn't punitive — a leg BSE stands behind.",
+  },
+  CAUTION: {
+    label: "CAUTION",
+    blurb: "The number beats the fair line, but you're paying up for it — keep it only if you accept the juice.",
+  },
+  CUT: {
+    label: "CUT",
+    blurb: "No measurable BSE edge on this number — it's dragging the ticket down.",
+  },
+  UNVERIFIED: {
+    label: "UNVERIFIED",
+    blurb: "BSE can't grade this leg (missing a rating or a price), so it can't vouch for it either way.",
+  },
+}
+
+/* --------------------------- Ticket disposition --------------------------- */
+
+/**
+ * One whole-ticket call, derived DETERMINISTICALLY from the per-leg treatment
+ * counts in a ParlaySummary. It uses ONLY counts of classifications evaluateBet
+ * already assigned — no win probability, no EV, no new cutoff. LOW_CONFIDENCE is
+ * explicitly the data-coverage bucket: BSE can't speak to enough of the ticket.
+ */
+export type TicketDisposition = "PLAY_IT" | "PLAY_BUT_TRIM" | "REWORK_IT" | "PASS" | "LOW_CONFIDENCE"
+
+export const DISPOSITION_COPY: Record<TicketDisposition, { label: string; blurb: string }> = {
+  PLAY_IT: {
+    label: "PLAY IT",
+    blurb: "Every leg beats the BSE fair line at an acceptable price. BSE stands behind the whole ticket.",
+  },
+  PLAY_BUT_TRIM: {
+    label: "PLAY, BUT TRIM IT",
+    blurb: "The keeps carry this ticket. Drop the flagged legs and it's a clean play.",
+  },
+  REWORK_IT: {
+    label: "REWORK IT",
+    blurb: "As many problem legs as keepers. Swap the weak ones before you put money on it.",
+  },
+  PASS: {
+    label: "PASS",
+    blurb: "No legs BSE endorses and no-edge legs dominate — there's nothing here to back.",
+  },
+  LOW_CONFIDENCE: {
+    label: "LOW CONFIDENCE",
+    blurb: "BSE can't grade enough of this ticket to call it. Treat the ungraded legs as blind.",
+  },
+}
+
+/**
+ * First-match ladder. keep/caution/cut/unverified are the four treatment
+ * buckets; verified = legs BSE could actually grade.
+ */
+export function ticketDisposition(s: ParlaySummary): TicketDisposition {
+  const keep = s.strong
+  const caution = s.expensive
+  const cut = s.noEdge
+  const unverified = s.insufficient
+  const verified = s.legCount - unverified
+
+  if (s.legCount === 0) return "LOW_CONFIDENCE"
+  if (keep === s.legCount) return "PLAY_IT"
+  if (verified === 0) return "LOW_CONFIDENCE"
+  if (unverified > 0 && unverified >= verified) return "LOW_CONFIDENCE"
+  if (keep === 0 && cut >= caution) return "PASS"
+  if (keep > cut + caution + unverified) return "PLAY_BUT_TRIM"
+  return "REWORK_IT"
 }

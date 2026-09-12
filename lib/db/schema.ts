@@ -121,6 +121,52 @@ export const processedStripeEvents = pgTable("processed_stripe_events", {
 })
 
 /**
+ * Editable app configuration, keyed by a stable string. Powers admin-tunable
+ * settings (e.g. free-tier tool limits) WITHOUT a redeploy. `value` is jsonb so
+ * a single row can hold a small object (e.g. { analyzerFreeWeekly, parlaidFreeWeekly }).
+ * Written by admins only; readers fall back to hard-coded defaults if a key is
+ * absent, so the app is always functional even before the row is seeded.
+ */
+export const appConfig = pgTable("app_config", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true }).notNull().defaultNow(),
+  updatedBy: text("updatedBy"),
+})
+
+/**
+ * Per-user tool-usage ledger. One row per COMPLETED, SUCCESSFUL tool run,
+ * scoped to the (season, week) it was run for so weekly limits reset implicitly
+ * as the week rolls over (a new week simply has no rows — we never delete).
+ *
+ * `requestHash` makes counting idempotent and refresh/logout/device proof: it
+ * is a deterministic signature of (userId, season, week, seasonType, tool,
+ * normalized inputs), and the UNIQUE (userId, tool, requestHash) constraint
+ * means re-running or refreshing the SAME ticket can never consume a second
+ * allowance. `payload` stores the last generated/analyzed result so an
+ * at-limit user can be re-shown their most recent ticket read-only.
+ */
+export const toolUsage = pgTable(
+  "tool_usage",
+  {
+    id: text("id").primaryKey(),
+    userId: text("userId").notNull(),
+    tool: text("tool").notNull(), // analyzer | parlaid
+    season: integer("season").notNull(),
+    week: integer("week").notNull(),
+    seasonType: text("seasonType").notNull().default("regular"),
+    requestHash: text("requestHash").notNull(),
+    payload: jsonb("payload"),
+    ticketId: text("ticketId"),
+    createdAt: timestamp("createdAt", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    userToolHashUnique: unique("tool_usage_user_tool_hash_unique").on(t.userId, t.tool, t.requestHash),
+    userToolWeekIdx: index("tool_usage_user_tool_week_idx").on(t.userId, t.tool, t.season, t.week, t.seasonType),
+  }),
+)
+
+/**
  * Append-only payment/subscription audit trail, populated from verified Stripe
  * webhook events. Powers the admin dashboard's payment history. Never written
  * from the client.
@@ -308,6 +354,9 @@ export const reviewTickets = pgTable(
     // Frozen analysis time + who recorded it.
     analyzedAt: timestamp("analyzedAt", { withTimezone: true }).notNull(),
     createdBy: text("createdBy"),
+    // Account that owns this snapshot (analyzer/tool saves). NULL for legacy
+    // admin-entered tickets. Plain text userId per the Neon scoping pattern.
+    userId: text("userId"),
     notes: text("notes"),
 
     // Real combined parlay price (juice), when every leg had a price. Never EV.
@@ -349,6 +398,7 @@ export const reviewTickets = pgTable(
     ticketNumberUnique: unique("review_tickets_number_unique").on(t.ticketNumber),
     statusIdx: index("review_tickets_status_idx").on(t.status),
     seasonWeekIdx: index("review_tickets_season_week_idx").on(t.season, t.week, t.seasonType),
+    userIdx: index("review_tickets_user_idx").on(t.userId),
   }),
 )
 
