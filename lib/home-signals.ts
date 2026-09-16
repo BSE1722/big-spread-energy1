@@ -78,6 +78,76 @@ export function heroSignal(games: LiveBoardGame[]): HomeSignal | null {
   return rated.sort((a, b) => b.absGap - a.absGap)[0]
 }
 
+/** A game whose kickoff is still in the future (or TBD, which hasn't happened). */
+export function isUpcoming(g: LiveBoardGame, now: number = Date.now()): boolean {
+  if (g.kickoffTBD) return true
+  const t = new Date(g.kickoff).getTime()
+  return Number.isFinite(t) ? t > now : true
+}
+
+/**
+ * What the hero headlines. Two honest shapes:
+ *  - `signal`: a full BSE-vs-market disagreement (needs both a live market line
+ *    and a fair line). Carries the gap/edge.
+ *  - `rating`: BSE's fair number + rating only, when no live market line exists
+ *    to compare against (e.g. between slates). NO edge is asserted — we never
+ *    invent a disagreement without a real market line.
+ * `upcoming` flags whether the headlined game is still to be played, so the UI
+ * can avoid calling a finished game "LIVE".
+ */
+export type HeroFeature =
+  | { kind: "signal"; signal: HomeSignal; upcoming: boolean }
+  | {
+      kind: "rating"
+      game: LiveBoardGame
+      fairSpread: number
+      rating: number | null
+      upcoming: boolean
+    }
+
+function bestSignalIn(pool: LiveBoardGame[]): HomeSignal | null {
+  const rated = pool
+    .filter((g) => g.bseRating != null)
+    .map(toHomeSignal)
+    .filter((s): s is HomeSignal => s != null && s.absGap > 0)
+  if (rated.length === 0) return null
+  return rated.sort((a, b) => b.absGap - a.absGap)[0]
+}
+
+function bestRatingIn(pool: LiveBoardGame[]): LiveBoardGame | null {
+  const rated = pool.filter((g) => g.bseRating != null && g.fairSpread != null)
+  if (rated.length === 0) return null
+  return rated.sort((a, b) => (b.bseRating ?? 0) - (a.bseRating ?? 0))[0]
+}
+
+/**
+ * Choose the hero feature, preferring games that are still upcoming so the hero
+ * never headlines a finished game as a live signal. Within each pool it prefers
+ * a full disagreement signal, then falls back to a rating-only feature. Returns
+ * null only when no rated game with a fair line exists at all.
+ */
+export function heroFeature(games: LiveBoardGame[], now: number = Date.now()): HeroFeature | null {
+  const upcoming = games.filter((g) => isUpcoming(g, now))
+
+  const upSignal = bestSignalIn(upcoming)
+  if (upSignal) return { kind: "signal", signal: upSignal, upcoming: true }
+
+  const upRating = bestRatingIn(upcoming)
+  if (upRating) {
+    return { kind: "rating", game: upRating, fairSpread: upRating.fairSpread as number, rating: upRating.bseRating, upcoming: true }
+  }
+
+  const anySignal = bestSignalIn(games)
+  if (anySignal) return { kind: "signal", signal: anySignal, upcoming: false }
+
+  const anyRating = bestRatingIn(games)
+  if (anyRating) {
+    return { kind: "rating", game: anyRating, fairSpread: anyRating.fairSpread as number, rating: anyRating.bseRating, upcoming: false }
+  }
+
+  return null
+}
+
 /** Top `n` games by absolute BSE-vs-market disagreement (Hot Board). */
 export function topDisagreements(games: LiveBoardGame[], n = 4): HomeSignal[] {
   return games
