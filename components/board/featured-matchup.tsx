@@ -6,6 +6,7 @@ import {
   formatKickoff,
   formatKickoffDate,
   formatFavoredSpread,
+  formatFavoredLine,
   type LiveBoardGame,
 } from "@/lib/use-live-board"
 import { cardAccessFor } from "@/lib/board-card-state"
@@ -37,6 +38,8 @@ export function FeaturedMatchup({ game, access, accessLoading, onRequestUnlock }
   const total = game.marketTotal != null ? `O/U ${game.marketTotal.toFixed(1)}` : PLACEHOLDER
   const edge =
     game.edgeSpread != null ? `${game.edgeSpread > 0 ? "+" : ""}${game.edgeSpread.toFixed(1)}` : PLACEHOLDER
+  // Canonical BSE fair spread in favorite-giving-points form, matching the market line.
+  const bseLineValue = formatFavoredLine(game.fairSpread, game.home, game.away) ?? PLACEHOLDER
 
   return (
     <section
@@ -95,12 +98,21 @@ export function FeaturedMatchup({ game, access, accessLoading, onRequestUnlock }
               </div>
               <div>
                 <span className="block font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
-                  Model Edge
+                  BSE Line
                 </span>
                 {unlocked ? (
-                  <span className="font-display text-2xl font-semibold tabular-nums text-primary">{edge}</span>
+                  <>
+                    <span className="font-display text-2xl font-semibold tabular-nums text-primary">
+                      {bseLineValue}
+                    </span>
+                    {edge !== PLACEHOLDER && (
+                      <span className="mt-0.5 block font-mono text-[0.625rem] uppercase tracking-wider text-primary/70">
+                        {edge} edge
+                      </span>
+                    )}
+                  </>
                 ) : (
-                  <LockChip label="Model Edge" hint="BSE Edge" className="mt-1" />
+                  <LockChip label="BSE Line" hint="BSE Edge" className="mt-1" />
                 )}
               </div>
             </div>
