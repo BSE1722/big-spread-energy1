@@ -6,6 +6,7 @@ import {
   formatKickoff,
   formatKickoffDate,
   formatFavoredSpread,
+  formatFavoredLine,
   type LiveBoardGame,
 } from "@/lib/use-live-board"
 import { cardAccessFor, type CardState } from "@/lib/board-card-state"
@@ -95,6 +96,9 @@ export function MatchupCard({ game, access, accessLoading, onRequestUnlock }: Ma
 
   const edgeValue =
     game.edgeSpread != null ? `${game.edgeSpread > 0 ? "+" : ""}${game.edgeSpread.toFixed(1)}` : PLACEHOLDER
+  // The canonical BSE fair spread, shown in the same favorite-giving-points form
+  // as the market line so viewers see the actual number BSE would set.
+  const bseLineValue = formatFavoredLine(game.fairSpread, game.home, game.away) ?? PLACEHOLDER
 
   return (
     <div
@@ -150,17 +154,24 @@ export function MatchupCard({ game, access, accessLoading, onRequestUnlock }: Ma
             </span>
           </div>
 
-          {/* Model Edge — premium */}
+          {/* BSE Line — the model's fair spread + edge vs market (premium) */}
           <div className="flex flex-col">
             <span className="font-mono text-[0.625rem] uppercase tracking-wider text-muted-foreground">
-              Model Edge
+              BSE Line
             </span>
             {unlocked ? (
-              <span className="font-display text-lg font-semibold tabular-nums text-primary">
-                {edgeValue}
-              </span>
+              <>
+                <span className="font-display text-lg font-semibold tabular-nums text-primary">
+                  {bseLineValue}
+                </span>
+                {edgeValue !== PLACEHOLDER && (
+                  <span className="font-mono text-[0.625rem] uppercase tracking-wider text-primary/70">
+                    {edgeValue} edge
+                  </span>
+                )}
+              </>
             ) : (
-              <LockChip label="Model Edge" hint="BSE" className="mt-0.5" />
+              <LockChip label="BSE Line" hint="BSE" className="mt-0.5" />
             )}
           </div>
         </div>

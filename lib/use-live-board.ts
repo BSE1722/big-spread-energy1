@@ -137,20 +137,32 @@ export function useLiveBoard(): LiveBoardState {
 export { formatKickoff, formatKickoffDate } from "@/lib/format-kickoff"
 
 /**
+ * Render a home-relative spread (negative = home favored) as the favorite —
+ * the team giving points — beside its own negative line, e.g. "TCU -7.5".
+ * Returns "PK" for a pick'em and null when the value is missing, so callers can
+ * apply their own placeholder. Used for both the market line and the BSE line
+ * so they read in the identical format.
+ */
+export function formatFavoredLine(
+  value: number | null,
+  home: { abbr: string },
+  away: { abbr: string },
+): string | null {
+  if (value == null) return null
+  if (value === 0) return "PK"
+  const favAbbr = value < 0 ? home.abbr : away.abbr
+  const favLine = value < 0 ? value : -value
+  return `${favAbbr} ${favLine.toFixed(1)}`
+}
+
+/**
  * The market spread is stored home-relative (negative = home favored). Returns
- * the favorite — the team giving points — beside its own negative line, e.g.
- * "TCU -7.5". Returns "PK" for a pick'em and null when no market spread exists,
- * so callers can apply their own placeholder.
+ * the favorite beside its line, e.g. "TCU -7.5", or null when unavailable.
  */
 export function formatFavoredSpread(
   g: Pick<LiveBoardGame, "marketSpread" | "home" | "away">,
 ): string | null {
-  const s = g.marketSpread
-  if (s == null) return null
-  if (s === 0) return "PK"
-  const favAbbr = s < 0 ? g.home.abbr : g.away.abbr
-  const favLine = s < 0 ? s : -s
-  return `${favAbbr} ${favLine.toFixed(1)}`
+  return formatFavoredLine(g.marketSpread, g.home, g.away)
 }
 
 
