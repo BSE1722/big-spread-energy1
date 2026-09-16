@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Search, X, CalendarClock, ChevronRight } from "lucide-react"
 import { TeamLogo } from "@/components/team-logo"
 import { TeamName } from "@/components/team-name"
-import { getTeamRank } from "@/lib/bse"
+import { useRankings } from "@/components/rankings-provider"
 import { cn } from "@/lib/utils"
 
 type TeamOption = {
@@ -93,6 +93,7 @@ function useCurrentBoardGameIds(): Set<string> {
 export function TeamSearch() {
   const teams = useTeamOptions()
   const boardGameIds = useCurrentBoardGameIds()
+  const { getRank } = useRankings()
   const [query, setQuery] = useState("")
   const [selected, setSelected] = useState<string | null>(null)
   const [liveGames, setLiveGames] = useState<CfbdGame[]>([])
@@ -229,7 +230,7 @@ export function TeamSearch() {
                   <TeamLogo name={t.name} abbr={t.abbr} size="sm" />
                   <span className="font-display text-sm font-semibold text-foreground">{t.name}</span>
                   {(() => {
-                    const rank = getTeamRank(t.name) ?? getTeamRank(t.abbr)
+                    const rank = getRank(t.name) ?? getRank(t.abbr)
                     return rank != null ? (
                       <span className="ml-auto font-mono text-[11px] font-semibold text-primary">
                         #{rank}

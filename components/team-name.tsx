@@ -1,5 +1,7 @@
-import { getTeamRank } from "@/lib/bse"
+"use client"
+
 import { TeamLogo } from "@/components/team-logo"
+import { useRankings } from "@/components/rankings-provider"
 import { cn } from "@/lib/utils"
 
 type Size = "sm" | "md" | "lg"
@@ -29,7 +31,8 @@ export function TeamName({
   className?: string
   rankClassName?: string
 }) {
-  const rank = getTeamRank(name) ?? getTeamRank(abbr)
+  const { getRank } = useRankings()
+  const rank = getRank(name) ?? getRank(abbr)
   const text = label === "abbr" ? abbr : name
 
   return (

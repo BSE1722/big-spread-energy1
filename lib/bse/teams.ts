@@ -175,35 +175,40 @@ export interface ApPollEntry {
 }
 
 /**
- * ESPN / Associated Press Top 25 — 2026 preseason poll.
- * Update this single list each week and every ranking across the site updates.
+ * ESPN / Associated Press Top 25 — used as the SSR seed and offline fallback.
+ *
+ * This is refreshed automatically every week: the `refresh-rankings` cron pulls
+ * the live AP poll from ESPN into `app_config`, and the site reads it through
+ * the RankingsProvider. This array only needs a manual bump when you want the
+ * committed default (first paint / pre-ingestion) to match the latest poll.
+ * Snapshot below: 2026 Week 3.
  */
 export const AP_TOP_25: ApPollEntry[] = [
-  { rank: 1, abbr: "OSU", points: 1672, firstPlaceVotes: 40, record: "0-0" },
-  { rank: 2, abbr: "ORE", points: 1597, firstPlaceVotes: 14, record: "0-0" },
-  { rank: 3, abbr: "UGA", points: 1513, record: "0-0" },
-  { rank: 4, abbr: "ND", points: 1510, firstPlaceVotes: 6, record: "0-0" },
-  { rank: 5, abbr: "TEX", points: 1483, record: "0-0" },
-  { rank: 6, abbr: "IU", points: 1440, firstPlaceVotes: 8, record: "0-0" },
-  { rank: 7, abbr: "MIA", points: 1379, firstPlaceVotes: 1, record: "0-0" },
-  { rank: 8, abbr: "TA&M", points: 1131, record: "0-0" },
-  { rank: 9, abbr: "MISS", points: 1102, record: "0-0" },
-  { rank: 10, abbr: "OU", points: 1047, record: "0-0" },
-  { rank: 11, abbr: "LSU", points: 988, record: "0-0" },
-  { rank: 12, abbr: "TTU", points: 983, record: "0-0" },
-  { rank: 13, abbr: "ALA", points: 904, record: "0-0" },
-  { rank: 14, abbr: "USC", points: 839, record: "0-0" },
-  { rank: 14, abbr: "BYU", points: 839, record: "0-0" },
-  { rank: 16, abbr: "MICH", points: 718, record: "0-0" },
-  { rank: 17, abbr: "WASH", points: 501, record: "0-0" },
-  { rank: 18, abbr: "PSU", points: 482, record: "0-0" },
-  { rank: 19, abbr: "SMU", points: 434, record: "0-0" },
-  { rank: 20, abbr: "TENN", points: 394, record: "0-0" },
-  { rank: 21, abbr: "UTAH", points: 304, record: "0-0" },
-  { rank: 22, abbr: "IOWA", points: 260, record: "0-0" },
-  { rank: 23, abbr: "HOU", points: 252, record: "0-0" },
-  { rank: 24, abbr: "LOU", points: 194, record: "0-0" },
-  { rank: 25, abbr: "MIZ", points: 117, record: "0-0" },
+  { rank: 1, abbr: "TEX", points: 1678, firstPlaceVotes: 56, record: "2-0" },
+  { rank: 2, abbr: "UGA", points: 1551, firstPlaceVotes: 3, record: "2-0" },
+  { rank: 3, abbr: "ND", points: 1531, firstPlaceVotes: 1, record: "2-0" },
+  { rank: 4, abbr: "IU", points: 1466, firstPlaceVotes: 3, record: "2-0" },
+  { rank: 5, abbr: "MIA", points: 1452, firstPlaceVotes: 4, record: "2-0" },
+  { rank: 6, abbr: "OSU", points: 1407, record: "1-1" },
+  { rank: 7, abbr: "LSU", points: 1334, firstPlaceVotes: 1, record: "2-0" },
+  { rank: 8, abbr: "MISS", points: 1216, record: "2-0" },
+  { rank: 9, abbr: "TA&M", points: 1165, record: "2-0" },
+  { rank: 10, abbr: "ALA", points: 1068, record: "2-0" },
+  { rank: 11, abbr: "BYU", points: 966, record: "2-0" },
+  { rank: 12, abbr: "USC", points: 944, record: "3-0" },
+  { rank: 13, abbr: "TTU", points: 910, record: "2-0" },
+  { rank: 14, abbr: "PSU", points: 692, record: "2-0" },
+  { rank: 15, abbr: "TENN", points: 676, record: "2-0" },
+  { rank: 16, abbr: "SMU", points: 636, record: "2-0" },
+  { rank: 17, abbr: "UTAH", points: 558, record: "2-0" },
+  { rank: 18, abbr: "IOWA", points: 391, record: "2-0" },
+  { rank: 19, abbr: "MICH", points: 382, record: "2-0" },
+  { rank: 20, abbr: "MIZ", points: 344, record: "2-0" },
+  { rank: 21, abbr: "ORE", points: 324, record: "1-1" },
+  { rank: 22, abbr: "HOU", points: 292, record: "2-0" },
+  { rank: 23, abbr: "LOU", points: 244, record: "1-1" },
+  { rank: 24, abbr: "OU", points: 222, record: "1-1" },
+  { rank: 25, abbr: "UVA", points: 182, record: "2-0" },
 ]
 
 /* ------------------------------- Indexes -------------------------------- */
@@ -276,9 +281,9 @@ export interface ApRankRow {
   record: string
 }
 
-/** The AP Top 25 enriched with canonical name + color for rendering. */
-export function getApTop25(): ApRankRow[] {
-  return AP_TOP_25.map((e) => {
+/** Enrich raw poll entries with canonical name + brand color for rendering. */
+export function enrichApPoll(entries: ApPollEntry[]): ApRankRow[] {
+  return entries.map((e) => {
     const entry = TEAM_TABLE[e.abbr]
     return {
       rank: e.rank,
@@ -290,4 +295,9 @@ export function getApTop25(): ApRankRow[] {
       record: e.record,
     }
   })
+}
+
+/** The hard-coded seed AP Top 25 enriched with canonical name + color. */
+export function getApTop25(): ApRankRow[] {
+  return enrichApPoll(AP_TOP_25)
 }
