@@ -11,7 +11,7 @@
  * button on /gameday. While empty, the buttons stay visible but do not
  * navigate off-site.
  */
-export const BSE_SUPPLY_URL = ""
+export const BSE_SUPPLY_URL = "https://big-spread-energy.printify.me/products"
 
 export const isSupplyConfigured = BSE_SUPPLY_URL.trim().length > 0
 
