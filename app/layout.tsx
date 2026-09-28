@@ -4,6 +4,8 @@ import { Oswald, Inter, Permanent_Marker } from 'next/font/google'
 import './globals.css'
 import { SiteHeader } from '@/components/site-header'
 import { SiteFooter } from '@/components/site-footer'
+import { RankingsProvider } from '@/components/rankings-provider'
+import { getApTop25 } from '@/lib/bse'
 
 const oswald = Oswald({
   subsets: ['latin'],
@@ -48,9 +50,11 @@ export default function RootLayout({
       className={`dark bg-background ${oswald.variable} ${inter.variable} ${permanentMarker.variable}`}
     >
       <body className="min-h-screen bg-background font-sans text-foreground antialiased">
-        <SiteHeader />
-        {children}
-        <SiteFooter />
+        <RankingsProvider seed={getApTop25()}>
+          <SiteHeader />
+          {children}
+          <SiteFooter />
+        </RankingsProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

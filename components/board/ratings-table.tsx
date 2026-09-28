@@ -1,13 +1,15 @@
-import { getApTop25 } from "@/lib/bse"
+"use client"
+
 import { TeamLogo } from "@/components/team-logo"
+import { useRankings } from "@/components/rankings-provider"
 
 /**
- * AP Top 25 poll (ESPN / Associated Press). Sourced from the centralized team
- * registry so ranks stay in sync with the rest of the site — update the poll in
- * one place (`lib/bse/teams.ts`) and every ranking display updates.
+ * AP Top 25 poll (ESPN / Associated Press). Reads the live poll from the
+ * RankingsProvider, which is refreshed automatically each week by the
+ * refresh-rankings cron, so this table stays in sync with the rest of the site.
  */
 export function RatingsTable() {
-  const rows = getApTop25()
+  const { poll: rows } = useRankings()
 
   return (
     <div className="overflow-hidden rounded-xl border border-border">
