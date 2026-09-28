@@ -242,6 +242,40 @@
   will-change: transform, opacity;
 }
 
+/* Game Day: football-field yard lines and a slow stadium-light sweep. */
+.yard-lines {
+  background-image: repeating-linear-gradient(
+    to right,
+    oklch(1 0 0 / 0.07) 0 2px,
+    transparent 2px 10%
+  );
+  mask-image: linear-gradient(to top, black, transparent);
+}
+
+@keyframes light-sweep {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translateX(-58%) rotate(-6deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-42%) rotate(6deg);
+  }
+}
+
+.animate-light-sweep {
+  animation: light-sweep 9s ease-in-out infinite;
+  transform-origin: top center;
+  will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-light-sweep {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-hero-float,
   .animate-energy-flicker,

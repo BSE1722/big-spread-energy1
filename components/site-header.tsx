@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 const nav = [
   { href: "/", label: "Home" },
   { href: "/board", label: "The Board" },
+  { href: "/gameday", label: "Game Day" },
   { href: "/performance", label: "Track Record" },
   { href: "/getting-parlaid", label: "Getting Parlaid" },
   { href: "/pricing", label: "Pricing" },
